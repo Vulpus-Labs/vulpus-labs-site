@@ -20,7 +20,7 @@
     {{ $posts := where site.RegularPages "Type" "posts" }}
     {{ range ($posts.GroupByDate "2006 January").Reverse }}
     <li>
-      <a href="{{ "/posts/" | relURL }}{{ .Key | urlize }}/">
+      <a href="{{ "/posts/" | relURL }}#{{ .Key | urlize }}">
         <span>{{ .Key }}</span>
         <span class="archive-count">{{ len .Pages }}</span>
       </a>

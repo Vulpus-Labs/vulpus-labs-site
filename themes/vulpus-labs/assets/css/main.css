@@ -452,6 +452,20 @@ body {
   margin-top: 0.5rem;
 }
 
+.archive-month {
+  margin-bottom: 3rem;
+  scroll-margin-top: 2rem;
+}
+
+.month-heading {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--color-primary);
+  margin-bottom: 1.5rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid var(--color-border);
+}
+
 /* Responsive Design */
 @media (max-width: 1024px) {
   .content-wrapper {
