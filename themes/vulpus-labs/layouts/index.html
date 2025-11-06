@@ -1,0 +1,48 @@
+{{ define "main" }}
+<div class="home-intro">
+  {{ with site.Params.description }}
+  <p class="site-description">{{ . }}</p>
+  {{ end }}
+</div>
+
+<div class="recent-posts">
+  {{ $posts := where site.RegularPages "Type" "posts" }}
+  {{ range first 3 $posts }}
+  <article class="post-card">
+    <div class="post-meta">
+      <time class="post-date" datetime="{{ .Date.Format "2006-01-02" }}">
+        📅 {{ .Date.Format "January 2, 2006" }}
+      </time>
+      {{ with .Params.readingTime }}
+      <span class="reading-time">⏱️ {{ . }} min read</span>
+      {{ end }}
+    </div>
+
+    <h2 class="post-title">
+      <a href="{{ .RelPermalink }}">{{ .Title }}</a>
+    </h2>
+
+    {{ with .Summary }}
+    <div class="post-summary">
+      {{ . }}
+    </div>
+    {{ end }}
+
+    <a href="{{ .RelPermalink }}" class="read-more">
+      Read more →
+    </a>
+  </article>
+  {{ else }}
+  <div class="post-card">
+    <p class="post-summary">No posts yet. Create your first post with:</p>
+    <pre><code>hugo new content posts/my-first-post.md</code></pre>
+  </div>
+  {{ end }}
+</div>
+
+{{ if gt (len $posts) 3 }}
+<div class="view-all">
+  <a href="{{ "/posts/" | relURL }}" class="read-more">View all posts →</a>
+</div>
+{{ end }}
+{{ end }}

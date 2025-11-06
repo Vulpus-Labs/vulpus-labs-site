@@ -1,0 +1,30 @@
+{{ if site.Params.links }}
+<div class="sidebar-section">
+  <h3>Resources</h3>
+  <ul class="sidebar-links">
+    {{ range site.Params.links }}
+    <li>
+      <a href="{{ .url }}" {{ if hasPrefix .url "http" }}target="_blank" rel="noopener noreferrer"{{ end }}>
+        <span class="link-icon">{{ .icon }}</span>
+        <span>{{ .title }}</span>
+      </a>
+    </li>
+    {{ end }}
+  </ul>
+</div>
+{{ end }}
+
+<div class="sidebar-section">
+  <h3>Archive</h3>
+  <ul class="archive-links">
+    {{ $posts := where site.RegularPages "Type" "posts" }}
+    {{ range ($posts.GroupByDate "2006 January").Reverse }}
+    <li>
+      <a href="{{ "/posts/" | relURL }}{{ .Key | urlize }}/">
+        <span>{{ .Key }}</span>
+        <span class="archive-count">{{ len .Pages }}</span>
+      </a>
+    </li>
+    {{ end }}
+  </ul>
+</div>

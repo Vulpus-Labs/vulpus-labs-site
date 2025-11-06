@@ -1,0 +1,43 @@
+{{ define "main" }}
+<div class="archive-header">
+  <h1>{{ .Title }}</h1>
+  {{ with .Content }}
+  <div class="archive-description">
+    {{ . }}
+  </div>
+  {{ end }}
+</div>
+
+<div class="archive-posts">
+  {{ range .Pages }}
+  <article class="post-card">
+    <div class="post-meta">
+      <time class="post-date" datetime="{{ .Date.Format "2006-01-02" }}">
+        📅 {{ .Date.Format "January 2, 2006" }}
+      </time>
+      {{ with .Params.readingTime }}
+      <span class="reading-time">⏱️ {{ . }} min read</span>
+      {{ end }}
+    </div>
+
+    <h2 class="post-title">
+      <a href="{{ .RelPermalink }}">{{ .Title }}</a>
+    </h2>
+
+    {{ with .Summary }}
+    <div class="post-summary">
+      {{ . }}
+    </div>
+    {{ end }}
+
+    <a href="{{ .RelPermalink }}" class="read-more">
+      Read more →
+    </a>
+  </article>
+  {{ else }}
+  <div class="post-card">
+    <p class="post-summary">No posts found in this archive.</p>
+  </div>
+  {{ end }}
+</div>
+{{ end }}

@@ -1,0 +1,23 @@
+baseURL = 'https://vulpuslabs.com/'
+languageCode = 'en-us'
+title = 'Vulpus Labs'
+theme = 'vulpus-labs'
+
+[params]
+description = 'Independent software development: innovative ideas, ergonomically thoughtful execution, transparent open source.'
+
+# Sidebar resource links (customize these URLs)
+[[params.links]]
+title = 'Documentation'
+url = 'https://github.com/Vulpus-Labs/vulpus-labs-vm/tree/main/module-docs'
+icon = '📚'
+
+[[params.links]]
+title = 'GitHub Repositories'
+url = 'https://github.com/Vulpus-Labs'
+icon = '💻'
+
+[[params.links]]
+title = 'Products'
+url = 'https://store.cherryaudio.com/manufacturers/vulpus-labs'
+icon = '🚀'

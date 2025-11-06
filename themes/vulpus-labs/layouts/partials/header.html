@@ -1,0 +1,14 @@
+<div class="site-branding">
+  <a href="{{ "/" | relURL }}" class="site-logo-link" aria-label="Home">
+    {{ $logo := resources.Get "logo.png" }}
+    {{ if $logo }}
+      <img src="{{ $logo.RelPermalink }}" alt="Vulpus Labs Logo" class="site-logo-img">
+    {{ else }}
+      <div class="site-logo-placeholder">🦊</div>
+    {{ end }}
+  </a>
+  <div class="site-title-wrapper">
+    <a href="{{ "/" | relURL }}" class="site-title">{{ site.Title }}</a>
+    <div class="site-tagline">know many things</div>
+  </div>
+</div>
