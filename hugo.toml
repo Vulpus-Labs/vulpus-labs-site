@@ -4,7 +4,7 @@ title = 'Vulpus Labs'
 theme = 'vulpus-labs'
 
 [params]
-description = 'Independent software development: innovative ideas, ergonomically thoughtful execution, transparent open source.'
+description = 'Independent software development'
 
 # Sidebar resource links (customize these URLs)
 [[params.links]]
