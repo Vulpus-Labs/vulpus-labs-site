@@ -5,7 +5,7 @@ title = 'Phantasmatic'
 readingTime = 3
 +++
 
-**Phantasmatic** (forthcoming) is another new module for Cherry Audio's [Voltage Modular](https://store.cherryaudio.com/bundles/voltage-modular-software). Like its older brother [Prismatic](https://store.cherryaudio.com/modules/prismatic), it uses [phase distortion](https://www.perfectcircuit.com/signal/casio-cz-series) to shape waveforms by changing the way the phase accumulator moves through a wavetable.
+[Phantasmatic](https://store.cherryaudio.com/modules/phantasmatic) is another new module for Cherry Audio's [Voltage Modular](https://store.cherryaudio.com/bundles/voltage-modular-software). Like its older brother [Prismatic](https://store.cherryaudio.com/modules/prismatic), it uses [phase distortion](https://www.perfectcircuit.com/signal/casio-cz-series) to shape waveforms by changing the way the phase accumulator moves through a wavetable.
 
 {{< youtube VeDn9p7TBY8 >}}
 
