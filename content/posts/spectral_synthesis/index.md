@@ -17,7 +17,7 @@ Let's start with the basics. To generate a single consistent tone using the beep
 
 This will produce a square wave, whose frequency is controlled by the total length of the loop between _1_ and _5_, and whose pulse width is controlled by the ratio between the length of the wait _n_ at _2_ and the length of the wait _m_ at _4_.
 
-```ascii
+```plaintext
     ON ┌────────┐        ┌────────┐        ┌────────
        │   n    │   m    │   n    │   m    │   n
    OFF ┘        └────────┘        └────────┘
@@ -30,7 +30,7 @@ This will produce a square wave, whose frequency is controlled by the total leng
 
 Changing the duty cycle of the wave changes its timbre and perceived volume:
 
-```ascii
+```plaintext
     50% duty cycle (n = m):
     
     ON ┌────┐    ┌────┐    ┌────┐    ┌────┐
