@@ -84,7 +84,11 @@ The Voltage Modular module I'm discussing in this post, RKW-1, emulates this app
 
 It's a fairly high-level, abstracted emulation: we're not actually running Z80 machine instructions, updating register values and so on. Instead, we divide the time between refresh interrupts into "ticks", with each tick representing a number of CPU cycles used to determine what the next state of the beeper should be. At each refresh the behaviour of each of the engine's four oscillators is updated, and at each tick each oscillator's phase accumulator runs forward by its phase delta and compared with the pulse width-controlling threshold to obtain the oscillator's binary `on`/`off` state. The oscillators' states are then combined to determine the beeper state at the end of that tick.
 
-How do we sync this up with Voltage Modular's fixed 48kHz sample rate? In short, we cheat. At each sample at the 48kHz rate we determine how long it's been since the last refresh, how many ticks have elapsed in that time, and therefore what the position of each oscillator's phase accumulator should be at the end of the last tick. In this way, we get automatic conversion from the (slightly abstracted and idealised) behaviour of a CPU running machine code instructions at 3.5MHz into Voltage Modular's sample rate, without having to simulate what happens "between" samples. All we care about is what the beeper's state would be "now", for each of a succession of precisely-clocked instants.
+How do we sync this up with Voltage Modular's fixed 48kHz sample rate? In short, we cheat...
+
+> UPDATE: not any more we don't. See [Spectral Synthesis (2)](/posts/spectral_synthesis_2). TLDR: the approach described below introduces aliasing, and while we want to keep things authentically nasty we don't want to mix that up with synthetic nastiness.
+
+At each sample at the 48kHz rate we determine how long it's been since the last refresh, how many ticks have elapsed in that time, and therefore what the position of each oscillator's phase accumulator should be at the end of the last tick. In this way, we get automatic conversion from the (slightly abstracted and idealised) behaviour of a CPU running machine code instructions at 3.5MHz into Voltage Modular's sample rate, without having to simulate what happens "between" samples. All we care about is what the beeper's state would be "now", for each of a succession of precisely-clocked instants.
 
 This is the core of it:
 
