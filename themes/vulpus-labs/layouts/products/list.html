@@ -1,0 +1,30 @@
+{{ define "main" }}
+<div class="archive-header">
+  <h1>{{ .Title }}</h1>
+  {{ with .Content }}
+  <div class="archive-description">{{ . }}</div>
+  {{ end }}
+</div>
+
+<div class="product-cards">
+  {{ range .Pages }}
+  <article class="post-card product-card">
+    <div class="product-title-row">
+      <h2 class="post-title">
+        <a href="{{ .RelPermalink }}">{{ .Title }}</a>
+      </h2>
+      {{ with .Params.status }}
+      <span class="status-badge status-{{ . | urlize }}">{{ . }}</span>
+      {{ end }}
+    </div>
+    {{ with .Params.tagline }}
+    <p class="post-summary">{{ . }}</p>
+    {{ end }}
+    <div class="product-meta">
+      {{ with .Params.version }}<span class="product-version">v{{ . }}</span>{{ end }}
+    </div>
+    <a href="{{ .RelPermalink }}" class="read-more">View product →</a>
+  </article>
+  {{ end }}
+</div>
+{{ end }}

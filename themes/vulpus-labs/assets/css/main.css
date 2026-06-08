@@ -60,12 +60,49 @@ body {
   box-shadow: var(--shadow-sm);
 }
 
+.site-header-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2rem;
+  flex-wrap: wrap;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
 .site-branding {
   display: flex;
   align-items: center;
   gap: 1rem;
-  max-width: 1400px;
-  margin: 0 auto;
+}
+
+/* Primary Nav */
+.site-nav ul {
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.site-nav a {
+  display: block;
+  color: var(--color-text-muted);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.9375rem;
+  padding: 0.5rem 0.875rem;
+  border-radius: 6px;
+  transition: var(--transition);
+}
+
+.site-nav a:hover {
+  color: var(--color-text);
+  background: var(--color-surface-hover);
+}
+
+.site-nav a.active {
+  color: var(--color-primary-bright);
+  background: var(--color-surface);
 }
 
 .site-logo-link {
@@ -478,6 +515,150 @@ body {
   border-bottom: 2px solid var(--color-border);
 }
 
+/* Products */
+.product-title-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.product-title-row .post-title {
+  margin-bottom: 0;
+}
+
+.product-tagline {
+  font-size: 1.1875rem;
+  color: var(--color-text-muted);
+  margin-bottom: 0.75rem;
+}
+
+.product-meta {
+  display: flex;
+  gap: 1rem;
+  font-size: 0.875rem;
+  color: var(--color-text-dim);
+}
+
+.product-version {
+  font-family: var(--font-mono);
+}
+
+.status-badge {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.2em 0.6em;
+  border-radius: 999px;
+  border: 1px solid var(--color-border);
+}
+
+.status-shipping {
+  color: var(--color-accent);
+  border-color: var(--color-accent);
+  background: rgba(0, 212, 170, 0.1);
+}
+
+.status-in-design {
+  color: var(--color-text-muted);
+  border-color: var(--color-text-dim);
+  background: rgba(136, 146, 166, 0.08);
+}
+
+.product-cards {
+  display: flex;
+  flex-direction: column;
+}
+
+.product-card .read-more {
+  margin-top: 0.5rem;
+}
+
+/* Downloads */
+.downloads {
+  margin-top: 3rem;
+  padding-top: 2rem;
+  border-top: 1px solid var(--color-border);
+}
+
+.downloads h2 {
+  font-size: 1.75rem;
+  font-weight: 700;
+  margin-bottom: 0.75rem;
+}
+
+.downloads-note {
+  color: var(--color-text-muted);
+  font-size: 0.9375rem;
+  line-height: 1.7;
+  margin-bottom: 1.5rem;
+}
+
+.downloads-note code {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+  background: var(--color-bg-alt);
+  border: 1px solid var(--color-border);
+  padding: 0.15em 0.4em;
+  border-radius: 4px;
+  color: var(--color-accent);
+}
+
+.download-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 1rem;
+}
+
+.download-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 1.25rem;
+  text-decoration: none;
+  transition: var(--transition);
+}
+
+.download-card:hover {
+  border-color: var(--color-primary);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+.download-platform {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.download-format {
+  font-size: 0.9375rem;
+  color: var(--color-text-muted);
+}
+
+.download-arch {
+  font-size: 0.8125rem;
+  color: var(--color-text-dim);
+  font-family: var(--font-mono);
+}
+
+.download-action {
+  margin-top: 0.5rem;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--color-primary);
+}
+
+.download-card:hover .download-action {
+  color: var(--color-primary-bright);
+}
+
 /* Responsive Design */
 @media (max-width: 1024px) {
   .content-wrapper {
@@ -493,6 +674,20 @@ body {
 @media (max-width: 768px) {
   .site-header {
     padding: 1rem;
+  }
+
+  .site-header-inner {
+    gap: 1rem;
+  }
+
+  .site-nav ul {
+    flex-wrap: wrap;
+    gap: 0.25rem;
+  }
+
+  .site-nav a {
+    padding: 0.4rem 0.7rem;
+    font-size: 0.875rem;
   }
 
   .site-branding {

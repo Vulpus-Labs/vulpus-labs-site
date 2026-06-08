@@ -3,6 +3,22 @@ languageCode = 'en-us'
 title = 'Vulpus Labs'
 theme = 'vulpus-labs'
 
+[menus]
+[[menus.main]]
+name = 'Home'
+pageRef = '/'
+weight = 10
+
+[[menus.main]]
+name = 'Products'
+pageRef = '/products'
+weight = 20
+
+[[menus.main]]
+name = 'Blog'
+pageRef = '/posts'
+weight = 30
+
 [params]
 description = 'Independent software development'
 
@@ -19,5 +35,10 @@ icon = '💻'
 
 [[params.links]]
 title = 'Products'
-url = 'https://store.cherryaudio.com/manufacturers/vulpus-labs'
+url = '/products/'
 icon = '🚀'
+
+[[params.links]]
+title = 'Cherry Audio Store'
+url = 'https://store.cherryaudio.com/manufacturers/vulpus-labs'
+icon = '🛒'

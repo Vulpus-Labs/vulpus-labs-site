@@ -1,0 +1,49 @@
+{{ define "main" }}
+<article class="product">
+  <header class="post-header product-header">
+    <div class="product-title-row">
+      <h1 class="post-title">{{ .Title }}</h1>
+      {{ with .Params.status }}
+      <span class="status-badge status-{{ . | urlize }}">{{ . }}</span>
+      {{ end }}
+    </div>
+    {{ with .Params.tagline }}
+    <p class="product-tagline">{{ . }}</p>
+    {{ end }}
+    <div class="product-meta">
+      {{ with .Params.version }}<span class="product-version">v{{ . }}</span>{{ end }}
+      {{ with .Params.license }}<span class="product-license">{{ . }}</span>{{ end }}
+    </div>
+  </header>
+
+  <div class="post-content product-content">
+    {{ .Content }}
+  </div>
+
+  {{ with .Params.downloads }}
+  <section class="downloads">
+    <h2>Downloads</h2>
+    <p class="downloads-note">
+      All binaries are unsigned. On <strong>macOS</strong>, clear the quarantine
+      flag after unpacking: <code>xattr -dr com.apple.quarantine &lt;file&gt;</code>.
+      On <strong>Windows</strong>, SmartScreen may warn — choose
+      <em>More info → Run anyway</em>.
+    </p>
+    <div class="download-grid">
+      {{ range . }}
+      <a class="download-card" href="{{ printf "/downloads/%s" .file | relURL }}" download>
+        <span class="download-platform">{{ .platform }}</span>
+        <span class="download-format">{{ .format }}</span>
+        {{ with .arch }}<span class="download-arch">{{ . }}</span>{{ end }}
+        <span class="download-action">Download&nbsp;↓</span>
+      </a>
+      {{ end }}
+    </div>
+  </section>
+  {{ else }}
+  <section class="downloads">
+    <p class="downloads-note">No download is available for this product yet.</p>
+  </section>
+  {{ end }}
+</article>
+{{ end }}

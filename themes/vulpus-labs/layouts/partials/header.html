@@ -1,14 +1,30 @@
-<div class="site-branding">
-  <a href="{{ "/" | relURL }}" class="site-logo-link" aria-label="Home">
-    {{ $logo := resources.Get "logo.png" }}
-    {{ if $logo }}
-      <img src="{{ $logo.RelPermalink }}" alt="Vulpus Labs Logo" class="site-logo-img">
-    {{ else }}
-      <div class="site-logo-placeholder">🦊</div>
-    {{ end }}
-  </a>
-  <div class="site-title-wrapper">
-    <a href="{{ "/" | relURL }}" class="site-title">{{ site.Title }}</a>
-    <div class="site-tagline">know many things</div>
+<div class="site-header-inner">
+  <div class="site-branding">
+    <a href="{{ "/" | relURL }}" class="site-logo-link" aria-label="Home">
+      {{ $logo := resources.Get "logo.png" }}
+      {{ if $logo }}
+        <img src="{{ $logo.RelPermalink }}" alt="Vulpus Labs Logo" class="site-logo-img">
+      {{ else }}
+        <div class="site-logo-placeholder">🦊</div>
+      {{ end }}
+    </a>
+    <div class="site-title-wrapper">
+      <a href="{{ "/" | relURL }}" class="site-title">{{ site.Title }}</a>
+      <div class="site-tagline">know many things</div>
+    </div>
   </div>
+
+  {{ with site.Menus.main }}
+  <nav class="site-nav" aria-label="Primary">
+    <ul>
+      {{ range . }}
+      <li>
+        <a href="{{ .URL }}"
+          {{- if $.IsMenuCurrent .Menu . }} class="active" aria-current="page"
+          {{- else if $.HasMenuCurrent .Menu . }} class="active" aria-current="true"{{ end }}>{{ .Name }}</a>
+      </li>
+      {{ end }}
+    </ul>
+  </nav>
+  {{ end }}
 </div>
