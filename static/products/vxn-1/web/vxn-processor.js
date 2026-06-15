@@ -30,10 +30,15 @@ class VxnHostProcessor extends AudioWorkletProcessor {
     super();
     this.alive = true;
 
+    const opts = options.processorOptions;
+
     // ---- render-load meter (CPU %) ----------------------------------------
     // Sum render time over a window of quanta and divide by the window's
-    // wall-clock budget; report the mean load + the window's per-quantum peak.
-    // Windowed (not per-quantum) so the coarse Date.now() path averages out.
+    // wall-clock budget; report the mean load. Windowed (not per-quantum) so the
+    // coarse Date.now() path averages out. DISABLED on hosts with no render-
+    // thread slack (Safari, via processorOptions.cpuMeter=false): there the
+    // per-quantum Date.now() + periodic postMessage can itself glitch the audio.
+    this._cpuEnabled = opts.cpuMeter !== false;
     this._cpuAccum = 0; // summed render ms this window
     this._cpuQuanta = 0;
     this._cpuWindow = 64; // ~170ms @ 48k/128 — ~6 Hz reporting
@@ -41,8 +46,6 @@ class VxnHostProcessor extends AudioWorkletProcessor {
     this._cpuEmaInit = false;
     this._cpuPeakHold = 0; // decaying peak of *window* loads (bar), never per-quantum
     this._cpuClockLogged = false;
-
-    const opts = options.processorOptions;
     this.runner = new WorkletHostRunner({
       wasmBytes: opts.wasmBytes,
       ringSab: opts.ringSab,
@@ -76,6 +79,12 @@ class VxnHostProcessor extends AudioWorkletProcessor {
   process(_inputs, outputs) {
     if (!this.alive) return false; // teardown: let the node be collected
     const out = outputs[0];
+    // Meter disabled (Safari): render with ZERO extra render-thread work — no
+    // clock reads, no accumulation, no postMessage.
+    if (!this._cpuEnabled) {
+      this.runner.process(out[0], out[1]);
+      return true;
+    }
     const t0 = CPU_CLOCK.now();
     this.runner.process(out[0], out[1]); // silence-until-ready + trap-safe
     this._accumCpu(CPU_CLOCK.now() - t0, out[0] ? out[0].length : 128);
