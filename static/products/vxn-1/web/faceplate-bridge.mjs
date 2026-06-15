@@ -416,16 +416,15 @@ export function createCpuMeter(doc = globalThis.document) {
   }
   const update = (load, peak) => {
     const f = el._fill, p = el._pct;
-    // null load == "no source" (renderCapacity API absent). Show n/a so a missing
-    // measurement reads differently from a real 0% (and from the initial "—",
-    // which means "source present, no sample yet").
+    // null load == "no measurement". Show n/a so a missing reading is distinct
+    // from a real 0% (and from the initial "—", "wired up, no sample yet").
     if (load == null) {
       f.style.width = "0%";
       p.textContent = "n/a";
       return;
     }
-    // Bar tracks peak (renderCapacity reports avg + peak; peak shows transient
-    // spikes the average smooths away). Both are browser-quantized to 1/100.
+    // Bar tracks peak (the worklet posts mean + per-window peak; peak shows
+    // transient spikes the mean smooths away).
     const pk = Math.max(0, Math.min(1.5, Math.max(load, peak || 0)));
     f.style.width = `${Math.min(100, pk * 100).toFixed(0)}%`;
     // green < 0.7, amber < 0.9, red beyond — the usual xrun-headroom bands.

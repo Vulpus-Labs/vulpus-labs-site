@@ -207,7 +207,6 @@ export class WebHost {
     this.node.port.onmessage = (e) => this._onPortMessage(e.data);
 
     this.node.connect(this.ctx.destination);
-    this._startRenderCapacity();
     // Autoplay unlock: the context starts `suspended`; resume() MUST be inside a
     // user-gesture call stack (start()'s contract). On success it reaches
     // `running`; the statechange listener also fires and sets the gate, but we
@@ -334,55 +333,19 @@ export class WebHost {
         this.trapCount = m.count != null ? m.count : this.trapCount + 1;
         this._onTrap(m.message, this.trapCount);
         break;
+      case "cpu":
+        // Worklet render load (mean + peak fractions of the per-quantum budget);
+        // drives the CPU meter. Cheap, fire-and-forget — no engine state. The
+        // first message tags which worklet clock won (performance vs date).
+        if (m.clock && !this._cpuClockLogged) {
+          console.info(`vxn: CPU meter clock = ${m.clock}`);
+          this._cpuClockLogged = true;
+        }
+        this._onCpu(m.load, m.peak);
+        break;
       default:
         break;
     }
-  }
-
-  // ---- render-load (CPU) meter -------------------------------------------
-  //
-  // Driven by the native AudioRenderCapacity API (BaseAudioContext.renderCapacity)
-  // rather than worklet-side timing: AudioWorkletGlobalScope exposes no
-  // high-resolution clock, so any in-worklet measurement reads 0. `update` events
-  // carry averageLoad/peakLoad as fractions of the per-quantum budget (0..1, where
-  // 1.0 == the audio thread used its whole deadline) — the same shape onCpu wants.
-  // Absent (older browsers) → the meter just stays idle; never fatal.
-  _startRenderCapacity() {
-    const rc = this.ctx && this.ctx.renderCapacity;
-    if (!rc || typeof rc.start !== "function") {
-      // API absent (non-Chromium / very old Chrome): tell the meter to show n/a
-      // rather than a misleading frozen 0%.
-      console.warn("vxn: AudioContext.renderCapacity unavailable — CPU meter shows n/a");
-      this._onCpu(null, null);
-      return;
-    }
-    this._renderCapacity = rc;
-    this._onCapacityUpdate = (e) => {
-      // One-shot console breadcrumb so a dead meter is debuggable: confirms the
-      // event fires and what the (1/100-quantized) load actually is.
-      if (!this._cpuLogged) {
-        console.info(`vxn: renderCapacity live — avg ${e.averageLoad} peak ${e.peakLoad}`);
-        this._cpuLogged = true;
-      }
-      this._onCpu(e.averageLoad, e.peakLoad);
-    };
-    rc.addEventListener("update", this._onCapacityUpdate);
-    try {
-      rc.start({ updateInterval: 0.25 }); // ~4 Hz; values quantize to 1/100
-      console.info("vxn: renderCapacity started — awaiting first update");
-    } catch (err) {
-      console.warn("vxn: renderCapacity.start failed", err);
-      this._onCpu(null, null);
-    }
-  }
-
-  _stopRenderCapacity() {
-    const rc = this._renderCapacity;
-    if (!rc) return;
-    if (this._onCapacityUpdate) rc.removeEventListener("update", this._onCapacityUpdate);
-    if (typeof rc.stop === "function") rc.stop();
-    this._renderCapacity = null;
-    this._onCapacityUpdate = null;
   }
 
   // ---- 0043 device change -------------------------------------------------
@@ -523,7 +486,6 @@ export class WebHost {
   async _disposeGraph() {
     this._detachDeviceChange();
     this._detachStateChange();
-    this._stopRenderCapacity();
     if (this.node) {
       try {
         this.node.port.postMessage({ type: "destroy" });
