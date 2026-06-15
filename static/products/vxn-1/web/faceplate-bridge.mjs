@@ -446,6 +446,17 @@ export function createCpuMeter(doc = globalThis.document) {
 // never runs in the native plugin.
 const MANUAL_URL = "https://vulpus-labs.github.io/vxn-1/";
 
+// True on Apple WebKit (Safari), where the AudioWorklet is glitch-prone — used
+// only to show a low-key heads-up in the welcome card. Mirrors coordinator.mjs's
+// isAppleWebKit; kept local so this module has no cross-import for one predicate.
+function isAppleWebKitUA(doc = globalThis.document) {
+  const nav = (doc && doc.defaultView && doc.defaultView.navigator) || globalThis.navigator;
+  if (!nav) return false;
+  const ua = nav.userAgent || "";
+  const vendor = nav.vendor || "";
+  return /Apple/.test(vendor) && !/CriOS|FxiOS|EdgiOS|Chrome|Chromium|Edg|Android/.test(ua);
+}
+
 export function createWelcome(doc = globalThis.document) {
   if (!doc || !doc.body) return { el: null, close() {} };
   const ID = "vxn-welcome";
@@ -488,6 +499,20 @@ export function createWelcome(doc = globalThis.document) {
   link.style.cssText = "color:#6db7ff;text-decoration:underline;";
   manual.append(link, doc.createTextNode(" (opens in a new tab)."));
 
+  // Safari-only heads-up: its AudioWorklet runs with a single render quantum of
+  // output buffer and ignores latencyHint, so its realtime audio thread is prone
+  // to occasional dropouts no matter how cheap our render is. Chrome/Edge don't
+  // have this. Keep it low-key and only show it where it applies.
+  let note = null;
+  if (isAppleWebKitUA(doc)) {
+    note = doc.createElement("p");
+    note.style.cssText =
+      "margin:0 0 1.2rem;padding:8px 10px;border-radius:6px;font-size:12px;" +
+      "background:rgba(224,179,65,.12);color:#e0b341;";
+    note.textContent =
+      "For the smoothest audio, use Chrome or Edge — Safari may produce occasional clicks.";
+  }
+
   const close = doc.createElement("button");
   close.type = "button";
   close.textContent = "Close";
@@ -504,7 +529,7 @@ export function createWelcome(doc = globalThis.document) {
   };
   doc.addEventListener("keydown", onKey);
 
-  card.append(h, intro, how, manual, close);
+  card.append(h, intro, how, manual, ...(note ? [note] : []), close);
   backdrop.appendChild(card);
   doc.body.appendChild(backdrop);
   return { el: backdrop, close: dismiss };
