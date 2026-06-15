@@ -174,13 +174,20 @@ export class WebHost {
     if (!this._AudioContext) throw new Error("no AudioContext available");
 
     this._setGate("starting");
-    this.ctx = new this._AudioContext();
-    // Diagnostic: Safari's audio device characteristics, to chase the glitch.
-    // sampleRate mismatch with hardware → resampling; latencies frame buffering.
+    // Safari renders the AudioWorklet with ~one quantum of output headroom
+    // (baseLatency ≈ 128/sr), so heavy-quantum VARIANCE under polyphony underruns
+    // even though the AVERAGE load is well under budget. Ask Safari for a bigger
+    // output buffer to absorb the spikes. Chromium has slack already → default.
+    const wantBuffer = isAppleWebKit();
+    this.ctx = wantBuffer
+      ? new this._AudioContext({ latencyHint: "playback" })
+      : new this._AudioContext();
+    // Diagnostic: confirm Safari honoured the hint (baseLatency should rise).
     if (typeof navigator !== "undefined") {
       console.info(
         `vxn: AudioContext sr=${this.ctx.sampleRate} ` +
-        `baseLatency=${this.ctx.baseLatency} outputLatency=${this.ctx.outputLatency}`,
+        `baseLatency=${this.ctx.baseLatency} outputLatency=${this.ctx.outputLatency} ` +
+        `bufferHint=${wantBuffer ? "playback" : "default"}`,
       );
     }
 
