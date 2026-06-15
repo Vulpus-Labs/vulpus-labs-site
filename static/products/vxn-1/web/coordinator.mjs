@@ -349,11 +349,31 @@ export class WebHost {
   // Absent (older browsers) → the meter just stays idle; never fatal.
   _startRenderCapacity() {
     const rc = this.ctx && this.ctx.renderCapacity;
-    if (!rc || typeof rc.start !== "function") return;
+    if (!rc || typeof rc.start !== "function") {
+      // API absent (non-Chromium / very old Chrome): tell the meter to show n/a
+      // rather than a misleading frozen 0%.
+      console.warn("vxn: AudioContext.renderCapacity unavailable — CPU meter shows n/a");
+      this._onCpu(null, null);
+      return;
+    }
     this._renderCapacity = rc;
-    this._onCapacityUpdate = (e) => this._onCpu(e.averageLoad, e.peakLoad);
+    this._onCapacityUpdate = (e) => {
+      // One-shot console breadcrumb so a dead meter is debuggable: confirms the
+      // event fires and what the (1/100-quantized) load actually is.
+      if (!this._cpuLogged) {
+        console.info(`vxn: renderCapacity live — avg ${e.averageLoad} peak ${e.peakLoad}`);
+        this._cpuLogged = true;
+      }
+      this._onCpu(e.averageLoad, e.peakLoad);
+    };
     rc.addEventListener("update", this._onCapacityUpdate);
-    rc.start({ updateInterval: 0.25 }); // ~4 Hz; values quantize to 1/100 anyway
+    try {
+      rc.start({ updateInterval: 0.25 }); // ~4 Hz; values quantize to 1/100
+      console.info("vxn: renderCapacity started — awaiting first update");
+    } catch (err) {
+      console.warn("vxn: renderCapacity.start failed", err);
+      this._onCpu(null, null);
+    }
   }
 
   _stopRenderCapacity() {

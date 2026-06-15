@@ -416,11 +416,24 @@ export function createCpuMeter(doc = globalThis.document) {
   }
   const update = (load, peak) => {
     const f = el._fill, p = el._pct;
-    const v = Math.max(0, Math.min(1.5, load || 0));
-    f.style.width = `${Math.min(100, v * 100).toFixed(0)}%`;
+    // null load == "no source" (renderCapacity API absent). Show n/a so a missing
+    // measurement reads differently from a real 0% (and from the initial "—",
+    // which means "source present, no sample yet").
+    if (load == null) {
+      f.style.width = "0%";
+      p.textContent = "n/a";
+      return;
+    }
+    // Bar tracks peak (renderCapacity reports avg + peak; peak shows transient
+    // spikes the average smooths away). Both are browser-quantized to 1/100.
+    const pk = Math.max(0, Math.min(1.5, Math.max(load, peak || 0)));
+    f.style.width = `${Math.min(100, pk * 100).toFixed(0)}%`;
     // green < 0.7, amber < 0.9, red beyond — the usual xrun-headroom bands.
-    f.style.background = v < 0.7 ? "#46c46e" : v < 0.9 ? "#e0b341" : "#e0564b";
-    p.textContent = `${Math.round((load || 0) * 100)}%`;
+    f.style.background = pk < 0.7 ? "#46c46e" : pk < 0.9 ? "#e0b341" : "#e0564b";
+    // One decimal under 10% so a live-but-light load (e.g. 0.0% vs frozen "—")
+    // is still legible despite the 1% quantization floor.
+    const a = Math.max(0, load) * 100;
+    p.textContent = a < 10 ? `${a.toFixed(1)}%` : `${Math.round(a)}%`;
   };
   return { update, el };
 }
