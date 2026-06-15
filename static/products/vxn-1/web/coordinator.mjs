@@ -174,22 +174,11 @@ export class WebHost {
     if (!this._AudioContext) throw new Error("no AudioContext available");
 
     this._setGate("starting");
-    // Safari renders the AudioWorklet with ~one quantum of output headroom
-    // (baseLatency ≈ 128/sr), so heavy-quantum VARIANCE under polyphony underruns
-    // even though the AVERAGE load is well under budget. Ask Safari for a bigger
-    // output buffer to absorb the spikes. Chromium has slack already → default.
-    const wantBuffer = isAppleWebKit();
-    this.ctx = wantBuffer
-      ? new this._AudioContext({ latencyHint: "playback" })
-      : new this._AudioContext();
-    // Diagnostic: confirm Safari honoured the hint (baseLatency should rise).
-    if (typeof navigator !== "undefined") {
-      console.info(
-        `vxn: AudioContext sr=${this.ctx.sampleRate} ` +
-        `baseLatency=${this.ctx.baseLatency} outputLatency=${this.ctx.outputLatency} ` +
-        `bufferHint=${wantBuffer ? "playback" : "default"}`,
-      );
-    }
+    // NB: Safari ignores latencyHint (verified: baseLatency stays at one quantum,
+    // ~128/sr, even under "playback"), so we can't buy output-buffer headroom to
+    // absorb heavy-quantum variance there. The only lever left is cutting the
+    // per-quantum cost itself (see _cpuMeterEnabled / voice + oversample limits).
+    this.ctx = new this._AudioContext();
 
     // Observe the context's own lifecycle. The browser flips state on tab
     // background / OS audio interruption / manual suspend; we mirror those into
