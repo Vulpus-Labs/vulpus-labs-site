@@ -207,6 +207,7 @@ export class WebHost {
     this.node.port.onmessage = (e) => this._onPortMessage(e.data);
 
     this.node.connect(this.ctx.destination);
+    this._startRenderCapacity();
     // Autoplay unlock: the context starts `suspended`; resume() MUST be inside a
     // user-gesture call stack (start()'s contract). On success it reaches
     // `running`; the statechange listener also fires and sets the gate, but we
@@ -333,14 +334,35 @@ export class WebHost {
         this.trapCount = m.count != null ? m.count : this.trapCount + 1;
         this._onTrap(m.message, this.trapCount);
         break;
-      case "cpu":
-        // Audio render load (fractions of the per-quantum budget); drives the
-        // CPU meter. Cheap, fire-and-forget — no engine state.
-        this._onCpu(m.load, m.peak);
-        break;
       default:
         break;
     }
+  }
+
+  // ---- render-load (CPU) meter -------------------------------------------
+  //
+  // Driven by the native AudioRenderCapacity API (BaseAudioContext.renderCapacity)
+  // rather than worklet-side timing: AudioWorkletGlobalScope exposes no
+  // high-resolution clock, so any in-worklet measurement reads 0. `update` events
+  // carry averageLoad/peakLoad as fractions of the per-quantum budget (0..1, where
+  // 1.0 == the audio thread used its whole deadline) — the same shape onCpu wants.
+  // Absent (older browsers) → the meter just stays idle; never fatal.
+  _startRenderCapacity() {
+    const rc = this.ctx && this.ctx.renderCapacity;
+    if (!rc || typeof rc.start !== "function") return;
+    this._renderCapacity = rc;
+    this._onCapacityUpdate = (e) => this._onCpu(e.averageLoad, e.peakLoad);
+    rc.addEventListener("update", this._onCapacityUpdate);
+    rc.start({ updateInterval: 0.25 }); // ~4 Hz; values quantize to 1/100 anyway
+  }
+
+  _stopRenderCapacity() {
+    const rc = this._renderCapacity;
+    if (!rc) return;
+    if (this._onCapacityUpdate) rc.removeEventListener("update", this._onCapacityUpdate);
+    if (typeof rc.stop === "function") rc.stop();
+    this._renderCapacity = null;
+    this._onCapacityUpdate = null;
   }
 
   // ---- 0043 device change -------------------------------------------------
@@ -481,6 +503,7 @@ export class WebHost {
   async _disposeGraph() {
     this._detachDeviceChange();
     this._detachStateChange();
+    this._stopRenderCapacity();
     if (this.node) {
       try {
         this.node.port.postMessage({ type: "destroy" });

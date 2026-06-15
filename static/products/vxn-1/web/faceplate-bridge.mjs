@@ -295,6 +295,11 @@ export async function bootFaceplate({ WebHostClass } = {}) {
     onCpu: (load, peak) => cpuMeter.update(load, peak),
   });
 
+  // First-run welcome card: what this is + how to play + a link to the manual.
+  // Web-only (this module never loads in the native plugin); dismissed by its
+  // Close button. Self-contained, same inline-style pattern as the CPU meter.
+  createWelcome(document);
+
   // 1b. E017 input adapters → the WebHost producer surface (ring). Web MIDI +
   //     computer keyboard both write notes/CC into the same E015 ring the
   //     worklet drains; events written before audio is live buffer in the ring
@@ -418,6 +423,79 @@ export function createCpuMeter(doc = globalThis.document) {
     p.textContent = `${Math.round((load || 0) * 100)}%`;
   };
   return { update, el };
+}
+
+// ---- welcome card ----------------------------------------------------------
+//
+// A centred modal shown on load: a one-line "what is this", a "how to play"
+// note, a link to the GitHub Pages manual (new tab), and a Close button.
+// Self-contained (inline styles, no external CSS); idempotent if it already
+// exists. Returns { el, close }. Web-only — bootFaceplate is the sole caller and
+// never runs in the native plugin.
+const MANUAL_URL = "https://vulpus-labs.github.io/vxn-1/";
+
+export function createWelcome(doc = globalThis.document) {
+  if (!doc || !doc.body) return { el: null, close() {} };
+  const ID = "vxn-welcome";
+  if (doc.getElementById(ID)) return { el: doc.getElementById(ID), close() {} };
+
+  const backdrop = doc.createElement("div");
+  backdrop.id = ID;
+  backdrop.style.cssText =
+    "position:fixed;inset:0;z-index:10000;display:flex;align-items:center;" +
+    "justify-content:center;background:rgba(8,9,11,.62);" +
+    "font:14px/1.5 system-ui,sans-serif;color:#e6e9ee;";
+
+  const card = doc.createElement("div");
+  card.style.cssText =
+    "max-width:30rem;margin:1rem;padding:22px 24px;border-radius:10px;" +
+    "background:#1b1e24;border:1px solid rgba(255,255,255,.10);" +
+    "box-shadow:0 14px 48px rgba(0,0,0,.55);";
+
+  const h = doc.createElement("h2");
+  h.textContent = "VXN-1";
+  h.style.cssText = "margin:0 0 .6rem;font-size:1.35rem;letter-spacing:.04em;";
+
+  const intro = doc.createElement("p");
+  intro.style.cssText = "margin:0 0 .8rem;";
+  intro.textContent =
+    "A WebAssembly port of the VXN-1 analogue synthesizer by Vulpus Labs.";
+
+  const how = doc.createElement("p");
+  how.style.cssText = "margin:0 0 .8rem;";
+  how.textContent =
+    "Play it with your computer keyboard or a connected MIDI device.";
+
+  const manual = doc.createElement("p");
+  manual.style.cssText = "margin:0 0 1.2rem;";
+  const link = doc.createElement("a");
+  link.href = MANUAL_URL;
+  link.target = "_blank";
+  link.rel = "noopener noreferrer"; // opens the manual in a new tab, safely
+  link.textContent = "Read the manual";
+  link.style.cssText = "color:#6db7ff;text-decoration:underline;";
+  manual.append(link, doc.createTextNode(" (opens in a new tab)."));
+
+  const close = doc.createElement("button");
+  close.type = "button";
+  close.textContent = "Close";
+  close.style.cssText =
+    "display:block;margin-left:auto;padding:7px 18px;border:0;border-radius:6px;" +
+    "background:#46c46e;color:#0c0e10;font:600 14px system-ui,sans-serif;cursor:pointer;";
+
+  const dismiss = () => backdrop.remove();
+  close.addEventListener("click", dismiss);
+  // Click outside the card or press Escape also dismisses.
+  backdrop.addEventListener("click", (e) => { if (e.target === backdrop) dismiss(); });
+  const onKey = (e) => {
+    if (e.key === "Escape") { dismiss(); doc.removeEventListener("keydown", onKey); }
+  };
+  doc.addEventListener("keydown", onKey);
+
+  card.append(h, intro, how, manual, close);
+  backdrop.appendChild(card);
+  doc.body.appendChild(backdrop);
+  return { el: backdrop, close: dismiss };
 }
 
 // ---- DOM text-input popup (0061) -------------------------------------------

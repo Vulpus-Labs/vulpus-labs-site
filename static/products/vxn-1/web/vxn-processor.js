@@ -12,28 +12,16 @@
 
 import { WorkletHostRunner } from "./host-runner.mjs";
 
-// High-res wall clock for the render-load meter. `performance.now()` is exposed
-// in AudioWorkletGlobalScope in modern browsers; if it's missing we report 0
-// load (meter shows idle) rather than break the render path.
-const perfNow =
-  typeof performance !== "undefined" && performance.now
-    ? () => performance.now()
-    : () => 0;
+// NOTE: the render-load meter is driven main-side off AudioContext.renderCapacity
+// (see coordinator.mjs). It is NOT timed here: AudioWorkletGlobalScope exposes no
+// high-resolution clock — `performance.now()` is unavailable in the worklet scope
+// (WebAudio/web-audio-api#2413), and Date.now()'s ~1ms resolution is far too
+// coarse for a sub-millisecond quantum render. So timing here always read 0.
 
 class VxnHostProcessor extends AudioWorkletProcessor {
   constructor(options) {
     super();
     this.alive = true;
-
-    // ---- render-load meter (CPU %) ----------------------------------------
-    // Time the DSP render each quantum and express it as a fraction of the
-    // quantum's wall-clock budget (frames / sampleRate). EMA-smoothed, with a
-    // per-window peak, posted to the main thread a few times a second.
-    this._cpuBudgetMs = 0; // set lazily from the first output buffer length
-    this._cpuEma = 0;
-    this._cpuPeak = 0;
-    this._cpuCount = 0;
-    this._cpuReportEvery = 16; // ~23 Hz at 48k/128 — smooth, not spammy
 
     const opts = options.processorOptions;
     this.runner = new WorkletHostRunner({
@@ -69,28 +57,8 @@ class VxnHostProcessor extends AudioWorkletProcessor {
   process(_inputs, outputs) {
     if (!this.alive) return false; // teardown: let the node be collected
     const out = outputs[0];
-    if (this._cpuBudgetMs === 0 && out[0]) {
-      this._cpuBudgetMs = (out[0].length / sampleRate) * 1000; // quantum budget
-    }
-    const t0 = perfNow();
     this.runner.process(out[0], out[1]); // silence-until-ready + trap-safe
-    this._accumCpu(perfNow() - t0);
     return true;
-  }
-
-  // Fold one quantum's render time into the EMA + peak, and post a `cpu` message
-  // every `_cpuReportEvery` quanta. `load` is render_time / quantum_budget, so
-  // 1.0 == the audio thread used its entire deadline (xrun risk above that).
-  _accumCpu(dtMs) {
-    if (this._cpuBudgetMs <= 0) return;
-    const load = dtMs / this._cpuBudgetMs;
-    this._cpuEma = this._cpuEma * 0.9 + load * 0.1;
-    if (load > this._cpuPeak) this._cpuPeak = load;
-    if (++this._cpuCount >= this._cpuReportEvery) {
-      this.port.postMessage({ type: "cpu", load: this._cpuEma, peak: this._cpuPeak });
-      this._cpuCount = 0;
-      this._cpuPeak = 0;
-    }
   }
 }
 
