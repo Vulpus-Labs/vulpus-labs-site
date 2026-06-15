@@ -50,6 +50,22 @@ const PROCESSOR_NAME = "vxn-host-processor";
 const DEFAULT_WORKLET_URL = "./vxn-processor.js";
 const DEFAULT_WASM_URL = "./vxn_wasm.wasm";
 
+// Output-buffer headroom for Safari's glitchy AudioWorklet scheduling. ~50ms is
+// a few render quanta of slack — enough to ride out Safari's underruns while
+// staying responsive enough to play. Returns AudioContext options for Apple
+// WebKit, or null elsewhere (Chromium keeps its default low latency).
+const SAFARI_LATENCY_HINT = 0.05; // seconds; tune here if it feels laggy / still blips
+function appleWebKitLatencyHint() {
+  if (typeof navigator === "undefined") return null; // Node harness
+  const ua = navigator.userAgent || "";
+  const vendor = navigator.vendor || "";
+  // Apple's WebKit reports vendor "Apple Computer, Inc."; exclude the WebKit-on-
+  // iOS wrappers of other engines and any Chromium that leaks "Safari" in its UA.
+  const isAppleWebKit =
+    /Apple/.test(vendor) && !/CriOS|FxiOS|EdgiOS|Chrome|Chromium|Edg|Android/.test(ua);
+  return isAppleWebKit ? { latencyHint: SAFARI_LATENCY_HINT } : null;
+}
+
 export class WebHost {
   // Construct cheaply (no audio side-effects); the AudioContext is created in
   // start(), which MUST be called from a user-gesture handler (autoplay policy —
@@ -160,7 +176,14 @@ export class WebHost {
     if (!this._AudioContext) throw new Error("no AudioContext available");
 
     this._setGate("starting");
-    this.ctx = new this._AudioContext();
+    // Apple WebKit (Safari) drives the AudioWorklet output device with a small
+    // buffer under the default "interactive" hint and occasionally underruns it
+    // even at low CPU — audible glitches. A latencyHint gives it a bigger,
+    // underrun-proof output buffer at the cost of a little key→sound latency.
+    // Chromium has no such problem, so it keeps the default (lowest) latency.
+    const opts = appleWebKitLatencyHint();
+    this.ctx = opts ? new this._AudioContext(opts) : new this._AudioContext();
+    if (opts) console.info(`vxn: Safari detected — AudioContext latencyHint=${opts.latencyHint}`);
 
     // Observe the context's own lifecycle. The browser flips state on tab
     // background / OS audio interruption / manual suspend; we mirror those into
