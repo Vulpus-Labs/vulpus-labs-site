@@ -35,9 +35,11 @@ class VxnHostProcessor extends AudioWorkletProcessor {
     // wall-clock budget; report the mean load + the window's per-quantum peak.
     // Windowed (not per-quantum) so the coarse Date.now() path averages out.
     this._cpuAccum = 0; // summed render ms this window
-    this._cpuPeak = 0; // worst single-quantum load this window
     this._cpuQuanta = 0;
-    this._cpuWindow = 48; // ~128ms @ 48k/128 — ~8 Hz, enough samples to smooth
+    this._cpuWindow = 64; // ~170ms @ 48k/128 — ~6 Hz reporting
+    this._cpuEma = 0; // smoothed mean load across windows (displayed number)
+    this._cpuEmaInit = false;
+    this._cpuPeakHold = 0; // decaying peak of *window* loads (bar), never per-quantum
     this._cpuClockLogged = false;
 
     const opts = options.processorOptions;
@@ -80,25 +82,31 @@ class VxnHostProcessor extends AudioWorkletProcessor {
     return true;
   }
 
-  // Fold one quantum's render time into the window accumulator; post a `cpu`
-  // message (mean load + peak, both fractions of the quantum budget) once per
-  // window. The first post tags which clock won, so a dead meter is debuggable.
+  // Accumulate render time over a window, then once per window derive a single
+  // load figure and post a smoothed `cpu` message. We deliberately never look at
+  // a single quantum's dt: on the coarse date clock it is only ever 0 or ~1ms,
+  // which as an instantaneous load is meaningless (1ms / 2.67ms ≈ 37%). The
+  // window mean is the only stable estimator; an EMA across windows tames the
+  // residual quantisation noise, and the bar's "peak" is a slow decaying hold of
+  // *window* loads — not a per-quantum spike.
   _accumCpu(dtMs, frames) {
-    const budgetMs = (frames / sampleRate) * 1000; // per-quantum wall budget
-    if (budgetMs > 0) {
-      const load = dtMs / budgetMs;
-      if (load > this._cpuPeak) this._cpuPeak = load;
-    }
     this._cpuAccum += dtMs;
-    if (++this._cpuQuanta >= this._cpuWindow) {
-      const load = this._cpuAccum / (this._cpuQuanta * budgetMs);
-      const msg = { type: "cpu", load, peak: this._cpuPeak };
-      if (!this._cpuClockLogged) { msg.clock = CPU_CLOCK.kind; this._cpuClockLogged = true; }
-      this.port.postMessage(msg);
-      this._cpuAccum = 0;
-      this._cpuPeak = 0;
-      this._cpuQuanta = 0;
-    }
+    if (++this._cpuQuanta < this._cpuWindow) return;
+
+    const budgetMs = (frames / sampleRate) * 1000; // per-quantum wall budget
+    const windowLoad = budgetMs > 0 ? this._cpuAccum / (this._cpuQuanta * budgetMs) : 0;
+
+    // EMA (α 0.2 → ~5-window time constant, ~0.8s) for the displayed number.
+    this._cpuEma = this._cpuEmaInit ? this._cpuEma * 0.8 + windowLoad * 0.2 : windowLoad;
+    this._cpuEmaInit = true;
+    // Peak-hold: jump up to a hot window immediately, decay ~0.88/window (~1.3s).
+    this._cpuPeakHold = Math.max(windowLoad, this._cpuPeakHold * 0.88);
+
+    const msg = { type: "cpu", load: this._cpuEma, peak: this._cpuPeakHold };
+    if (!this._cpuClockLogged) { msg.clock = CPU_CLOCK.kind; this._cpuClockLogged = true; }
+    this.port.postMessage(msg);
+    this._cpuAccum = 0;
+    this._cpuQuanta = 0;
   }
 }
 
