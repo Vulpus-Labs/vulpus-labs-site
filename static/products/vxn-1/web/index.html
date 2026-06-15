@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>VXN1 web (v0.0.8)</title>
+    <style>
+      body { font: 16px system-ui; max-width: 40rem; margin: 4rem auto; padding: 0 1rem; }
+      code { background: #f0f0f0; padding: 0.1rem 0.3rem; border-radius: 3px; }
+      button { font-size: 1.1rem; padding: 0.55rem 1.3rem; margin-right: 0.5rem; }
+      #iso { font-weight: 600; }
+      #log { white-space: pre-wrap; color: #555; margin-top: 1.25rem; }
+    </style>
+  </head>
+  <body>
+    <h1>VXN1 → WASM</h1>
+    <p>Bundle from <code>cargo xtask web</code> (0041); coordinator boot is
+      ticket 0042. Click <em>Start</em> on a user gesture, then hold the note.</p>
+    <p>cross-origin isolated: <span id="iso">checking…</span></p>
+    <button id="start">Start audio</button>
+    <button id="note" disabled>Hold A4</button>
+    <div id="log"></div>
+    <script type="module">
+      import { WebHost } from "./coordinator.mjs";
+
+      const iso = document.getElementById("iso");
+      iso.textContent = self.crossOriginIsolated ? "yes — SharedArrayBuffer available"
+        : "no — serve with COOP/COEP (ticket 0045)";
+      iso.style.color = self.crossOriginIsolated ? "green" : "crimson";
+
+      const log = (m) => (document.getElementById("log").textContent += m + "\n");
+      const startBtn = document.getElementById("start");
+      const noteBtn = document.getElementById("note");
+      let host;
+
+      startBtn.onclick = async () => {
+        startBtn.disabled = true;
+        host = new WebHost({
+          onReady: () => { log("audio live"); noteBtn.disabled = false; },
+          onTrap: (msg, n) => log(`trap #${n}: ${msg}`),
+        });
+        try {
+          await host.start();
+          log(`context @ ${host.ctx.sampleRate} Hz — waiting for worklet…`);
+        } catch (e) {
+          log(`start failed: ${e.message}`);
+          startBtn.disabled = false;
+        }
+      };
+
+      const NOTE = 69; // A4
+      const down = () => host && host.noteOn(NOTE, 1.0);
+      const up = () => host && host.noteOff(NOTE);
+      noteBtn.addEventListener("mousedown", down);
+      noteBtn.addEventListener("mouseup", up);
+      noteBtn.addEventListener("mouseleave", up);
+    </script>
+  </body>
+</html>

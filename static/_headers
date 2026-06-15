@@ -1,0 +1,9 @@
+# Cross-origin isolation for the VXN1 web synth (vxn-1 ticket 0045).
+# SharedArrayBuffer (its audio transport) needs the page cross-origin isolated,
+# which needs COOP: same-origin + COEP: require-corp on the document. Scoped to
+# the synth subpath so the rest of the site is unaffected (COOP/COEP site-wide
+# can break third-party embeds / popups).
+/products/vxn-1/web/*
+  Cross-Origin-Opener-Policy: same-origin
+  Cross-Origin-Embedder-Policy: require-corp
+  Cross-Origin-Resource-Policy: same-origin
