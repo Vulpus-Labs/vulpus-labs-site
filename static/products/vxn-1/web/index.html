@@ -17,8 +17,10 @@
     <p>Bundle from <code>cargo xtask web</code> (0041); coordinator boot is
       ticket 0042. Click <em>Start</em> on a user gesture, then hold the note.</p>
     <p>cross-origin isolated: <span id="iso">checking…</span></p>
+    <p>gate: <span id="gate">idle</span></p>
     <button id="start">Start audio</button>
     <button id="note" disabled>Hold A4</button>
+    <button id="stop" disabled>Stop audio</button>
     <div id="log"></div>
     <script type="module">
       import { WebHost } from "./coordinator.mjs";
@@ -29,23 +31,42 @@
       iso.style.color = self.crossOriginIsolated ? "green" : "crimson";
 
       const log = (m) => (document.getElementById("log").textContent += m + "\n");
+      const gate = document.getElementById("gate");
       const startBtn = document.getElementById("start");
       const noteBtn = document.getElementById("note");
+      const stopBtn = document.getElementById("stop");
       let host;
+
+      // 0043 gate-state hook: the UI renders entirely off onState. A faceplate
+      // (E018) replaces this minimal button row; the lifecycle API is the same.
+      const onState = (s) => {
+        gate.textContent = s;
+        startBtn.disabled = s !== "idle" && s !== "closed";
+        stopBtn.disabled = s === "idle" || s === "closed";
+      };
 
       startBtn.onclick = async () => {
         startBtn.disabled = true;
         host = new WebHost({
+          onState,
           onReady: () => { log("audio live"); noteBtn.disabled = false; },
           onTrap: (msg, n) => log(`trap #${n}: ${msg}`),
         });
         try {
-          await host.start();
+          await host.start(); // autoplay unlock — this click IS the gesture
           log(`context @ ${host.ctx.sampleRate} Hz — waiting for worklet…`);
         } catch (e) {
           log(`start failed: ${e.message}`);
           startBtn.disabled = false;
         }
+      };
+
+      // 0043 teardown: close the context, free the worklet engine, drop SABs. A
+      // fresh Start afterwards constructs a new WebHost and boots clean.
+      stopBtn.onclick = async () => {
+        noteBtn.disabled = true;
+        if (host) await host.teardown();
+        log("audio stopped (teardown)");
       };
 
       const NOTE = 69; // A4
