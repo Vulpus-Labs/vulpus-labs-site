@@ -113,8 +113,9 @@ html, body {
   color: var(--text);
 }
 .pbar-btn {
-  background: #2a2a2a;
-  border: 1px solid #444;
+  /* 0020: palette vars (value-identical) so a theme tweak is one edit. */
+  background: var(--knob-face);
+  border: 1px solid var(--knob-rim);
   border-radius: 2px;
   color: var(--ctl-label);
   font-family: inherit;
@@ -132,7 +133,7 @@ html, body {
 .pbar-btn:disabled:hover {
   opacity: 0.4;
   cursor: default;
-  border-color: #444;
+  border-color: var(--knob-rim);
   color: var(--ctl-label);
 }
 .pbar-btn.active {
@@ -178,8 +179,6 @@ html, body {
   flex: 1 1 0;
   box-sizing: border-box;
 }
-
-.panel[data-layered] {}
 
 /* Per-row stretch shares — pulled from `panel_view`'s `match title` block
    in `crates/vxn-ui-vizia/src/lib.rs`. flex-basis is 0 so `flex-grow`
@@ -292,23 +291,8 @@ html, body {
   margin-bottom: 4px;
 }
 
-/* Floating value popup — one shared <div> across every control, anchored
-   at the pointer's entry / grab point in fixed coords so it floats above
-   the layout and can never push siblings around. Style matches the vizia
-   editor's `.value-pop` (dark fill, orange border). */
-.value-pop {
-  position: fixed;
-  display: none;
-  pointer-events: none;
-  background: #0e0e0e;
-  border: 1px solid var(--ctl-value);
-  border-radius: 3px;
-  padding: 2px 5px;
-  font-size: 10px;
-  color: #f6f6f6;
-  white-space: nowrap;
-  z-index: 1000;
-}
+/* `.value-pop` moved to the shared `vxn-core-ui-web/assets/value-pop.css`
+   (0140); appended to this faceplate's `<style>` at splice time. */
 
 /* Status pill (0046) — inline chip in the preset bar, right of the
    current name (0049 §Notes). Driven by the controller's `Status { line }`
@@ -316,7 +300,7 @@ html, body {
    after ~3s; pure CSS animation so the JS side just sets the line and
    toggles the `visible` class. */
 .status-pill {
-  background: #0e0e0e;
+  background: var(--track-bg); /* 0020: was #0e0e0e (value-identical) */
   border: 1px solid var(--glyph-active);
   border-radius: 3px;
   padding: 2px 8px;
@@ -1224,6 +1208,30 @@ html, body {
 }
 .save-as-select:focus { outline: none; border-color: var(--glyph-active); }
 
+/* Floating value popup — one shared <div> across every control, anchored
+   at the pointer's entry / grab point in fixed coords so it floats above
+   the layout and can never push siblings around or be clipped by a panel's
+   overflow. Shared ruleset (0140): replaces the per-synth `.value-pop`
+   copies in VXN1 `faceplate.css` and VXN2 `style.css`.
+
+   `--track-bg` and `--ctl-value` are theme custom properties both synths
+   define (VXN1 `faceplate.css`, VXN2 `style.css`); the fallback keeps the
+   rule valid if a host page omits them. */
+.value-pop {
+  position: fixed;
+  display: none;
+  pointer-events: none;
+  background: var(--track-bg, #0e0e0e);
+  border: 1px solid var(--ctl-value);
+  border-radius: 3px;
+  padding: 2px 5px;
+  font-size: 10px;
+  color: #f6f6f6;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  z-index: 1000;
+}
+
 </style>
 </head>
 <body>
@@ -1653,7 +1661,248 @@ html, body {
   window.__VXN_PATCH_COUNT__ = 69;
 })();
 </script>
+
 <script>
+// Floating value popup — one shared <div> across every control, anchored
+// at the pointer's first relevant position (entry for hover, grab for
+// drag) so the popup stays put while the indicator moves. `fixed`
+// positioning + body-level mount means it can't push any layout around
+// or be clipped by a panel's overflow.
+//
+// Shared primitive (0140): both faceplates re-implemented this verbatim —
+// VXN1's `bridge.js` `valuePop` and VXN2's `fader.js`
+// `ensurePop/showPop/updatePop/hidePop`. Lifted here so there is one
+// singleton + one `.value-pop` CSS ruleset (see `value-pop.css`).
+//
+// Authored as an ES module so the Node/vitest suites can pull `valuePop` in
+// directly; the ESM marker is stripped at splice time (the synths concat every
+// module into one inline `<script>` where module syntax is illegal) — see
+// `strip_esm_exports` in the crate's `lib.rs`. The singleton's <div> is
+// created lazily on first `show` so importing the module (e.g. only for the
+// cutoff helpers) doesn't touch the DOM until a control actually needs it.
+const valuePop = (() => {
+  let el = null;
+  function ensure() {
+    if (el) return el;
+    el = document.createElement('div');
+    el.className = 'value-pop';
+    document.body.appendChild(el);
+    return el;
+  }
+  return {
+    show(text, clientX, clientY) {
+      const e = ensure();
+      e.textContent = text;
+      e.style.left = (clientX + 12) + 'px';
+      e.style.top  = (clientY - 8)  + 'px';
+      e.style.display = 'block';
+    },
+    update(text) { if (el) el.textContent = text; },
+    hide() { if (el) el.style.display = 'none'; },
+  };
+})();
+
+;
+// Filter "Cutoff Tuned" mode math — shared primitive (0140).
+//
+// When a filter-cutoff fader is in tuned mode its range is read/displayed as
+// a musical note over MIDI C0..C4 (12..60), semitone-snapped, while the
+// stored param stays Hz so the DSP and DAW automation are unaffected (the
+// engine never reads the toggle). Both faceplates had drifting three-way
+// copies of these helpers — VXN1 `panels.js`, VXN2 `main.js` ("Mirrors
+// VXN-1's panels.js") and VXN2 `bootstrap.js` (the bare `noteName`). One
+// module now owns them.
+//
+// ES module so the vitest suites can `import` the pure helpers and assert
+// the `cutoffTunedNormToHz` / `hzToMidi` round-trip directly; the `export`
+// markers are stripped at splice time (see `strip_esm_exports`).
+
+// Fader range: MIDI C0..C4, C2 at the midpoint.
+const CUTOFF_TUNED_MIDI_MIN = 12; // C0
+const CUTOFF_TUNED_MIDI_MAX = 60; // C4
+
+function midiToHz(m) {
+  return 440 * Math.pow(2, (m - 69) / 12);
+}
+function hzToMidi(hz) {
+  return 69 + 12 * Math.log2(Math.max(1e-6, hz) / 440);
+}
+
+// MIDI note number → name (e.g. 60 → "C4"). General-purpose: `Math.round`
+// tolerates a fractional MIDI value. Replaces VXN1's `keysNoteName` and the
+// two VXN2 `noteName` copies.
+const NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+function noteName(m) {
+  const n = Math.round(m);
+  return NOTE_NAMES[((n % 12) + 12) % 12] + (Math.floor(n / 12) - 1);
+}
+
+// norm [0,1] → MIDI 12..60 (semitone-snapped) → Hz.
+function cutoffTunedNormToHz(norm) {
+  const span = CUTOFF_TUNED_MIDI_MAX - CUTOFF_TUNED_MIDI_MIN;
+  const midi = Math.round(CUTOFF_TUNED_MIDI_MIN + Math.max(0, Math.min(1, norm)) * span);
+  return midiToHz(midi);
+}
+function cutoffTunedHzToNorm(hz) {
+  const midi = Math.max(
+    CUTOFF_TUNED_MIDI_MIN,
+    Math.min(CUTOFF_TUNED_MIDI_MAX, Math.round(hzToMidi(hz))),
+  );
+  return (midi - CUTOFF_TUNED_MIDI_MIN) / (CUTOFF_TUNED_MIDI_MAX - CUTOFF_TUNED_MIDI_MIN);
+}
+function cutoffTunedNoteName(hz) {
+  const midi = Math.max(
+    CUTOFF_TUNED_MIDI_MIN,
+    Math.min(CUTOFF_TUNED_MIDI_MAX, Math.round(hzToMidi(hz))),
+  );
+  return noteName(midi);
+}
+
+;
+// Pointer-drag lifecycle primitive — shared by both faceplates (0140).
+//
+// Both synths re-implemented the pointerdown → setPointerCapture → move →
+// up/cancel choreography ≥4× with observable drift (VXN1 `wireDrag`, VXN2
+// `fader.create` / `fader.createBipolar` / `knob.bindDrag`, plus the op-row
+// KS-handle drags). This is the one owner.
+//
+// `wireDrag(el, geometry, callbacks)` owns the *mechanics*: hover vs drag
+// state, pointer capture, the `dragging` class, optional rAF-throttling of
+// moves, an optional hit-exclude predicate (so a press on a click-to-select
+// child isn't a drag), and an optional inner target element. Two value
+// models share the same `onMove(ev, payload)` seam:
+//
+//   • ABSOLUTE — pass `pointerToValue(ev, ctx)`; `payload` is its return
+//     value, verbatim. VXN1's position-mapped faders / wave knob use this;
+//     the contract is unchanged from the original `wireDrag`.
+//   • RELATIVE — pass `axis: 'x' | 'y'` and no `pointerToValue`; `payload`
+//     is `{ dx, dy, ctx }`, the signed pixel delta since the grab point,
+//     already scaled by `shift` (default 0.1) while Shift is held. VXN2's
+//     accumulate-from-grab faders / knob use this.
+//
+// Per-control side effects (gesture brackets, the `dataset.dragging`
+// echo-gate) stay in the caller's `onDown` / `onUp` — they aren't universal.
+//
+// ES module so the vitest suites can pull `wireDrag` in directly; the ESM
+// marker is stripped at splice time (see `strip_esm_exports`).
+function wireDrag(
+  el,
+  {
+    pointerToValue,        // (ev, ctx) => value — ABSOLUTE model; omit for RELATIVE
+    downContext,           // (ev) => ctx, stashed once on pointerdown and passed to every map call
+    target = el,           // element the listeners + pointer capture attach to (e.g. an inner <svg>)
+    excludeHit = null,     // selector string | (ev) => bool — pointerdown on a match is ignored (click-to-select)
+    axis = null,           // 'x' | 'y' — enables the RELATIVE delta payload (informational; both axes are reported)
+    shift = 0.1,           // fine-drag multiplier applied to the whole delta-since-grab while Shift is held
+    raf = false,           // throttle moves to one requestAnimationFrame; the trailing edit flushes on pointerup
+    preventDefault = true,
+  } = {},
+  { onEnter, onDown, onMove, onUp, onLeave, onDoubleClick } = {},
+) {
+  void axis; // documents the relative model at the call site; the payload always carries both dx/dy
+  let dragging = false;
+  let hovered = false;
+  let ctx = null;
+  let startX = 0;
+  let startY = 0;
+  let pendingEv = null; // latest move event awaiting an rAF flush
+  let rafScheduled = false;
+
+  function hitExcluded(ev) {
+    if (!excludeHit) return false;
+    if (typeof excludeHit === 'function') return excludeHit(ev);
+    return ev.target instanceof Element && !!ev.target.closest(excludeHit);
+  }
+
+  // RELATIVE payload: signed delta from the grab point, shift-scaled.
+  function dragInfo(ev) {
+    const sens = ev.shiftKey ? shift : 1;
+    return { dx: (ev.clientX - startX) * sens, dy: (ev.clientY - startY) * sens, ctx };
+  }
+  function mapValue(ev) {
+    return pointerToValue ? pointerToValue(ev, ctx) : dragInfo(ev);
+  }
+  function fireMove(ev) {
+    if (onMove) onMove(ev, mapValue(ev));
+  }
+  function flush() {
+    rafScheduled = false;
+    if (pendingEv) {
+      const ev = pendingEv;
+      pendingEv = null;
+      fireMove(ev);
+    }
+  }
+
+  target.addEventListener('pointerenter', (ev) => {
+    if (dragging) return;
+    hovered = true;
+    if (onEnter) onEnter(ev);
+  });
+  target.addEventListener('pointerleave', () => {
+    hovered = false;
+    if (!dragging && onLeave) onLeave();
+  });
+  target.addEventListener('pointerdown', (ev) => {
+    if (ev.button !== undefined && ev.button !== 0) return; // primary button only
+    if (hitExcluded(ev)) return;
+    if (preventDefault) ev.preventDefault();
+    dragging = true;
+    startX = ev.clientX;
+    startY = ev.clientY;
+    ctx = downContext ? downContext(ev) : null;
+    target.classList.add('dragging');
+    if (target.setPointerCapture && ev.pointerId !== undefined) {
+      try { target.setPointerCapture(ev.pointerId); } catch (_) {}
+    }
+    if (onDown) onDown(ev, mapValue(ev));
+  });
+  target.addEventListener('pointermove', (ev) => {
+    if (!dragging || !onMove) return;
+    if (preventDefault) ev.preventDefault();
+    if (raf) {
+      pendingEv = ev;
+      if (!rafScheduled) {
+        rafScheduled = true;
+        window.requestAnimationFrame(flush);
+      }
+    } else {
+      fireMove(ev);
+    }
+  });
+  const end = (ev) => {
+    if (!dragging) return;
+    if (preventDefault) ev.preventDefault();
+    // Flush the trailing throttled edit unthrottled so tap-and-release is crisp.
+    if (raf && pendingEv) {
+      const last = pendingEv;
+      pendingEv = null;
+      rafScheduled = false;
+      fireMove(last);
+    }
+    dragging = false;
+    target.classList.remove('dragging');
+    if (target.releasePointerCapture && ev.pointerId !== undefined) {
+      try { target.releasePointerCapture(ev.pointerId); } catch (_) {}
+    }
+    if (onUp) onUp(ev);
+    if (!hovered && onLeave) onLeave();
+  };
+  target.addEventListener('pointerup', end);
+  target.addEventListener('pointercancel', end);
+  if (onDoubleClick) {
+    target.addEventListener('dblclick', (ev) => {
+      if (preventDefault) ev.preventDefault();
+      onDoubleClick(ev);
+    });
+  }
+  return {
+    isDragging: () => dragging,
+    isHovered: () => hovered,
+  };
+}
+
+;
 // ─── Bridge bootstrap ──────────────────────────────────────────────────────
 //
 // `window.vxn.send` is a typed sender namespace: one method per opcode the
@@ -1685,22 +1934,37 @@ function _post(msg) {
   try { window.ipc.postMessage(JSON.stringify(msg)); }
   catch (e) { console.warn('vxn.send failed', e); }
 }
+// Mutation hook (0141). The engine-mutating senders below (set_param /
+// set_param_norm / reset_layer / set_key_mode / set_split_point) fire every
+// registered callback after posting. This replaces the old preset-bar
+// monkey-patch that reassigned the shared sender methods to flip a dirty flag:
+// `window.vxn.onMutation(cb)` is a first-class, additive hook in the dispatch
+// layer, so a subscriber composes instead of overwriting (and can't silently
+// drop a prior patcher's side effect). View-only / transport sends (gestures,
+// preset load, text input, ready) deliberately don't fire it.
+const _mutationHooks = [];
+function _mutated() {
+  for (const cb of _mutationHooks) {
+    try { cb(); } catch (e) { console.warn('vxn.onMutation hook failed', e); }
+  }
+}
 window.vxn = {
   send: {
     _post,
-    setParam:        (id, plain)            => _post({ op: 'set_param', id, plain }),
-    setParamNorm:    (id, norm)             => _post({ op: 'set_param_norm', id, norm }),
+    setParam:        (id, plain)            => { _post({ op: 'set_param', id, plain }); _mutated(); },
+    setParamNorm:    (id, norm)             => { _post({ op: 'set_param_norm', id, norm }); _mutated(); },
     beginGesture:    (id)                   => _post({ op: 'begin_gesture', id }),
     endGesture:      (id)                   => _post({ op: 'end_gesture', id }),
     // One-click discrete write. Brackets the set_param in a
     // begin/end gesture so the host records a single edit rather
-    // than a zero-width gesture-less write some hosts drop.
+    // than a zero-width gesture-less write some hosts drop. The inner
+    // setParam fires the mutation hook, so discrete writes mark dirty too.
     discrete(id, plain) {
       this.beginGesture(id);
       this.setParam(id, plain);
       this.endGesture(id);
     },
-    resetLayer:      (layer)                => _post({ op: 'reset_layer', layer }),
+    resetLayer:      (layer)                => { _post({ op: 'reset_layer', layer }); _mutated(); },
     loadFactory:     (index)                => _post({ op: 'load_factory', index }),
     loadUser:        (path)                 => _post({ op: 'load_user', path }),
     renamePreset:    (path, new_name)       => _post({ op: 'rename_preset', path, new_name }),
@@ -1711,8 +1975,8 @@ window.vxn = {
     newFolder:       (suggested)            => _post({ op: 'new_folder', suggested }),
     stepPreset:      (delta)                => _post({ op: 'step_preset', delta }),
     savePreset:      (name, folder)         => _post({ op: 'save_preset', name, folder }),
-    setKeyMode:      (mode)                 => _post({ op: 'set_key_mode', mode }),
-    setSplitPoint:   (note)                 => _post({ op: 'set_split_point', note }),
+    setKeyMode:      (mode)                 => { _post({ op: 'set_key_mode', mode }); _mutated(); },
+    setSplitPoint:   (note)                 => { _post({ op: 'set_split_point', note }); _mutated(); },
     setEditLayer:    (layer)                => _post({ op: 'set_edit_layer', layer }),
     requestTextInput:(id, title, initial)   => _post({ op: 'request_text_input', id, title, initial }),
     ready:           ()                     => _post({ op: 'ready' }),
@@ -1765,29 +2029,16 @@ window.vxn.promptText = function (title, initial, cb) {
   window.vxn.send.requestTextInput(id, title || '', initial || '');
 };
 
-// ─── Floating value popup (single shared instance) ─────────────────────────
-//
-// One <div> per page, used by every control. Show/update/hide as the
-// pointer enters / drags / leaves. Anchored at the pointer's first
-// relevant position (entry for hover, grab for drag) so the popup stays
-// put while the indicator moves — matches the vizia editor's grabbed-cell
-// behaviour. `fixed` positioning + body-level mount means it can't push
-// any layout around or be clipped by a panel's overflow.
-const valuePop = (() => {
-  const el = document.createElement('div');
-  el.className = 'value-pop';
-  document.body.appendChild(el);
-  return {
-    show(text, clientX, clientY) {
-      el.textContent = text;
-      el.style.left = (clientX + 12) + 'px';
-      el.style.top  = (clientY - 8)  + 'px';
-      el.style.display = 'block';
-    },
-    update(text) { el.textContent = text; },
-    hide() { el.style.display = 'none'; },
-  };
-})();
+// Register a callback fired on every engine-mutating send (0141). The preset
+// bar uses it for dirty-tracking; see the `_mutated` chokepoint above.
+window.vxn.onMutation = function (cb) {
+  if (typeof cb === 'function') _mutationHooks.push(cb);
+};
+
+// `valuePop` (the floating value popup singleton) moved to the shared
+// `vxn-core-ui-web/assets/value-pop.js` (0140); it's spliced ahead of this
+// module, so its top-level binding is already in scope for `attachValuePop`
+// in panels.js.
 
 // ─── Status pill (0046, repositioned in 0049) ──────────────────────────────
 //
@@ -2534,6 +2785,10 @@ function createPresetBrowser(cfg) {
     getSaveFolder,
     folderForUserPath,
     openSaveAs: openSaveAsModal,
+    // 0020: single-slot callback — last caller wins, a second subscriber
+    // silently replaces the first. The preset bar (its Browse-button .active
+    // mirror) is the sole subscriber in both synths; promote to a listener list
+    // if a second consumer ever appears.
     onOpenChange: (cb) => { onOpenChange = cb; },
     followPath,
   };
@@ -2573,436 +2828,18 @@ if (typeof window !== 'undefined' && window.__vxn) {
   }
 }
 
-// E015 / 0079: `valuePop` is consumed by `attachValuePop` below. The
-// splice loader drops this line for the inline wry `<script>` (the
-// concat-time `valuePop` const from bridge.js is already in scope there);
-// under Node ESM the binding resolves through bridge.js so the
-// drag-and-popup tests can exercise the helper without re-mocking.
-
-// `paramIdByNameAtLayer` + `addCtl` are imported for ESM-mode tests; in the
-// inline-bundled production script the splice loader drops `import` lines
-// and the bindings come from the concat-time function declarations in
-// dispatch.js (loaded after panels.js, but only referenced from
-// `wireLayerLevels()` which runs at editor-ready time when both modules are
-// in scope).
-
-
-// ─── Preset bar wiring (0049 / 0050) ───────────────────────────────────────
+// util/drag.js — generic drag / paint / value-popup primitives, plus the two
+// tiny shared control helpers (`clampVariant`, `tgRow`). Split out of the
+// panels.js god-file in ticket 0141; consumes the shared `wireDrag` (0140).
 //
-// Prev/next post `step_preset` with a signed delta — the controller walks
-// the combined Factory + User list and emits a fresh `preset_loaded` for
-// us to pick up. The current name comes from the same `preset_loaded`
-// dispatch branch in `init()`. Browse toggles the 0050 browser panel
-// (open/close mirrored back via the panel's `onOpenChange` so the button's
-// `.active` class stays in sync with click-outside / ESC dismissals).
-// Save As opens the 0048 popup and on commit posts `save_preset` using
-// the browser panel's currently-selected user folder as the destination
-// (factory selections collapse to user root — there's no write target
-// inside the factory bank).
-const presetBar = (() => {
-  const nameEl   = document.getElementById('pbar-name');
-  // E015 / 0077: under Node ESM `import` (no faceplate DOM, no concatenated
-  // `browserPanel` global), bail out with a stub so pure-helper test
-  // imports don't crash on `browserPanel.onOpenChange(...)` below.
-  if (!nameEl) return { setName() {}, setSource() {} };
-  const prevEl     = document.getElementById('pbar-prev');
-  const nextEl     = document.getElementById('pbar-next');
-  const browseEl   = document.getElementById('pbar-browse');
-  const saveAsEl   = document.getElementById('pbar-save');
-  const saveEl     = document.getElementById('pbar-save-overwrite');
-  let currentName  = '';
-  // 0094: Save (overwrite) gates on a) loaded source is user, b) dirty.
-  // `currentSource` mirrors browser.js's: { kind: 'factory', index } |
-  // { kind: 'user', path }. `dirty` flips on the next user-initiated
-  // mutation after a load and resets on every fresh preset_loaded.
-  let currentSource = null;
-  let dirty = false;
+// The splice loader drops these `import` lines for the inline `<script>` (the
+// stripped shared bindings are spliced ahead of this module via the bridge
+// slot, so `valuePop` / `wireDrag` are already in scope); under Node ESM the
+// bindings resolve through the shared modules so the suites can exercise the
+// helpers. The panels.js barrel re-exports everything here so tests that pull
+// these from `../panels.js` keep working.
 
-  function refreshSaveBtn() {
-    if (!saveEl) return;
-    const enabled = dirty && currentSource && currentSource.kind === 'user';
-    saveEl.disabled = !enabled;
-  }
-  function setName(name) {
-    currentName = name || '';
-    if (nameEl) nameEl.textContent = currentName;
-  }
-  function setSource(src) {
-    currentSource = src || null;
-    dirty = false;
-    refreshSaveBtn();
-  }
-  function markDirty() {
-    if (dirty) return;
-    dirty = true;
-    refreshSaveBtn();
-  }
 
-  // Wrap the engine-mutating senders so any UI write flips dirty. `discrete`
-  // delegates to `this.setParam` so the wrapped version is picked up
-  // automatically; `resetLayer` / `setKeyMode` / `setSplitPoint` are wrapped
-  // directly. `setEditLayer` is pure view state — not in the preset.
-  const send = window.vxn && window.vxn.send;
-  if (send) {
-    for (const k of ['setParam', 'setParamNorm', 'resetLayer', 'setKeyMode', 'setSplitPoint']) {
-      const orig = send[k];
-      if (typeof orig !== 'function') continue;
-      send[k] = function () {
-        markDirty();
-        return orig.apply(this, arguments);
-      };
-    }
-  }
-
-  if (prevEl) {
-    prevEl.addEventListener('click', () => window.vxn.send.stepPreset(-1));
-  }
-  if (nextEl) {
-    nextEl.addEventListener('click', () => window.vxn.send.stepPreset(1));
-  }
-  if (browseEl) {
-    browseEl.addEventListener('click', () => browserPanel.setOpen(!browserPanel.isOpen()));
-  }
-  browserPanel.onOpenChange((open) => {
-    if (browseEl) browseEl.classList.toggle('active', open);
-  });
-  if (saveAsEl) {
-    // Save As opens the combined name + folder modal. The name field
-    // funnels through the existing native popup (`promptText`) for
-    // spacebar-safe entry; the folder dropdown is mouse-driven (no kbd
-    // capture concern). The modal anchors over the faceplate, so it
-    // works whether or not the browser panel itself is open.
-    saveAsEl.addEventListener('click', () => browserPanel.openSaveAs(currentName));
-  }
-  if (saveEl) {
-    saveEl.addEventListener('click', () => {
-      if (saveEl.disabled) return;
-      if (!currentSource || currentSource.kind !== 'user') return;
-      const folder = browserPanel.folderForUserPath(currentSource.path);
-      // Path missing from corpus (race against a refresh, or a moved file
-      // we haven't re-anchored on): refuse rather than fall through to
-      // user root and silently fork the preset. The Save As path stays
-      // available for explicit relocation.
-      if (folder === undefined) return;
-      window.vxn.send.savePreset(currentName, folder);
-      // Optimistic: assume the controller's write succeeded. A failed
-      // save will surface as a `save failed: …` status flash but won't
-      // re-mark the patch dirty — the next param wiggle will.
-      dirty = false;
-      refreshSaveBtn();
-    });
-  }
-  return { setName, setSource };
-})();
-
-// ─── Keys panel (0053) ────────────────────────────────────────────────────
-//
-// Mirrors `vxn_ui_vizia::keys_panel`: a 3-row mode selector (Whole / Dual /
-// Split), a 2-row Upper/Lower edit toggle, a split-point slider over the
-// C0..C7 MIDI window with a note-name readout, and a Reset button. The
-// mode / edit / split widgets all write *non-automatable* shared state
-// directly (ADR 0003 §3/§8) — no gestures, no host echo — and the
-// controller broadcasts back via `KeyModeChanged` / `EditLayerChanged` /
-// `SplitPointChanged` so the panel reseeds after a preset/state load.
-//
-// Visibility: the edit column hides in Whole and the split row hides
-// outside Split, both via `visibility: hidden` so the Reset stays pinned
-// to the same vertical position (matches the ticket's "keep the same
-// shape" note about reset placement).
-const KEY_MODE_NAMES = ['WHOLE', 'DUAL', 'SPLIT'];
-const KEY_LAYERS = [
-  { code: 'upper', label: 'UPPER' },
-  { code: 'lower', label: 'LOWER' },
-];
-// Match `DEFAULT_SPLIT_POINT` in vxn-app/src/domain.rs — C4.
-const KEYS_DEFAULT_SPLIT = 60;
-// Mirror `vxn_ui_vizia::SPLIT_MIN` / `SPLIT_MAX`: narrower than the full
-// MIDI range so every semitone is easy to land on.
-const KEYS_SPLIT_MIN = 12;
-const KEYS_SPLIT_MAX = 96;
-function keysNoteName(n) {
-  const NAMES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
-  const octave = Math.floor(n / 12) - 1;
-  return NAMES[((n % 12) + 12) % 12] + octave;
-}
-
-// Filter Cutoff Tuned mode: fader range = MIDI C0..C4 (12..60), C2 at the
-// midpoint. Hz <-> MIDI helpers; the fader stores Hz like the untuned
-// path so DAW automation reads the same param value.
-const CUTOFF_TUNED_MIDI_MIN = 12;   // C0
-const CUTOFF_TUNED_MIDI_MAX = 60;   // C4
-function midiToHz(m) {
-  return 440 * Math.pow(2, (m - 69) / 12);
-}
-function hzToMidi(hz) {
-  return 69 + 12 * Math.log2(Math.max(1e-6, hz) / 440);
-}
-function cutoffTunedNormToHz(norm) {
-  const span = CUTOFF_TUNED_MIDI_MAX - CUTOFF_TUNED_MIDI_MIN;
-  const midi = Math.round(CUTOFF_TUNED_MIDI_MIN + Math.max(0, Math.min(1, norm)) * span);
-  return midiToHz(midi);
-}
-function cutoffTunedHzToNorm(hz) {
-  const midi = Math.max(
-    CUTOFF_TUNED_MIDI_MIN,
-    Math.min(CUTOFF_TUNED_MIDI_MAX, Math.round(hzToMidi(hz))),
-  );
-  return (midi - CUTOFF_TUNED_MIDI_MIN) / (CUTOFF_TUNED_MIDI_MAX - CUTOFF_TUNED_MIDI_MIN);
-}
-function cutoffTunedNoteName(hz) {
-  const midi = Math.max(
-    CUTOFF_TUNED_MIDI_MIN,
-    Math.min(CUTOFF_TUNED_MIDI_MAX, Math.round(hzToMidi(hz))),
-  );
-  return keysNoteName(midi);
-}
-const keysPanel = (() => {
-  const bodyEl = document.querySelector('.panel[data-name="Keys"] .panel-body');
-  if (!bodyEl) return { setMode() {}, setLayer() {}, setSplit() {}, wireLayerLevels() {} };
-
-  // mode: 0 Whole, 1 Dual, 2 Split. layer: 'upper' | 'lower'. split: MIDI
-  // note in [KEYS_SPLIT_MIN, KEYS_SPLIT_MAX]. Controller-side defaults
-  // re-arrive on `EditorReady` so the cold-start seed gets overwritten;
-  // these initials just keep the markup valid until the first echo lands.
-  let mode = 0;
-  let layer = 'upper';
-  let split = KEYS_DEFAULT_SPLIT;
-
-  bodyEl.innerHTML = `
-    <div class="keys-top">
-      <div class="keys-tg-list" id="keys-mode-list"></div>
-      <div class="keys-tg-list" id="keys-edit-list"></div>
-    </div>
-    <div class="keys-split-row" id="keys-split-row">
-      <span class="keys-split-label">Split</span>
-      <input type="range" class="keys-split-slider" id="keys-split-slider"
-             min="${KEYS_SPLIT_MIN}" max="${KEYS_SPLIT_MAX}" step="1" />
-      <div class="keys-split-readout" id="keys-split-readout"></div>
-    </div>
-    <div class="keys-level-row" data-layer="upper">
-      <span class="keys-level-lbl">Upper</span>
-      <div class="keys-level-track">
-        <div class="keys-level-thumb"></div>
-      </div>
-    </div>
-    <div class="keys-level-row" data-layer="lower">
-      <span class="keys-level-lbl">Lower</span>
-      <div class="keys-level-track">
-        <div class="keys-level-thumb"></div>
-      </div>
-    </div>
-    <button type="button" class="keys-reset" id="keys-reset">RESET</button>
-  `;
-  const modeListEl   = bodyEl.querySelector('#keys-mode-list');
-  const editListEl   = bodyEl.querySelector('#keys-edit-list');
-  const splitRowEl   = bodyEl.querySelector('#keys-split-row');
-  const splitSlider  = bodyEl.querySelector('#keys-split-slider');
-  const splitReadout = bodyEl.querySelector('#keys-split-readout');
-  const resetBtn     = bodyEl.querySelector('#keys-reset');
-
-  function renderModeList() {
-    modeListEl.innerHTML = '';
-    KEY_MODE_NAMES.forEach((label, i) => {
-      const row = tgRow(label);
-      if (i === mode) row.classList.add('active');
-      // pointerdown not click: matches the no-click-slop fix the vizia
-      // toggles needed (a small wobble between down and up eats the
-      // click). Browsers don't drop clicks the same way, but pointerdown
-      // is still the more responsive surface.
-      row.addEventListener('pointerdown', (ev) => {
-        ev.preventDefault();
-        if (i === mode) return;
-        window.vxn.send.setKeyMode(i);
-      });
-      modeListEl.appendChild(row);
-    });
-  }
-  function renderEditList() {
-    editListEl.innerHTML = '';
-    // In Whole the edit toggle is meaningless (both layers share one patch);
-    // keep it visible but dim so the layout doesn't shift and the user sees
-    // what control is parked. `.dimmed` greys it out and blocks clicks.
-    editListEl.classList.toggle('dimmed', mode === 0);
-    KEY_LAYERS.forEach(({ code, label }) => {
-      const row = tgRow(label);
-      if (code === layer) row.classList.add('active');
-      row.addEventListener('pointerdown', (ev) => {
-        ev.preventDefault();
-        if (code === layer) return;
-        window.vxn.send.setEditLayer(code);
-      });
-      editListEl.appendChild(row);
-    });
-  }
-  function renderSplit() {
-    // Only meaningful in Split (mode 2). Dim in Whole/Dual so the layout
-    // is stable and the user sees that the slider exists but is parked.
-    splitRowEl.classList.toggle('dimmed', mode !== 2);
-    splitSlider.value = String(split);
-    splitReadout.textContent = keysNoteName(split);
-  }
-
-  splitSlider.addEventListener('input', () => {
-    const note = Math.max(
-      KEYS_SPLIT_MIN,
-      Math.min(KEYS_SPLIT_MAX, Math.round(Number(splitSlider.value))),
-    );
-    // Optimistic local repaint of the readout; the echo from
-    // `split_point_changed` will overwrite when it arrives.
-    splitReadout.textContent = keysNoteName(note);
-    window.vxn.send.setSplitPoint(note);
-  });
-  splitSlider.addEventListener('dblclick', (ev) => {
-    ev.preventDefault();
-    window.vxn.send.setSplitPoint(KEYS_DEFAULT_SPLIT);
-  });
-  resetBtn.addEventListener('pointerdown', (ev) => {
-    ev.preventDefault();
-    // In Whole the two layers share one patch — reset both. In Dual /
-    // Split reset only the layer the edit toggle points at. Globals,
-    // key mode and split point are setup state, left untouched.
-    if (mode === 0) {
-      window.vxn.send.resetLayer('upper');
-      window.vxn.send.resetLayer('lower');
-    } else {
-      window.vxn.send.resetLayer(layer);
-    }
-  });
-
-  renderModeList();
-  renderEditList();
-  renderSplit();
-
-  // Per-layer level sliders (Upper/Lower) — wired by dispatch from
-  // `rebindAllForLayer` (NOT init alone). Each row paints its own thumb at
-  // `norm * 100 %` along the track; the param is per-patch so each layer
-  // has its own fixed CLAP id (these rows don't follow the edit-layer
-  // toggle). No popup readout — the slider's position is the display.
-  //
-  // `rebindAllForLayer` clears `model.controls`, so we MUST re-register
-  // the `addCtl` subscribers on every call — otherwise our echo updaters
-  // would be wiped between the init-time wire and the first ParamChanged
-  // burst. DOM event listeners attach exactly once per layer, guarded by
-  // `levelEventsWired`.
-  const levelEventsWired = { upper: false, lower: false };
-  function wireLayerLevels() {
-    const paint = (thumb, norm) => {
-      const n = Math.max(0, Math.min(1, norm));
-      thumb.style.left = (n * 100) + '%';
-    };
-    for (const which of ['upper', 'lower']) {
-      const id = paramIdByNameAtLayer('layer_level', which);
-      if (id == null) continue;
-      const row = bodyEl.querySelector(`.keys-level-row[data-layer="${which}"]`);
-      if (!row) continue;
-      const track = row.querySelector('.keys-level-track');
-      const thumb = row.querySelector('.keys-level-thumb');
-      if (!track || !thumb) continue;
-
-      // Subscriber — re-registered on every call so the layer-level
-      // sliders survive a `rebindAllForLayer` `model.controls.clear()`.
-      addCtl(id, { update: (_plain, norm) => paint(thumb, norm) });
-
-      if (levelEventsWired[which]) continue;
-      levelEventsWired[which] = true;
-
-      const pointerToNorm = (ev) => {
-        const r = track.getBoundingClientRect();
-        return Math.max(0, Math.min(1, (ev.clientX - r.left) / r.width));
-      };
-      let dragging = false;
-      track.addEventListener('pointerdown', (ev) => {
-        ev.preventDefault();
-        dragging = true;
-        track.setPointerCapture(ev.pointerId);
-        window.vxn.send.beginGesture(id);
-        const n = pointerToNorm(ev);
-        paint(thumb, n);
-        window.vxn.send.setParamNorm(id, n);
-      });
-      track.addEventListener('pointermove', (ev) => {
-        if (!dragging) return;
-        const n = pointerToNorm(ev);
-        paint(thumb, n);
-        window.vxn.send.setParamNorm(id, n);
-      });
-      const up = (ev) => {
-        if (!dragging) return;
-        dragging = false;
-        try { track.releasePointerCapture(ev.pointerId); } catch (e) {}
-        window.vxn.send.endGesture(id);
-      };
-      track.addEventListener('pointerup', up);
-      track.addEventListener('pointercancel', up);
-      track.addEventListener('dblclick', (ev) => {
-        ev.preventDefault();
-        // Default = unity (1.0). Wrap in a gesture so it lands as one edit.
-        window.vxn.send.beginGesture(id);
-        window.vxn.send.setParamNorm(id, 1.0);
-        window.vxn.send.endGesture(id);
-      });
-    }
-  }
-
-  return {
-    setMode(m) {
-      if (m === mode) return;
-      mode = m;
-      renderModeList();
-      renderEditList();
-      renderSplit();
-    },
-    setLayer(l) {
-      if (l === layer) return;
-      layer = l;
-      renderEditList();
-    },
-    setSplit(n) {
-      if (n === split) return;
-      split = n;
-      // Only the slider/readout change — no mode/layer visibility flip.
-      splitSlider.value = String(split);
-      splitReadout.textContent = keysNoteName(split);
-    },
-    wireLayerLevels,
-  };
-})();
-
-// ─── Waveform glyph polylines ──────────────────────────────────────────────
-//
-// In a [0, 1]² box (y down). Ported from `wave_points` in
-// vxn-ui-vizia/src/lib.rs — coordinates only, no SVG-specific tweaks.
-const WAVE_GLYPHS = {
-  'Sine': (() => {
-    const pts = [];
-    for (let k = 0; k <= 16; k++) {
-      const t = k / 16;
-      pts.push([t, 0.5 - 0.38 * Math.sin(t * Math.PI * 2)]);
-    }
-    return pts;
-  })(),
-  'Triangle': [[0, 0.85], [0.5, 0.15], [1, 0.85]],
-  'Tri':      [[0, 0.85], [0.5, 0.15], [1, 0.85]],
-  'Saw':      [[0, 0.85], [0.5, 0.15], [0.5, 0.85], [1, 0.15]],
-  'Saw+':     [[0, 0.85], [0.5, 0.15], [0.5, 0.85], [1, 0.15]],
-  'Saw-':     [[0, 0.15], [0.5, 0.85], [0.5, 0.15], [1, 0.85]],
-  'Pulse':    [[0, 0.85], [0, 0.15], [0.5, 0.15], [0.5, 0.85], [1, 0.85]],
-  'Square':   [[0, 0.85], [0, 0.15], [0.5, 0.15], [0.5, 0.85], [1, 0.85]],
-  'S&H':      [[0, 0.6], [0.28, 0.6], [0.28, 0.2], [0.56, 0.2], [0.56, 0.8], [0.82, 0.8], [0.82, 0.45], [1, 0.45]],
-};
-
-function glyphPath(label, w, h) {
-  const pts = WAVE_GLYPHS[label];
-  if (!pts) return null;
-  return pts.map((p, i) =>
-    (i === 0 ? 'M' : 'L') + (p[0] * w).toFixed(2) + ' ' + (p[1] * h).toFixed(2)
-  ).join(' ');
-}
-
-// ─── Control primitives ────────────────────────────────────────────────────
-
-// Dispatch state lives in `model` (declared in dispatch.js). `addCtl` is
-// the only helper the primitive factories below need from it.
 
 // One detent = one variant step. The drag sensitivity: pixels of vertical
 // pointer travel per detent. ~30 feels close to hardware knobs.
@@ -3012,74 +2849,6 @@ const PIXELS_PER_DETENT = 30;
 // automation moves don't strobe between detents; short enough that drag
 // still feels responsive.
 const KNOB_INDICATOR_TRANSITION_MS = 120;
-
-// Detune ceiling in Twin assign mode (cents). Twin's "useful" range is
-// purely a view convention — the engine doesn't enforce it, so the
-// editor that surfaces the mode is the one that has to clamp. Mirrors
-// vxn_ui_vizia::TWIN_DETUNE_CT (retired in 0054 but the value is still
-// load-bearing).
-const TWIN_TOP_CT = 20.0;
-
-// Generalised pointer-drag protocol. Both fader-shaped controls (vertical
-// linear norm) and the wave knob (vertical pixel-delta off a captured start
-// state) share the same hover / down / capture / move / release lifecycle —
-// they only differ in how pointer position maps to a value.
-//
-// `pointerToValue(ev, ctx)` — required. Runs on `pointerdown` (its return
-//   value is the second arg to `onDown`) and `pointermove` (second arg to
-//   `onMove`). `ctx` is whatever `downContext` returned for this drag.
-// `downContext(ev)` — optional. Runs once on `pointerdown`, before
-//   `pointerToValue`. Lets stateful drags (the wave knob) stash start
-//   coordinates / start value cleanly instead of via closure-scoped lets.
-//
-// Callbacks fire in order:
-//   onEnter(ev)             — hover begins (not during drag)
-//   onDown(ev, value)       — pointer down, drag starts.
-//   onMove(ev, value)       — drag-time move. Fires only while dragging.
-//   onUp(ev)                — drag ends (pointerup or cancel).
-//   onLeave()               — hover ends (not during drag).
-// Returns { isDragging, isHovered } getters for callers whose
-// ParamChanged echoes need to know whether to update the popup.
-function wireDrag(el, { pointerToValue, downContext }, { onEnter, onDown, onMove, onUp, onLeave }) {
-  let dragging = false;
-  let hovered = false;
-  let ctx = null;
-  el.addEventListener('pointerenter', (ev) => {
-    if (dragging) return;
-    hovered = true;
-    if (onEnter) onEnter(ev);
-  });
-  el.addEventListener('pointerleave', () => {
-    hovered = false;
-    if (!dragging && onLeave) onLeave();
-  });
-  el.addEventListener('pointerdown', (ev) => {
-    ev.preventDefault();
-    dragging = true;
-    ctx = downContext ? downContext(ev) : null;
-    el.classList.add('dragging');
-    el.setPointerCapture(ev.pointerId);
-    if (onDown) onDown(ev, pointerToValue(ev, ctx));
-  });
-  el.addEventListener('pointermove', (ev) => {
-    if (!dragging || !onMove) return;
-    onMove(ev, pointerToValue(ev, ctx));
-  });
-  const end = (ev) => {
-    if (!dragging) return;
-    dragging = false;
-    el.classList.remove('dragging');
-    try { el.releasePointerCapture(ev.pointerId); } catch (e) {}
-    if (onUp) onUp(ev);
-    if (!hovered && onLeave) onLeave();
-  };
-  el.addEventListener('pointerup', end);
-  el.addEventListener('pointercancel', end);
-  return {
-    isDragging: () => dragging,
-    isHovered:  () => hovered,
-  };
-}
 
 // Thin wrapper: the fader-shaped controls (Fader, DetuneLegato) all want
 // the same vertical [0, 1] norm.
@@ -3132,6 +2901,84 @@ function paintFader(fader, thumb, norm) {
   thumb.style.top = (halfThumb + (1 - n) * travel) + 'px';
   fader.style.setProperty('--fader-norm', n);
 }
+
+// Plain → variant index clamp. Round to nearest, clamp to [0, len - 1].
+// The four enum-shaped primitives (Switch, ButtonGroup, Dropdown, Wave-
+// knob drag) all need exactly this.
+function clampVariant(plain, variants) {
+  return Math.max(0, Math.min(variants.length - 1, Math.round(plain)));
+}
+
+// `tgRow(name)` returns a fresh `.ctl-tg-row` containing the box + label
+// pair. `tgRow(name, { mount })` instead fills the supplied target and
+// returns it — used by composites whose container is already classed
+// (`.ctl-detune-legato.ctl-tg-row`) and need to drop the same inner markup
+// in place.
+function tgRow(name, opts) {
+  const target = (opts && opts.mount) || document.createElement('div');
+  if (!opts || !opts.mount) target.className = 'ctl-tg-row';
+  target.innerHTML =
+    '<div class="ctl-tg-box"></div>' +
+    '<div class="ctl-tg-lbl">' + name.toUpperCase() + '</div>';
+  return target;
+}
+
+;
+// panels/fader.js — the continuous / fader-family controls: the vertical
+// fader, the LFO-rate subdivision label, the rotary waveform knob, and the
+// Detune+Legato composite, plus the waveform glyph polylines they draw.
+// Split out of the panels.js god-file in ticket 0141.
+//
+// `import` lines are dropped by the splice loader (the shared bindings ride
+// the bridge slot; the sibling helpers are concatenated in the same scope);
+// under Node ESM they resolve so the suites can pull these in via the
+// `../panels.js` barrel. `variantIdx` is a concat-global from dispatch.js
+// (referenced only inside `makeDetuneLegato`, at editor-ready time).
+
+
+
+
+
+
+// ─── Waveform glyph polylines ──────────────────────────────────────────────
+//
+// In a [0, 1]² box (y down). Ported from `wave_points` in
+// vxn-ui-vizia/src/lib.rs — coordinates only, no SVG-specific tweaks.
+const WAVE_GLYPHS = {
+  'Sine': (() => {
+    const pts = [];
+    for (let k = 0; k <= 16; k++) {
+      const t = k / 16;
+      pts.push([t, 0.5 - 0.38 * Math.sin(t * Math.PI * 2)]);
+    }
+    return pts;
+  })(),
+  'Triangle': [[0, 0.85], [0.5, 0.15], [1, 0.85]],
+  'Tri':      [[0, 0.85], [0.5, 0.15], [1, 0.85]],
+  'Saw':      [[0, 0.85], [0.5, 0.15], [0.5, 0.85], [1, 0.15]],
+  'Saw+':     [[0, 0.85], [0.5, 0.15], [0.5, 0.85], [1, 0.15]],
+  'Saw-':     [[0, 0.15], [0.5, 0.85], [0.5, 0.15], [1, 0.85]],
+  'Pulse':    [[0, 0.85], [0, 0.15], [0.5, 0.15], [0.5, 0.85], [1, 0.85]],
+  'Square':   [[0, 0.85], [0, 0.15], [0.5, 0.15], [0.5, 0.85], [1, 0.85]],
+  'S&H':      [[0, 0.6], [0.28, 0.6], [0.28, 0.2], [0.56, 0.2], [0.56, 0.8], [0.82, 0.8], [0.82, 0.45], [1, 0.45]],
+};
+
+function glyphPath(label, w, h) {
+  const pts = WAVE_GLYPHS[label];
+  if (!pts) return null;
+  return pts.map((p, i) =>
+    (i === 0 ? 'M' : 'L') + (p[0] * w).toFixed(2) + ' ' + (p[1] * h).toFixed(2)
+  ).join(' ');
+}
+
+// ─── Control primitives ────────────────────────────────────────────────────
+
+// Detune ceiling in Twin assign mode (cents). Twin's "useful" range is
+// purely a view convention — the engine doesn't enforce it, so the
+// editor that surfaces the mode is the one that has to clamp. Mirrors
+// vxn_ui_vizia::TWIN_DETUNE_CT (retired in 0054 but the value is still
+// load-bearing).
+const TWIN_TOP_CT = 20.0;
 
 function makeFader(el, id, desc, opts) {
   const noLabel = el.hasAttribute('data-no-label');
@@ -3396,34 +3243,153 @@ function makeWave(el, id, desc) {
   };
 }
 
-// ─── Switch / ButtonGroup / Dropdown ──────────────────────────────────────
+// ─── Detune + Legato composite (Voice panel, 0045) ─────────────────────────
 //
-// All three share the same write semantics: a click sends
-// `begin_gesture` → `set_param` → `end_gesture` so the host records a
-// single discrete edit (zero gesture-less writes would otherwise drop on
-// some hosts that only commit between brackets). No drag, no popup —
-// these are point-and-click variant pickers.
+// Two params + one watch in a single column: the Detune fader on top and
+// the Legato toggle beneath it, both driven by Assign Mode for visual hints
+// (dim Legato in Poly/Twin) and behaviour (Detune fader's full-travel
+// meaning is 50 ct in Unison vs 20 ct in Twin — mirrors
+// `vxn_ui_vizia::detune_top`). Plain values stay in descriptor units (0–50
+// ct); only the fader's [0,1] → cents map changes per mode.
+//
+// `data-legato-param` / `data-mode-param` name the descriptor names this
+// cell pairs with; both are resolved per layer at bind time so a layer
+// rebind (0045) rebuilds the cell with the new ids.
+function makeDetuneLegato(el, ids, descs, modeName, layer) {
+  const { detune, legato, mode } = ids;
+  const label = el.dataset.label || descs.detune.label;
+  el.classList.add('ctl-detune');
+  el.innerHTML =
+    '<div class="ctl-label">' + label.toUpperCase() + '</div>' +
+    '<div class="ctl-detune-body">' +
+      '<div class="ctl-fader">' +
+        '<div class="ctl-fader-track"></div>' +
+        '<div class="ctl-fader-thumb"></div>' +
+      '</div>' +
+      '<div class="ctl-detune-legato ctl-tg-row"></div>' +
+    '</div>';
+  const fader = el.querySelector('.ctl-fader');
+  const thumb = el.querySelector('.ctl-fader-thumb');
+  const legatoRow = el.querySelector('.ctl-detune-legato');
+  tgRow('LEGATO', { mount: legatoRow });
 
-// Plain → variant index clamp. Round to nearest, clamp to [0, len - 1].
-// The four enum-shaped primitives (Switch, ButtonGroup, Dropdown, Wave-
-// knob drag) all need exactly this.
-function clampVariant(plain, variants) {
-  return Math.max(0, Math.min(variants.length - 1, Math.round(plain)));
+  const DESC_TOP = descs.detune.max;
+  // Twin's variant index lives in the assign descriptor (current order:
+  // Poly, Unison, Solo, Twin → index 3). Look it up by name so a reorder
+  // in ASSIGN_LABELS doesn't desync.
+  const lookupVariant = (name) => variantIdx(modeName, name, layer);
+  const TWIN_IDX = lookupVariant('Twin');
+  const MONO_IDXS = new Set();
+  // Mono assign modes (Legato applies in these): Unison, Solo. Found by
+  // name so an ASSIGN_LABELS reorder doesn't desync.
+  ['Unison', 'Solo'].forEach((n) => {
+    const i = lookupVariant(n);
+    if (i >= 0) MONO_IDXS.add(i);
+  });
+
+  let lastDetunePlain = 0;
+  let lastModePlain = 0;
+
+  function currentTop() {
+    return Math.round(lastModePlain) === TWIN_IDX ? TWIN_TOP_CT : DESC_TOP;
+  }
+  function setThumbFromPlain(plain) {
+    const top = currentTop();
+    paintFader(fader, thumb, top > 0 ? plain / top : 0);
+  }
+
+  let drag;
+  let lastDetuneDisplay = null;
+  const detuneLabel = () =>
+    lastDetuneDisplay || (lastDetunePlain.toFixed(1) + ' ct');
+  const pop = attachValuePop({
+    isHovered:  () => drag.isHovered(),
+    isDragging: () => drag.isDragging(),
+  }, detuneLabel);
+  drag = wireFaderDrag(fader, {
+    onEnter: (ev) => pop.markEntered(ev),
+    onLeave: () => pop.markLeft(),
+    onDown: (ev, n) => {
+      window.vxn.send.beginGesture(detune);
+      const plain = n * currentTop();
+      lastDetunePlain = plain;
+      lastDetuneDisplay = plain.toFixed(1) + ' ct';
+      setThumbFromPlain(plain);
+      window.vxn.send.setParam(detune, plain);
+      pop.markGrabbed(ev);
+    },
+    onMove: (_ev, n) => {
+      const plain = n * currentTop();
+      lastDetunePlain = plain;
+      lastDetuneDisplay = plain.toFixed(1) + ' ct';
+      setThumbFromPlain(plain);
+      window.vxn.send.setParam(detune, plain);
+      pop.refresh();
+    },
+    onUp: () => {
+      window.vxn.send.endGesture(detune);
+      pop.markReleased();
+    },
+  });
+
+  legatoRow.addEventListener('pointerdown', (ev) => {
+    ev.preventDefault();
+    const on = legatoRow.classList.contains('active') ? 0 : 1;
+    window.vxn.send.discrete(legato, on);
+  });
+  // Double-click resets the detune fader (descriptor default).
+  el.addEventListener('dblclick', (ev) => {
+    ev.preventDefault();
+    window.vxn.send.discrete(detune, descs.detune.default);
+  });
+
+  function applyLegatoDim() {
+    legatoRow.classList.toggle('disabled', !MONO_IDXS.has(Math.round(lastModePlain)));
+  }
+
+  return {
+    // The composite registers three model.controls entries (detune, legato, mode)
+    // pointing at three updater closures returned here — `init()` then
+    // routes each ParamChanged into the matching closure.
+    detuneUpdate(plain, _norm, display) {
+      lastDetunePlain = plain;
+      lastDetuneDisplay = display || (plain.toFixed(1) + ' ct');
+      setThumbFromPlain(plain);
+      pop.refresh();
+    },
+    legatoUpdate(plain) {
+      legatoRow.classList.toggle('active', plain >= 0.5);
+    },
+    modeUpdate(plain) {
+      const prevTwin = Math.round(lastModePlain) === TWIN_IDX;
+      lastModePlain = plain;
+      // On entering Twin, clamp the stored detune down to the Twin ceiling
+      // (mirrors `vxn_ui_vizia::clamp_detune_on_twin`). The engine doesn't
+      // enforce this — Twin's "useful" range is purely a view convention,
+      // so the editor that surfaces the mode is the one that has to clamp.
+      if (!prevTwin && Math.round(plain) === TWIN_IDX && lastDetunePlain > TWIN_TOP_CT) {
+        window.vxn.send.discrete(detune, TWIN_TOP_CT);
+        lastDetunePlain = TWIN_TOP_CT;
+      }
+      setThumbFromPlain(lastDetunePlain);
+      applyLegatoDim();
+    },
+  };
 }
 
-// `tgRow(name)` returns a fresh `.ctl-tg-row` containing the box + label
-// pair. `tgRow(name, { mount })` instead fills the supplied target and
-// returns it — used by composites whose container is already classed
-// (`.ctl-detune-legato.ctl-tg-row`) and need to drop the same inner markup
-// in place.
-function tgRow(name, opts) {
-  const target = (opts && opts.mount) || document.createElement('div');
-  if (!opts || !opts.mount) target.className = 'ctl-tg-row';
-  target.innerHTML =
-    '<div class="ctl-tg-box"></div>' +
-    '<div class="ctl-tg-lbl">' + name.toUpperCase() + '</div>';
-  return target;
-}
+;
+// panels/discrete.js — the click-to-pick widgets (Switch / ButtonGroup /
+// Dropdown / HeaderSwitch) and the FX tab strip. Split out of the panels.js
+// god-file in ticket 0141.
+//
+// All four pickers share the same write semantics: a click sends
+// `begin_gesture` → `set_param` → `end_gesture` (via `send.discrete`) so the
+// host records a single discrete edit. No drag, no popup.
+//
+// `import` lines are dropped by the splice loader (the sibling helpers ride the
+// same concatenated scope); under Node ESM they resolve so the suites can pull
+// these via the `../panels.js` barrel.
+
 
 // `Switch(id, label)` — vertical toggle for bools; also handles 2-variant
 // enums (NoiseColor, FilterSlope, LfoSync, …) the way vizia's
@@ -3623,139 +3589,366 @@ function wireFxTabs() {
   });
 }
 
-// ─── Detune + Legato composite (Voice panel, 0045) ─────────────────────────
+;
+// panels/keys.js — the Keys panel (mode / edit-layer / split-point / reset +
+// the per-layer level sliders). Split out of the panels.js god-file in 0141.
 //
-// Two params + one watch in a single column: the Detune fader on top and
-// the Legato toggle beneath it, both driven by Assign Mode for visual hints
-// (dim Legato in Poly/Twin) and behaviour (Detune fader's full-travel
-// meaning is 50 ct in Unison vs 20 ct in Twin — mirrors
-// `vxn_ui_vizia::detune_top`). Plain values stay in descriptor units (0–50
-// ct); only the fader's [0,1] → cents map changes per mode.
+// Mirrors `vxn_ui_vizia::keys_panel`. The mode / edit / split widgets write
+// *non-automatable* shared state directly (ADR 0003 §3/§8) — no gestures, no
+// host echo — and the controller broadcasts back via `KeyModeChanged` /
+// `EditLayerChanged` / `SplitPointChanged` so the panel reseeds after a
+// preset/state load.
 //
-// `data-legato-param` / `data-mode-param` name the descriptor names this
-// cell pairs with; both are resolved per layer at bind time so a layer
-// rebind (0045) rebuilds the cell with the new ids.
-function makeDetuneLegato(el, ids, descs, modeName, layer) {
-  const { detune, legato, mode } = ids;
-  const label = el.dataset.label || descs.detune.label;
-  el.classList.add('ctl-detune');
-  el.innerHTML =
-    '<div class="ctl-label">' + label.toUpperCase() + '</div>' +
-    '<div class="ctl-detune-body">' +
-      '<div class="ctl-fader">' +
-        '<div class="ctl-fader-track"></div>' +
-        '<div class="ctl-fader-thumb"></div>' +
-      '</div>' +
-      '<div class="ctl-detune-legato ctl-tg-row"></div>' +
-    '</div>';
-  const fader = el.querySelector('.ctl-fader');
-  const thumb = el.querySelector('.ctl-fader-thumb');
-  const legatoRow = el.querySelector('.ctl-detune-legato');
-  tgRow('LEGATO', { mount: legatoRow });
+// `import` lines are dropped by the splice loader (the bindings ride the
+// concatenated scope: `noteName` from the bridge slot, `tgRow` from
+// util/drag.js, `paramIdByNameAtLayer` / `addCtl` from dispatch.js, which is
+// concatenated after this module but only referenced from `wireLayerLevels()`
+// at editor-ready time). Under Node ESM they resolve so the suites can pull the
+// consts + `keysPanel` via the `../panels.js` barrel. The `../bridge.js`
+// side-effect `import` guarantees `window.vxn` exists before this evaluates.
 
-  const DESC_TOP = descs.detune.max;
-  // Twin's variant index lives in the assign descriptor (current order:
-  // Poly, Unison, Solo, Twin → index 3). Look it up by name so a reorder
-  // in ASSIGN_LABELS doesn't desync.
-  const lookupVariant = (name) => variantIdx(modeName, name, layer);
-  const TWIN_IDX = lookupVariant('Twin');
-  const MONO_IDXS = new Set();
-  // Mono assign modes (Legato applies in these): Unison, Solo. Found by
-  // name so an ASSIGN_LABELS reorder doesn't desync.
-  ['Unison', 'Solo'].forEach((n) => {
-    const i = lookupVariant(n);
-    if (i >= 0) MONO_IDXS.add(i);
-  });
 
-  let lastDetunePlain = 0;
-  let lastModePlain = 0;
 
-  function currentTop() {
-    return Math.round(lastModePlain) === TWIN_IDX ? TWIN_TOP_CT : DESC_TOP;
+
+
+const KEY_MODE_NAMES = ['WHOLE', 'DUAL', 'SPLIT'];
+const KEY_LAYERS = [
+  { code: 'upper', label: 'UPPER' },
+  { code: 'lower', label: 'LOWER' },
+];
+// Match `DEFAULT_SPLIT_POINT` in vxn-app/src/domain.rs — C4.
+const KEYS_DEFAULT_SPLIT = 60;
+// Mirror `vxn_ui_vizia::SPLIT_MIN` / `SPLIT_MAX`: narrower than the full
+// MIDI range so every semitone is easy to land on.
+const KEYS_SPLIT_MIN = 12;
+const KEYS_SPLIT_MAX = 96;
+
+const keysPanel = (() => {
+  const bodyEl = document.querySelector('.panel[data-name="Keys"] .panel-body');
+  if (!bodyEl) return { setMode() {}, setLayer() {}, setSplit() {}, wireLayerLevels() {} };
+
+  // mode: 0 Whole, 1 Dual, 2 Split. layer: 'upper' | 'lower'. split: MIDI
+  // note in [KEYS_SPLIT_MIN, KEYS_SPLIT_MAX]. Controller-side defaults
+  // re-arrive on `EditorReady` so the cold-start seed gets overwritten;
+  // these initials just keep the markup valid until the first echo lands.
+  let mode = 0;
+  let layer = 'upper';
+  let split = KEYS_DEFAULT_SPLIT;
+
+  bodyEl.innerHTML = `
+    <div class="keys-top">
+      <div class="keys-tg-list" id="keys-mode-list"></div>
+      <div class="keys-tg-list" id="keys-edit-list"></div>
+    </div>
+    <div class="keys-split-row" id="keys-split-row">
+      <span class="keys-split-label">Split</span>
+      <input type="range" class="keys-split-slider" id="keys-split-slider"
+             min="${KEYS_SPLIT_MIN}" max="${KEYS_SPLIT_MAX}" step="1" />
+      <div class="keys-split-readout" id="keys-split-readout"></div>
+    </div>
+    <div class="keys-level-row" data-layer="upper">
+      <span class="keys-level-lbl">Upper</span>
+      <div class="keys-level-track">
+        <div class="keys-level-thumb"></div>
+      </div>
+    </div>
+    <div class="keys-level-row" data-layer="lower">
+      <span class="keys-level-lbl">Lower</span>
+      <div class="keys-level-track">
+        <div class="keys-level-thumb"></div>
+      </div>
+    </div>
+    <button type="button" class="keys-reset" id="keys-reset">RESET</button>
+  `;
+  const modeListEl   = bodyEl.querySelector('#keys-mode-list');
+  const editListEl   = bodyEl.querySelector('#keys-edit-list');
+  const splitRowEl   = bodyEl.querySelector('#keys-split-row');
+  const splitSlider  = bodyEl.querySelector('#keys-split-slider');
+  const splitReadout = bodyEl.querySelector('#keys-split-readout');
+  const resetBtn     = bodyEl.querySelector('#keys-reset');
+
+  function renderModeList() {
+    modeListEl.innerHTML = '';
+    KEY_MODE_NAMES.forEach((label, i) => {
+      const row = tgRow(label);
+      if (i === mode) row.classList.add('active');
+      // pointerdown not click: matches the no-click-slop fix the vizia
+      // toggles needed (a small wobble between down and up eats the
+      // click). Browsers don't drop clicks the same way, but pointerdown
+      // is still the more responsive surface.
+      row.addEventListener('pointerdown', (ev) => {
+        ev.preventDefault();
+        if (i === mode) return;
+        window.vxn.send.setKeyMode(i);
+      });
+      modeListEl.appendChild(row);
+    });
   }
-  function setThumbFromPlain(plain) {
-    const top = currentTop();
-    paintFader(fader, thumb, top > 0 ? plain / top : 0);
+  function renderEditList() {
+    editListEl.innerHTML = '';
+    // In Whole the edit toggle is meaningless (both layers share one patch);
+    // keep it visible but dim so the layout doesn't shift and the user sees
+    // what control is parked. `.dimmed` greys it out and blocks clicks.
+    editListEl.classList.toggle('dimmed', mode === 0);
+    KEY_LAYERS.forEach(({ code, label }) => {
+      const row = tgRow(label);
+      if (code === layer) row.classList.add('active');
+      row.addEventListener('pointerdown', (ev) => {
+        ev.preventDefault();
+        if (code === layer) return;
+        window.vxn.send.setEditLayer(code);
+      });
+      editListEl.appendChild(row);
+    });
+  }
+  function renderSplit() {
+    // Only meaningful in Split (mode 2). Dim in Whole/Dual so the layout
+    // is stable and the user sees that the slider exists but is parked.
+    splitRowEl.classList.toggle('dimmed', mode !== 2);
+    splitSlider.value = String(split);
+    splitReadout.textContent = noteName(split);
   }
 
-  let drag;
-  let lastDetuneDisplay = null;
-  const detuneLabel = () =>
-    lastDetuneDisplay || (lastDetunePlain.toFixed(1) + ' ct');
-  const pop = attachValuePop({
-    isHovered:  () => drag.isHovered(),
-    isDragging: () => drag.isDragging(),
-  }, detuneLabel);
-  drag = wireFaderDrag(fader, {
-    onEnter: (ev) => pop.markEntered(ev),
-    onLeave: () => pop.markLeft(),
-    onDown: (ev, n) => {
-      window.vxn.send.beginGesture(detune);
-      const plain = n * currentTop();
-      lastDetunePlain = plain;
-      lastDetuneDisplay = plain.toFixed(1) + ' ct';
-      setThumbFromPlain(plain);
-      window.vxn.send.setParam(detune, plain);
-      pop.markGrabbed(ev);
-    },
-    onMove: (_ev, n) => {
-      const plain = n * currentTop();
-      lastDetunePlain = plain;
-      lastDetuneDisplay = plain.toFixed(1) + ' ct';
-      setThumbFromPlain(plain);
-      window.vxn.send.setParam(detune, plain);
-      pop.refresh();
-    },
-    onUp: () => {
-      window.vxn.send.endGesture(detune);
-      pop.markReleased();
-    },
+  splitSlider.addEventListener('input', () => {
+    const note = Math.max(
+      KEYS_SPLIT_MIN,
+      Math.min(KEYS_SPLIT_MAX, Math.round(Number(splitSlider.value))),
+    );
+    // Optimistic local repaint of the readout; the echo from
+    // `split_point_changed` will overwrite when it arrives.
+    splitReadout.textContent = noteName(note);
+    window.vxn.send.setSplitPoint(note);
+  });
+  splitSlider.addEventListener('dblclick', (ev) => {
+    ev.preventDefault();
+    window.vxn.send.setSplitPoint(KEYS_DEFAULT_SPLIT);
+  });
+  resetBtn.addEventListener('pointerdown', (ev) => {
+    ev.preventDefault();
+    // In Whole the two layers share one patch — reset both. In Dual /
+    // Split reset only the layer the edit toggle points at. Globals,
+    // key mode and split point are setup state, left untouched.
+    if (mode === 0) {
+      window.vxn.send.resetLayer('upper');
+      window.vxn.send.resetLayer('lower');
+    } else {
+      window.vxn.send.resetLayer(layer);
+    }
   });
 
-  legatoRow.addEventListener('pointerdown', (ev) => {
-    ev.preventDefault();
-    const on = legatoRow.classList.contains('active') ? 0 : 1;
-    window.vxn.send.discrete(legato, on);
-  });
-  // Double-click resets the detune fader (descriptor default).
-  el.addEventListener('dblclick', (ev) => {
-    ev.preventDefault();
-    window.vxn.send.discrete(detune, descs.detune.default);
-  });
+  renderModeList();
+  renderEditList();
+  renderSplit();
 
-  function applyLegatoDim() {
-    legatoRow.classList.toggle('disabled', !MONO_IDXS.has(Math.round(lastModePlain)));
+  // Per-layer level sliders (Upper/Lower) — wired by dispatch from
+  // `rebindAllForLayer` (NOT init alone). Each row paints its own thumb at
+  // `norm * 100 %` along the track; the param is per-patch so each layer
+  // has its own fixed CLAP id (these rows don't follow the edit-layer
+  // toggle). No popup readout — the slider's position is the display.
+  //
+  // `rebindAllForLayer` clears `model.controls`, so we MUST re-register
+  // the `addCtl` subscribers on every call — otherwise our echo updaters
+  // would be wiped between the init-time wire and the first ParamChanged
+  // burst. DOM event listeners attach exactly once per layer, guarded by
+  // `levelEventsWired`.
+  const levelEventsWired = { upper: false, lower: false };
+  function wireLayerLevels() {
+    const paint = (thumb, norm) => {
+      const n = Math.max(0, Math.min(1, norm));
+      thumb.style.left = (n * 100) + '%';
+    };
+    for (const which of ['upper', 'lower']) {
+      const id = paramIdByNameAtLayer('layer_level', which);
+      if (id == null) continue;
+      const row = bodyEl.querySelector(`.keys-level-row[data-layer="${which}"]`);
+      if (!row) continue;
+      const track = row.querySelector('.keys-level-track');
+      const thumb = row.querySelector('.keys-level-thumb');
+      if (!track || !thumb) continue;
+
+      // Subscriber — re-registered on every call so the layer-level
+      // sliders survive a `rebindAllForLayer` `model.controls.clear()`.
+      addCtl(id, { update: (_plain, norm) => paint(thumb, norm) });
+
+      if (levelEventsWired[which]) continue;
+      levelEventsWired[which] = true;
+
+      const pointerToNorm = (ev) => {
+        const r = track.getBoundingClientRect();
+        return Math.max(0, Math.min(1, (ev.clientX - r.left) / r.width));
+      };
+      let dragging = false;
+      track.addEventListener('pointerdown', (ev) => {
+        ev.preventDefault();
+        dragging = true;
+        track.setPointerCapture(ev.pointerId);
+        window.vxn.send.beginGesture(id);
+        const n = pointerToNorm(ev);
+        paint(thumb, n);
+        window.vxn.send.setParamNorm(id, n);
+      });
+      track.addEventListener('pointermove', (ev) => {
+        if (!dragging) return;
+        const n = pointerToNorm(ev);
+        paint(thumb, n);
+        window.vxn.send.setParamNorm(id, n);
+      });
+      const up = (ev) => {
+        if (!dragging) return;
+        dragging = false;
+        try { track.releasePointerCapture(ev.pointerId); } catch (e) {}
+        window.vxn.send.endGesture(id);
+      };
+      track.addEventListener('pointerup', up);
+      track.addEventListener('pointercancel', up);
+      track.addEventListener('dblclick', (ev) => {
+        ev.preventDefault();
+        // Default = unity (1.0). Wrap in a gesture so it lands as one edit.
+        window.vxn.send.beginGesture(id);
+        window.vxn.send.setParamNorm(id, 1.0);
+        window.vxn.send.endGesture(id);
+      });
+    }
   }
 
   return {
-    // The composite registers three model.controls entries (detune, legato, mode)
-    // pointing at three updater closures returned here — `init()` then
-    // routes each ParamChanged into the matching closure.
-    detuneUpdate(plain, _norm, display) {
-      lastDetunePlain = plain;
-      lastDetuneDisplay = display || (plain.toFixed(1) + ' ct');
-      setThumbFromPlain(plain);
-      pop.refresh();
+    setMode(m) {
+      if (m === mode) return;
+      mode = m;
+      renderModeList();
+      renderEditList();
+      renderSplit();
     },
-    legatoUpdate(plain) {
-      legatoRow.classList.toggle('active', plain >= 0.5);
+    setLayer(l) {
+      if (l === layer) return;
+      layer = l;
+      renderEditList();
     },
-    modeUpdate(plain) {
-      const prevTwin = Math.round(lastModePlain) === TWIN_IDX;
-      lastModePlain = plain;
-      // On entering Twin, clamp the stored detune down to the Twin ceiling
-      // (mirrors `vxn_ui_vizia::clamp_detune_on_twin`). The engine doesn't
-      // enforce this — Twin's "useful" range is purely a view convention,
-      // so the editor that surfaces the mode is the one that has to clamp.
-      if (!prevTwin && Math.round(plain) === TWIN_IDX && lastDetunePlain > TWIN_TOP_CT) {
-        window.vxn.send.discrete(detune, TWIN_TOP_CT);
-        lastDetunePlain = TWIN_TOP_CT;
-      }
-      setThumbFromPlain(lastDetunePlain);
-      applyLegatoDim();
+    setSplit(n) {
+      if (n === split) return;
+      split = n;
+      // Only the slider/readout change — no mode/layer visibility flip.
+      splitSlider.value = String(split);
+      splitReadout.textContent = noteName(split);
     },
+    wireLayerLevels,
   };
-}
+})();
+
+;
+// panels/preset-bar.js — the preset bar (prev/next/browse/save/save-as +
+// dirty-tracking). Split out of the panels.js god-file in ticket 0141.
+//
+// Prev/next post `step_preset` with a signed delta — the controller walks
+// the combined Factory + User list and emits a fresh `preset_loaded` for
+// us to pick up. The current name comes from the same `preset_loaded`
+// dispatch branch in `init()`. Browse toggles the 0050 browser panel
+// (open/close mirrored back via the panel's `onOpenChange` so the button's
+// `.active` class stays in sync with click-outside / ESC dismissals).
+// Save As opens the 0048 popup and on commit posts `save_preset` using
+// the browser panel's currently-selected user folder as the destination
+// (factory selections collapse to user root — there's no write target
+// inside the factory bank).
+//
+// The `../bridge.js` side-effect `import` installs `window.vxn` (the `send`
+// table + the `onMutation` dirty hook this panel registers). Stripped at
+// splice time (bridge.js is concatenated ahead of this module); under Node
+// ESM it ensures bridge.js evaluates first. `browserPanel` is a concat-global
+// from browser.js (spliced before the panels), referenced only after the
+// no-DOM stub guard so pure-helper test imports don't crash.
+
+
+const presetBar = (() => {
+  const nameEl   = document.getElementById('pbar-name');
+  // E015 / 0077: under Node ESM `import` (no faceplate DOM, no concatenated
+  // `browserPanel` global), bail out with a stub so pure-helper test
+  // imports don't crash on `browserPanel.onOpenChange(...)` below.
+  if (!nameEl) return { setName() {}, setSource() {}, markDirty() {} };
+  const prevEl     = document.getElementById('pbar-prev');
+  const nextEl     = document.getElementById('pbar-next');
+  const browseEl   = document.getElementById('pbar-browse');
+  const saveAsEl   = document.getElementById('pbar-save');
+  const saveEl     = document.getElementById('pbar-save-overwrite');
+  let currentName  = '';
+  // 0094: Save (overwrite) gates on a) loaded source is user, b) dirty.
+  // `currentSource` mirrors browser.js's: { kind: 'factory', index } |
+  // { kind: 'user', path }. `dirty` flips on the next user-initiated
+  // mutation after a load and resets on every fresh preset_loaded.
+  let currentSource = null;
+  let dirty = false;
+
+  function refreshSaveBtn() {
+    if (!saveEl) return;
+    const enabled = dirty && currentSource && currentSource.kind === 'user';
+    saveEl.disabled = !enabled;
+  }
+  function setName(name) {
+    currentName = name || '';
+    if (nameEl) nameEl.textContent = currentName;
+  }
+  function setSource(src) {
+    currentSource = src || null;
+    dirty = false;
+    refreshSaveBtn();
+  }
+  function markDirty() {
+    if (dirty) return;
+    dirty = true;
+    refreshSaveBtn();
+  }
+
+  // Any engine-mutating UI write flips dirty. Registered on the bridge's
+  // first-class `onMutation` hook (0141) instead of monkey-patching
+  // `window.vxn.send.*`: the hook is additive, so this composes with any
+  // other subscriber rather than overwriting the shared senders. The
+  // mutating senders (set_param / set_param_norm / reset_layer /
+  // set_key_mode / set_split_point, and `discrete` via set_param) fire it;
+  // view-only sends (gestures, edit-layer, preset load) don't. `setEditLayer`
+  // is pure view state — correctly not a mutation, so it never marks dirty.
+  if (window.vxn && typeof window.vxn.onMutation === 'function') {
+    window.vxn.onMutation(markDirty);
+  }
+
+  if (prevEl) {
+    prevEl.addEventListener('click', () => window.vxn.send.stepPreset(-1));
+  }
+  if (nextEl) {
+    nextEl.addEventListener('click', () => window.vxn.send.stepPreset(1));
+  }
+  if (browseEl) {
+    browseEl.addEventListener('click', () => browserPanel.setOpen(!browserPanel.isOpen()));
+  }
+  browserPanel.onOpenChange((open) => {
+    if (browseEl) browseEl.classList.toggle('active', open);
+  });
+  if (saveAsEl) {
+    // Save As opens the combined name + folder modal. The name field
+    // funnels through the existing native popup (`promptText`) for
+    // spacebar-safe entry; the folder dropdown is mouse-driven (no kbd
+    // capture concern). The modal anchors over the faceplate, so it
+    // works whether or not the browser panel itself is open.
+    saveAsEl.addEventListener('click', () => browserPanel.openSaveAs(currentName));
+  }
+  if (saveEl) {
+    saveEl.addEventListener('click', () => {
+      if (saveEl.disabled) return;
+      if (!currentSource || currentSource.kind !== 'user') return;
+      const folder = browserPanel.folderForUserPath(currentSource.path);
+      // Path missing from corpus (race against a refresh, or a moved file
+      // we haven't re-anchored on): refuse rather than fall through to
+      // user root and silently fork the preset. The Save As path stays
+      // available for explicit relocation.
+      if (folder === undefined) return;
+      window.vxn.send.savePreset(currentName, folder);
+      // Optimistic: assume the controller's write succeeded. A failed
+      // save will surface as a `save failed: …` status flash but won't
+      // re-mark the patch dirty — the next param wiggle will.
+      dirty = false;
+      refreshSaveBtn();
+    });
+  }
+  return { setName, setSource, markDirty };
+})();
 
 // ─── Init + dispatch ───────────────────────────────────────────────────────
 

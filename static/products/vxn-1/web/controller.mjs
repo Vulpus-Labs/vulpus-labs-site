@@ -38,9 +38,9 @@ export const VE_PRESET_LOADED = 5;
 export const VE_PRESET_CORPUS_CHANGED = 6;
 
 // PresetSource discriminants in the VE_PRESET_LOADED record (match lib.rs).
-const PRESET_SRC_NONE = 0;
-const PRESET_SRC_FACTORY = 1;
-const PRESET_SRC_USER = 2;
+export const PRESET_SRC_NONE = 0;
+export const PRESET_SRC_FACTORY = 1;
+export const PRESET_SRC_USER = 2;
 
 // Journal-op tags packed by vxnc_take_journal — MUST match lib.rs (JW_*).
 const JW_PUT = 1;
@@ -60,6 +60,84 @@ export const KEY_MODE_SPLIT = 2;
 // Layer discriminants (match vxn_app::Layer).
 export const LAYER_UPPER = 0;
 export const LAYER_LOWER = 1;
+
+// Decode a packed ViewEvent out-buffer into an array of decoded records. The
+// wire layout is the hand-walked binary protocol documented in
+// vxn-web-controller/src/lib.rs (`drain_view_events` / `pack_view_event`):
+// a `u32` record count, then that many tag-prefixed records. Little-endian;
+// strings are `u32` length + UTF-8 bytes.
+//
+// `buffer`/`ptr`/`len` describe the bytes to read (wasm linear memory + the
+// view-out pointer in production; a plain ArrayBuffer in the parity test, ticket
+// 0083). Pulled out of `_drainViewEvents` so the golden-byte parity test
+// exercises THIS exact decoder against the Rust packer's bytes — drift fails in
+// CI, not at runtime as the `unknown ViewEvent tag` throw below.
+export function decodeViewEvents(buffer, ptr, len) {
+  const view = new DataView(buffer, ptr, len);
+  const dec = new TextDecoder();
+  let off = 0;
+  const u32 = () => {
+    const v = view.getUint32(off, true);
+    off += 4;
+    return v;
+  };
+  const f32 = () => {
+    const v = view.getFloat32(off, true);
+    off += 4;
+    return v;
+  };
+  const str = () => {
+    const n = u32();
+    const s = dec.decode(new Uint8Array(buffer, ptr + off, n));
+    off += n;
+    return s;
+  };
+
+  const count = u32();
+  const out = [];
+  for (let i = 0; i < count; i++) {
+    const tag = u32();
+    switch (tag) {
+      case VE_PARAM_CHANGED:
+        out.push({ type: "ParamChanged", id: u32(), plain: f32(), norm: f32(), display: str() });
+        break;
+      case VE_KEY_MODE_CHANGED:
+        out.push({ type: "KeyModeChanged", mode: u32() });
+        break;
+      case VE_SPLIT_POINT_CHANGED:
+        out.push({ type: "SplitPointChanged", note: u32() });
+        break;
+      case VE_EDIT_LAYER_CHANGED:
+        out.push({ type: "EditLayerChanged", layer: u32() });
+        break;
+      case VE_PRESET_LOADED: {
+        const name = str();
+        const srcKind = u32();
+        let source = null;
+        if (srcKind === PRESET_SRC_FACTORY) {
+          source = { kind: "factory", index: u32() };
+        } else if (srcKind === PRESET_SRC_USER) {
+          source = { kind: "user", path: str() };
+        }
+        const warnCount = u32();
+        const warnings = [];
+        for (let w = 0; w < warnCount; w++) warnings.push(str());
+        out.push({ type: "PresetLoaded", name, source, warnings });
+        break;
+      }
+      case VE_PRESET_CORPUS_CHANGED: {
+        const follow = u32() ? str() : null;
+        out.push({ type: "PresetCorpusChanged", follow });
+        break;
+      }
+      default:
+        // Unknown tag — the packed stream is self-describing only for known
+        // tags; an unknown one means JS/Rust drift. Fail loud.
+        throw new Error(`controller: unknown ViewEvent tag ${tag}`);
+    }
+  }
+  return out;
+}
 
 export class WebController {
   // Construct cheaply; instantiate() does the async wasm load. Options:
@@ -368,6 +446,62 @@ export class WebController {
     this.x.vxnc_hydrate_done();
   }
 
+  // ---- full patch-state autosave / restore (E019 / 0065) ------------------
+  //
+  // The host-state-blob analogue: snapshot the whole live patch (every param +
+  // key mode + split point, the canonical state codec) for the page to autosave,
+  // and restore a saved blob at boot. Distinct from user presets — this is the
+  // single "last session" patch, not a named corpus entry.
+
+  // Snapshot the full patch state. Returns a COPIED Uint8Array (the caller writes
+  // it to storage async, after wasm memory may have moved).
+  snapshotState() {
+    const len = this.x.vxnc_snapshot_state();
+    const ptr = this.x.vxnc_state_out_ptr();
+    return new Uint8Array(this.x.memory.buffer, ptr, len).slice(); // copy
+  }
+
+  // Restore a saved blob into the model. Stage it into the state buffer, then
+  // restore. Returns true if applied, false if malformed/wrong-length (the model
+  // is left at defaults). Call BEFORE editorReady() so the re-broadcast seeds the
+  // UI + param SAB with the restored values.
+  restoreState(bytes) {
+    const b = bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes);
+    const ptr = this.x.vxnc_state_buf_reserve(b.length >>> 0);
+    new Uint8Array(this.x.memory.buffer, ptr, b.length).set(b);
+    return this.x.vxnc_restore_state(b.length >>> 0) === 1;
+  }
+
+  // ---- patch export / import (name-keyed TOML, E019 / 0066) ---------------
+  //
+  // The portable, desktop-compatible patch format: a sparse TOML string keyed by
+  // param name (`vxn_app::preset_toml`, byte-identical to the desktop build), so
+  // an exported web patch imports on desktop and vice versa. Distinct from the
+  // binary snapshot blob (0065) — that stays the compact channel for autosave +
+  // the URL share-link; this is the human-readable file.
+
+  // Serialize the current patch to a TOML string. `name` is the preset's `[meta]
+  // name` (the desktop filename derives from it). Returns the text.
+  exportToml(name = "") {
+    const n = this._enc.encode(name);
+    this._writeArgs([n]);
+    const len = this.x.vxnc_export_toml(n.length >>> 0);
+    const ptr = this.x.vxnc_toml_out_ptr();
+    const bytes = new Uint8Array(this.x.memory.buffer, ptr, len);
+    return new TextDecoder().decode(bytes);
+  }
+
+  // Parse a TOML patch string and apply it into the model. Returns true if
+  // applied, false if malformed/wrong-schema (the model is left untouched, so the
+  // caller surfaces a message). Call editorReady() afterwards so the re-broadcast
+  // seeds the UI + param SAB with the imported values.
+  importToml(text) {
+    const b = this._enc.encode(text);
+    const ptr = this.x.vxnc_toml_buf_reserve(b.length >>> 0);
+    new Uint8Array(this.x.memory.buffer, ptr, b.length).set(b);
+    return this.x.vxnc_import_toml(b.length >>> 0) === 1;
+  }
+
   // ---- tick: drain queues → mutate model → drain ViewEvents ---------------
   //
   // Call this on each rAF (or after a gesture burst). It (1) ticks the
@@ -433,100 +567,7 @@ export class WebController {
   _drainViewEvents() {
     const ptr = this.x.vxnc_view_out_ptr();
     const len = this.x.vxnc_view_out_len();
-    const view = new DataView(this.x.memory.buffer, ptr, len);
-    const dec = new TextDecoder();
-    let off = 0;
-    const count = view.getUint32(off, true);
-    off += 4;
-    const out = [];
-    for (let i = 0; i < count; i++) {
-      const tag = view.getUint32(off, true);
-      off += 4;
-      switch (tag) {
-        case VE_PARAM_CHANGED: {
-          const id = view.getUint32(off, true);
-          off += 4;
-          const plain = view.getFloat32(off, true);
-          off += 4;
-          const norm = view.getFloat32(off, true);
-          off += 4;
-          const dlen = view.getUint32(off, true);
-          off += 4;
-          const bytes = new Uint8Array(this.x.memory.buffer, ptr + off, dlen);
-          const display = dec.decode(bytes);
-          off += dlen;
-          out.push({ type: "ParamChanged", id, plain, norm, display });
-          break;
-        }
-        case VE_KEY_MODE_CHANGED: {
-          const mode = view.getUint32(off, true);
-          off += 4;
-          out.push({ type: "KeyModeChanged", mode });
-          break;
-        }
-        case VE_SPLIT_POINT_CHANGED: {
-          const note = view.getUint32(off, true);
-          off += 4;
-          out.push({ type: "SplitPointChanged", note });
-          break;
-        }
-        case VE_EDIT_LAYER_CHANGED: {
-          const layer = view.getUint32(off, true);
-          off += 4;
-          out.push({ type: "EditLayerChanged", layer });
-          break;
-        }
-        case VE_PRESET_LOADED: {
-          const nameLen = view.getUint32(off, true);
-          off += 4;
-          const name = dec.decode(new Uint8Array(this.x.memory.buffer, ptr + off, nameLen));
-          off += nameLen;
-          const srcKind = view.getUint32(off, true);
-          off += 4;
-          let source = null;
-          if (srcKind === PRESET_SRC_FACTORY) {
-            const index = view.getUint32(off, true);
-            off += 4;
-            source = { kind: "factory", index };
-          } else if (srcKind === PRESET_SRC_USER) {
-            const pathLen = view.getUint32(off, true);
-            off += 4;
-            const path = dec.decode(new Uint8Array(this.x.memory.buffer, ptr + off, pathLen));
-            off += pathLen;
-            source = { kind: "user", path };
-          }
-          const warnCount = view.getUint32(off, true);
-          off += 4;
-          const warnings = [];
-          for (let w = 0; w < warnCount; w++) {
-            const wlen = view.getUint32(off, true);
-            off += 4;
-            warnings.push(dec.decode(new Uint8Array(this.x.memory.buffer, ptr + off, wlen)));
-            off += wlen;
-          }
-          out.push({ type: "PresetLoaded", name, source, warnings });
-          break;
-        }
-        case VE_PRESET_CORPUS_CHANGED: {
-          const hasFollow = view.getUint32(off, true);
-          off += 4;
-          let follow = null;
-          if (hasFollow) {
-            const flen = view.getUint32(off, true);
-            off += 4;
-            follow = dec.decode(new Uint8Array(this.x.memory.buffer, ptr + off, flen));
-            off += flen;
-          }
-          out.push({ type: "PresetCorpusChanged", follow });
-          break;
-        }
-        default:
-          // Unknown tag — the packed stream is self-describing only for known
-          // tags; an unknown one means JS/Rust drift. Fail loud.
-          throw new Error(`controller: unknown ViewEvent tag ${tag}`);
-      }
-    }
-    return out;
+    return decodeViewEvents(this.x.memory.buffer, ptr, len);
   }
 
   // Tear down the Rust controller (page teardown / re-init).

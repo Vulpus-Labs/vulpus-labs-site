@@ -29,6 +29,23 @@
 
 import { WebController, LAYER_UPPER, LAYER_LOWER } from "./controller.mjs";
 import { PresetPersistence } from "./preset-persistence.mjs";
+import { StateAutosave } from "./state-autosave.mjs";
+import {
+  exportPatchFile,
+  importPatchFile,
+  shareLinkFor,
+  applyShareLinkOnBoot,
+} from "./patch-io.mjs";
+
+// Faceplate event kinds that change the persistable patch state (params + key
+// mode + split point) — the trigger for a full-state autosave (E019 / 0065). An
+// edit_layer_changed is pure view state and is deliberately excluded.
+const PATCH_STATE_KINDS = new Set([
+  "param_changed",
+  "key_mode_changed",
+  "split_point_changed",
+  "preset_loaded",
+]);
 
 // ---- opcode <-> controller routing helpers ---------------------------------
 
@@ -114,6 +131,7 @@ export class FaceplateBridge {
     dispatch = () => {},
     onTextInput = () => {},
     onCorpusChanged = () => {},
+    onPatchChanged = () => {},
     scheduleFrame = (cb) =>
       typeof requestAnimationFrame === "function"
         ? requestAnimationFrame(cb)
@@ -130,6 +148,11 @@ export class FaceplateBridge {
     // journal to IndexedDB (E019 / 0064). Not part of the dispatch batch: the
     // corpus rides its own side channel (controller.corpusJson()), not applyViewEvents.
     this.onCorpusChanged = onCorpusChanged;
+    // Called when a tick produced a change to the persistable patch state (param
+    // / key mode / split / preset load) — the boot wiring debounces a full-state
+    // autosave off this (E019 / 0065). Not the corpus channel: this is the live
+    // patch ("last session"), not the named-preset corpus.
+    this.onPatchChanged = onPatchChanged;
     this._scheduleFrame = scheduleFrame;
     this._cancelFrame = cancelFrame;
 
@@ -254,6 +277,11 @@ export class FaceplateBridge {
     }
     const batch = dedupParamChanged(translated);
     if (batch.length) this.dispatch(batch);
+    // Full-state autosave trigger (0065): if anything changed the persistable
+    // patch state this tick, debounce a session-blob write. Keyed off the
+    // emitted ViewEvents (the controller's own model mutations), so corpus-only
+    // ops (which ride their own channel) and pure view-state changes don't fire.
+    if (batch.some((e) => PATCH_STATE_KINDS.has(e.kind))) this.onPatchChanged();
     return batch;
   }
 
@@ -419,9 +447,32 @@ export async function bootFaceplate({ WebHostClass } = {}) {
     console.warn("vxn: preset persistence init failed", e);
   }
 
+  // 2c. Full patch-state autosave/restore (E019 / 0065): the host-state-blob
+  //     analogue. Restore the saved "last session" patch into the model BEFORE
+  //     the faceplate's `ready`→EditorReady re-broadcast (step 4), so the
+  //     broadcast seeds the UI + param SAB with the restored values (params +
+  //     key mode + split point ride the one blob). Then arm the flush-on-hide
+  //     backstop; the bridge debounces writes on every patch change (below).
+  //     Best-effort: no saved blob / malformed / storage unavailable just boots
+  //     to defaults.
+  //     A `#patch=…` share-link (E019 / 0066) takes PRECEDENCE over the autosave
+  //     restore: an explicit shared patch is the user's intent for this load. Both
+  //     run before the `ready`→EditorReady flush (step 4) so the broadcast seeds
+  //     the restored/imported values; the share-link decode also strips the
+  //     fragment so a reload doesn't re-import it over later edits.
+  const autosave = new StateAutosave({ controller });
+  try {
+    const fromShare = applyShareLinkOnBoot(controller);
+    if (!fromShare) await autosave.restore();
+    autosave.attachFlushOnHide();
+  } catch (e) {
+    console.warn("vxn: state autosave / share-link init failed", e);
+  }
+
   // 3. The bridge: opcodes in, ViewEvents out, ~60 Hz coalescing. A corpus
   //    change (user save/rename/delete/move/folder op) re-pushes the corpus and
-  //    flushes the write journal to IndexedDB off the tick.
+  //    flushes the write journal to IndexedDB off the tick. A patch-state change
+  //    (param / key mode / split / preset load) debounces a full-state autosave.
   const bridge = new FaceplateBridge({
     controller,
     dispatch,
@@ -430,8 +481,49 @@ export async function bootFaceplate({ WebHostClass } = {}) {
       publishCorpus();
       persistence.flush();
     },
+    onPatchChanged: () => autosave.schedule(),
   });
   bridge.start();
+
+  // 3a. Patch export / import / share controls (E019 / 0066), web-only. Injected
+  //     into the preset bar rather than the shared faceplate markup: the native
+  //     plugin's HOST owns state save/load, so off-device sharing is a web-only
+  //     concern — same reasoning as the CPU meter + welcome card living here in
+  //     the web glue. Export downloads a desktop-compatible `.toml`; Import applies
+  //     a picked file; Share copies a `#patch=` link to the clipboard.
+  createPatchIoControls(document, {
+    getName: () => {
+      const el = document.getElementById("pbar-name");
+      const n = el && el.textContent ? el.textContent.trim() : "";
+      return n || "VXN1 Patch";
+    },
+    onExport: (name) => {
+      exportPatchFile(controller, { name });
+      flashPatchStatus(document, `Exported “${name}.toml”`);
+    },
+    onImport: () => {
+      importPatchFile(controller, {
+        onResult: ({ ok, name, error }) =>
+          flashPatchStatus(document, ok ? `Imported ${name}` : `Import failed: ${error}`),
+      });
+    },
+    onShare: async () => {
+      const url = shareLinkFor(controller);
+      if (!url) {
+        flashPatchStatus(document, "Patch too large to share by link — use Export");
+        return;
+      }
+      const copied = await copyToClipboard(url);
+      flashPatchStatus(document, copied ? "Share link copied to clipboard" : "Share link ready");
+      if (!copied) {
+        try {
+          window.prompt("Copy this share link:", url);
+        } catch {
+          /* ignore */
+        }
+      }
+    },
+  });
 
   // 4. Replace the queuing `window.ipc` stub with the live router and flush
   //    whatever the faceplate buffered during parse (its `init()` `ready`).
@@ -467,8 +559,82 @@ export async function bootFaceplate({ WebHostClass } = {}) {
   window.addEventListener("keydown", unlock, true);
 
   // Expose for the page's Start button + E017 input adapters.
-  window.__vxnWeb = { host, controller, bridge, persistence, start: unlock, input };
+  window.__vxnWeb = { host, controller, bridge, persistence, autosave, start: unlock, input };
   return window.__vxnWeb;
+}
+
+// ---- patch export / import / share controls (E019 / 0066) ------------------
+//
+// Web-only preset-bar buttons for off-device patch sharing. Injected at boot into
+// the existing `#preset-bar-slot` (the same bar that hosts Save / Save As /
+// Browse) rather than baked into the shared faceplate markup — the native plugin
+// has no use for file/URL sharing (its host owns state), so this stays in the web
+// glue. Idempotent; a no-op if the preset bar isn't present. Reuses the bar's
+// `.pbar-btn` styling so the new buttons match the existing ones.
+export function createPatchIoControls(doc = globalThis.document, handlers = {}) {
+  if (!doc) return { el: null };
+  const slot = doc.getElementById("preset-bar-slot");
+  if (!slot) return { el: null };
+  if (doc.getElementById("vxn-patch-io")) return { el: doc.getElementById("vxn-patch-io") };
+
+  const { getName = () => "VXN1 Patch", onExport = () => {}, onImport = () => {}, onShare = () => {} } =
+    handlers;
+
+  const mk = (text, title, onClick) => {
+    const b = doc.createElement("button");
+    b.type = "button";
+    b.className = "pbar-btn";
+    b.textContent = text;
+    b.title = title;
+    b.addEventListener("click", onClick);
+    return b;
+  };
+
+  // Group wrapper so the three buttons can be found / removed as a unit.
+  const group = doc.createElement("span");
+  group.id = "vxn-patch-io";
+  group.style.cssText = "display:contents"; // don't disturb the bar's flex layout
+  group.append(
+    mk("Export", "Download this patch as a .toml file", () => onExport(getName())),
+    mk("Import", "Load a patch from a .toml file", () => onImport()),
+    mk("Share", "Copy a shareable link to this patch", () => onShare()),
+  );
+
+  // Place them just before the spacer (so they sit with Save/Save As, left of the
+  // status pill); fall back to appending if the bar's shape changes.
+  const spacer = slot.querySelector(".pbar-spacer");
+  if (spacer) slot.insertBefore(group, spacer);
+  else slot.appendChild(group);
+  return { el: group };
+}
+
+// Flash a transient message in the preset bar's status pill (E019 / 0066). Reuses
+// the `#pbar-status` element + `.visible` class the faceplate's `statusPill` does,
+// so import/export/share feedback looks like every other status flash.
+export function flashPatchStatus(doc = globalThis.document, text = "") {
+  if (!doc) return;
+  const el = doc.getElementById("pbar-status");
+  if (!el) return;
+  el.textContent = text;
+  el.classList.add("visible");
+  if (el._vxnPatchTimer) clearTimeout(el._vxnPatchTimer);
+  el._vxnPatchTimer = setTimeout(() => el.classList.remove("visible"), 3000);
+}
+
+// Copy `text` to the clipboard, resolving true on success. Uses the async
+// Clipboard API where available (needs a user gesture + secure context, which the
+// Share button click provides), false otherwise so the caller can fall back to a
+// prompt.
+export async function copyToClipboard(text) {
+  try {
+    if (globalThis.navigator && navigator.clipboard && navigator.clipboard.writeText) {
+      await navigator.clipboard.writeText(text);
+      return true;
+    }
+  } catch {
+    /* fall through to false */
+  }
+  return false;
 }
 
 // ---- CPU (render-load) meter -----------------------------------------------
