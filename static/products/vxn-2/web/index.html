@@ -1003,13 +1003,114 @@ html, body {
  * .overlay-backdrop / .overlay-panel / .mm-overlay rules above. */
 .vxn-mm-row {
   display: grid;
-  grid-template-columns: 28px 24px 1fr 1fr 140px 90px 80px 24px;
+  /* slot | active | source | dest | amount | scaling | scale-by | bin */
+  grid-template-columns: 28px 24px 1fr 1fr 140px 64px 1fr 24px;
   gap: 6px;
   align-items: center;
   padding: 4px 0;
   color: #6f7780;
 }
+/* Column header + group dividers (mm layout tweak). Header shares the row
+ * grid so labels sit over their columns; the slot-num and bin spacers are
+ * empty. Dividers are flex children of the flex-column list, so they span
+ * the full width. */
+.vxn-mm-header {
+  display: grid;
+  grid-template-columns: 28px 24px 1fr 1fr 140px 64px 1fr 24px;
+  gap: 6px;
+  align-items: center;
+  padding: 2px 0;
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ctl-label);
+}
+/* "Active" header spans the slot-num + checkbox columns (grid cols 1-2) so the
+ * word has room and reads to the left of "Source" instead of colliding. */
+.vxn-mm-h-active { grid-column: 1 / 3; text-align: center; }
+/* Plain orange line closing the automatable group (under top 8). */
+.vxn-mm-divider {
+  border-top: 1px solid var(--track-fill);
+  margin: 3px 0;
+}
+/* Labelled orange line opening the automatable group (over top 8): the
+ * "automatable" label sits at the left with the orange rule filling right. */
+.vxn-mm-divider-labeled {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 2px 0 3px;
+  color: var(--track-fill);
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.vxn-mm-divider-labeled::after {
+  content: "";
+  flex: 1 1 auto;
+  border-top: 1px solid var(--track-fill);
+}
 .vxn-mm-row[data-active="1"] { color: var(--text); }
+/* E033 scale-source selector: min-width 0 so the extra column can shrink; the
+ * "—" (None) default renders dimmer so an unscaled slot reads as off. */
+.vxn-mm-scale { min-width: 0; }
+
+/* Custom dropdown (mod-matrix.js buildSelect) — replaces the native <select>
+ * so no NSMenu steals webview first-responder (the first-click-swallow bug on
+ * macOS/WKWebView). Looks like the old selects; the popup is body-attached and
+ * fixed-positioned so the overlay's overflow can't clip it. */
+.vxn-mm-combo {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  box-sizing: border-box;
+  background: #0e0e0e;
+  border: 1px solid #333;
+  border-radius: 2px;
+  color: var(--text);
+  font: inherit;
+  font-size: 11px;
+  padding: 2px 4px;
+  height: 20px;
+  cursor: pointer;
+  outline: none;
+}
+.vxn-mm-combo:hover,
+.vxn-mm-combo:focus,
+.vxn-mm-combo.open { border-color: var(--glyph-active); }
+.vxn-mm-combo-label {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.vxn-mm-combo-caret { flex: 0 0 auto; color: var(--ctl-label); font-size: 8px; }
+.vxn-mm-combo-pop {
+  position: fixed;
+  z-index: 500;
+  max-height: 60vh;
+  overflow-y: auto;
+  /* Keep the popup's own wheel scroll from chaining to the panel behind it
+   * (which would fire a scroll there and dismiss the popup at the limits). */
+  overscroll-behavior: contain;
+  background: #141414;
+  border: 1px solid var(--glyph-active);
+  border-radius: 2px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.55);
+  padding: 2px;
+  font-size: 11px;
+}
+.vxn-mm-combo-opt {
+  padding: 3px 8px;
+  color: var(--text);
+  white-space: nowrap;
+  cursor: pointer;
+  border-radius: 2px;
+}
+.vxn-mm-combo-opt:hover { background: #2a2a2a; }
+.vxn-mm-combo-opt.sel { color: var(--ctl-value); }
 /* Bipolar depth fader (E008 0096): a compact center-origin HORIZONTAL fader in
  * the row's depth column. Center tick marks 0; the shared fill grows signed
  * left/right from it. */
@@ -1065,15 +1166,6 @@ html, body {
   font-variant-numeric: tabular-nums;
 }
 .vxn-mm-active input { cursor: pointer; }
-.vxn-mm-badge {
-  font-size: 9px;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--ctl-label);
-  border: 1px solid #2c3038;
-  border-radius: 3px;
-  padding: 1px 4px;
-}
 .vxn-mm-bin {
   background: transparent;
   border: 1px solid #2c3038;
@@ -4644,17 +4736,121 @@ function wireDrag(
     return out;
   }
 
+  // Custom div-based dropdown — NOT a native <select>. On macOS (WKWebView, the
+  // wry backend used in-DAW) a native <select> opens an NSMenu that takes
+  // first-responder from the webview; when it closes, the FIRST pointerdown
+  // anywhere in the page is eaten restoring mouse tracking — so the first
+  // click/drag on the amount fader right after picking a source/dest/etc. did
+  // nothing. A DOM-only dropdown never spawns an NSMenu, so focus stays in the
+  // webview and the next click lands. Returns an element that mimics enough of
+  // the <select> surface the rest of the panel uses: a settable `.value`
+  // (option id as string), a "change" event on commit, `.title`, `.dataset`,
+  // `.classList`, `.blur()`, and focusability (so the activeElement repaint
+  // guard still works).
   function buildSelect(list, idAttr) {
-    var sel = document.createElement("select");
-    if (idAttr) sel.dataset.field = idAttr;
-    for (var i = 0; i < list.length; i++) {
-      var entry = list[i];
-      var opt = document.createElement("option");
-      opt.value = String(entry.id);
-      opt.textContent = entry.label;
-      sel.appendChild(opt);
+    var btn = document.createElement("div");
+    btn.className = "vxn-mm-combo";
+    btn.tabIndex = 0;
+    if (idAttr) btn.dataset.field = idAttr;
+    var labelSpan = el("span", { class: "vxn-mm-combo-label" }, []);
+    var caret = el("span", { class: "vxn-mm-combo-caret" }, ["▾"]);
+    btn.appendChild(labelSpan);
+    btn.appendChild(caret);
+
+    var curId = list.length ? String(list[0].id) : "0";
+    function labelFor(id) {
+      for (var i = 0; i < list.length; i++) {
+        if (String(list[i].id) === String(id)) return list[i].label;
+      }
+      return "";
     }
-    return sel;
+    function render() { labelSpan.textContent = labelFor(curId); }
+    render();
+
+    Object.defineProperty(btn, "value", {
+      get: function () { return curId; },
+      set: function (v) { curId = String(v); render(); },
+    });
+
+    var popup = null;
+    function closePopup() {
+      if (popup) { popup.remove(); popup = null; }
+      document.removeEventListener("mousedown", onDocDown, true);
+      document.removeEventListener("keydown", onKey, true);
+      window.removeEventListener("scroll", onScroll, true);
+      window.removeEventListener("resize", closePopup, true);
+      btn.classList.remove("open");
+    }
+    function onDocDown(e) {
+      if (popup && !popup.contains(e.target) && !btn.contains(e.target)) closePopup();
+    }
+    // Close only when something OTHER than the popup scrolls (the panel behind
+    // it) — the fixed popup would otherwise detach from its button. Scrolling
+    // the popup's own overflow must NOT close it.
+    function onScroll(e) {
+      if (popup && !popup.contains(e.target)) closePopup();
+    }
+    function onKey(e) {
+      if (e.key === "Escape" || e.keyCode === 27) {
+        // Swallow so the first Escape dismisses only the dropdown, not the
+        // whole overlay (the overlay's own keydown listener also watches Esc).
+        e.preventDefault();
+        e.stopPropagation();
+        closePopup();
+        btn.blur();
+      }
+    }
+    function pick(entry) {
+      var changed = String(entry.id) !== curId;
+      curId = String(entry.id);
+      render();
+      closePopup();
+      btn.blur();
+      if (changed) btn.dispatchEvent(new Event("change"));
+    }
+    function openPopup() {
+      popup = el("div", { class: "vxn-mm-combo-pop" }, []);
+      for (var i = 0; i < list.length; i++) {
+        (function (entry) {
+          var opt = el("div", { class: "vxn-mm-combo-opt" }, [entry.label]);
+          if (String(entry.id) === curId) opt.classList.add("sel");
+          opt.addEventListener("mousedown", function (e) {
+            e.preventDefault(); // keep webview focus; no text-selection
+            pick(entry);
+          });
+          popup.appendChild(opt);
+        })(list[i]);
+      }
+      document.body.appendChild(popup);
+      var r = btn.getBoundingClientRect();
+      popup.style.position = "fixed";
+      popup.style.left = r.left + "px";
+      popup.style.top = r.bottom + "px";
+      popup.style.minWidth = r.width + "px";
+      // Flip above if it would overflow the bottom of the viewport.
+      var pr = popup.getBoundingClientRect();
+      if (pr.bottom > window.innerHeight) {
+        popup.style.top = Math.max(0, r.top - pr.height) + "px";
+      }
+      btn.classList.add("open");
+      document.addEventListener("mousedown", onDocDown, true);
+      document.addEventListener("keydown", onKey, true);
+      window.addEventListener("scroll", onScroll, true);
+      window.addEventListener("resize", closePopup, true);
+    }
+    btn.addEventListener("mousedown", function (e) {
+      e.preventDefault(); // keep focus in the webview
+      btn.focus();
+      if (popup) closePopup();
+      else openPopup();
+    });
+    btn.addEventListener("keydown", function (e) {
+      if ((e.key === "Enter" || e.key === " " || e.keyCode === 13 || e.keyCode === 32) && !popup) {
+        e.preventDefault();
+        openPopup();
+      }
+    });
+    return btn;
   }
 
   // Resolve "mtxN-depth" → CLAP id via the hydrated params model.
@@ -4722,7 +4918,7 @@ function wireDrag(
 
     function dispatchRow(slot, partial) {
       var current = window.__vxn.matrix.rows[slot] || {
-        source: 0, dest: 0, curve: 0, active: false, depth: 0.0,
+        source: 0, dest: 0, curve: 0, active: false, depth: 0.0, scale: 0,
       };
       var next = {
         source: partial.source != null ? partial.source : current.source,
@@ -4730,6 +4926,8 @@ function wireDrag(
         curve: partial.curve != null ? partial.curve : current.curve,
         active: partial.active != null ? partial.active : current.active,
         depth: partial.depth != null ? partial.depth : current.depth,
+        // E033 secondary scale source (VCA on depth). Topology, like curve.
+        scale: partial.scale != null ? partial.scale : (current.scale || 0),
       };
       // Local optimistic update so the UI doesn't flash before the
       // pump's next-tick MatrixSnapshot lands.
@@ -4741,7 +4939,8 @@ function wireDrag(
       var topologyChanged = partial.source != null
         || partial.dest != null
         || partial.curve != null
-        || partial.active != null;
+        || partial.active != null
+        || partial.scale != null;
 
       if (topologyChanged) {
         // Any topology field carries the whole row (depth included).
@@ -4770,6 +4969,11 @@ function wireDrag(
       var sourceSel = buildSelect(sourcesList, "source");
       var destSel = buildSelect(destDisplayOrder(destsList), "dest");
       var curveSel = buildSelect(curvesList, "curve");
+      // E033: secondary scale source. Reuses the full source roster; index 0
+      // ("—") is the None default so an unscaled slot reads as off at a glance.
+      var scaleSel = buildSelect(sourcesList, "scale");
+      scaleSel.classList.add("vxn-mm-scale");
+      scaleSel.title = "Scale depth by (secondary source)";
 
       // Bipolar depth fader (E008 0096): center-tick + signed fill, value-pop
       // readout, double-click numeric entry, shift-drag fine — built on the
@@ -4813,12 +5017,8 @@ function wireDrag(
         dataset: { field: "active" },
       });
 
-      // Slot 1-8 carry the CLAP badge; slot 9-16 emit an empty placeholder
-      // so the bin button below lands in the same grid column on every row.
-      var badge = slot < CLAP_SLOT_COUNT
-        ? el("span", { class: "vxn-mm-badge", title: "CLAP-automatable depth" }, ["automatable"])
-        : el("span", { class: "vxn-mm-badge-spacer" }, []);
-
+      // CLAP-automatable slots (1-8) are grouped under the "automatable"
+      // divider rather than per-row badged — see buildScaffold().
       var bin = el("button", {
         type: "button",
         class: "vxn-mm-bin",
@@ -4841,7 +5041,7 @@ function wireDrag(
           destSel,
           depth,
           curveSel,
-          badge,
+          scaleSel,
           bin,
         ]
       );
@@ -4858,12 +5058,22 @@ function wireDrag(
           partial.active = true;
         }
         dispatchRow(slot, partial);
+        // Drop focus so the next pointerdown on a sibling (e.g. the amount
+        // fader) isn't swallowed dismissing the still-focused native select
+        // (WebView quirk — first click was being eaten).
+        sourceSel.blur();
       });
       destSel.addEventListener("change", function () {
         dispatchRow(slot, { dest: parseInt(destSel.value, 10) | 0 });
+        destSel.blur();
       });
       curveSel.addEventListener("change", function () {
         dispatchRow(slot, { curve: parseInt(curveSel.value, 10) | 0 });
+        curveSel.blur();
+      });
+      scaleSel.addEventListener("change", function () {
+        dispatchRow(slot, { scale: parseInt(scaleSel.value, 10) | 0 });
+        scaleSel.blur();
       });
       active.addEventListener("change", function () {
         dispatchRow(slot, { active: !!active.checked });
@@ -4874,7 +5084,7 @@ function wireDrag(
         // Avoids silently re-binding host automation lanes that point at
         // mtxN-depth CLAP ids on slots 1-8.
         dispatchRow(slot, {
-          source: 0, dest: 0, curve: 0, active: false, depth: 0.0,
+          source: 0, dest: 0, curve: 0, active: false, depth: 0.0, scale: 0,
         });
       });
 
@@ -4885,8 +5095,47 @@ function wireDrag(
         depth: depth,
         depthFader: depthFader,
         curve: curveSel,
+        scale: scaleSel,
         active: active,
       };
+    }
+
+    // Column header + group dividers. Header labels align to the row grid
+    // (slot-num and bin columns are unlabelled spacers). The top-8 slots are
+    // CLAP-automatable: an orange "automatable" line opens the group and a
+    // plain orange line closes it, segregating slots 9-16 below.
+    function buildHeader() {
+      function h(txt, cls) {
+        return el("span", { class: cls ? "vxn-mm-h " + cls : "vxn-mm-h" }, [txt]);
+      }
+      return el("div", { class: "vxn-mm-header" }, [
+        // "Active" spans the slot-num + checkbox columns so the label has room
+        // and sits left of "Source" (a 24px column can't hold the word).
+        h("Active", "vxn-mm-h-active"),
+        h("Source"),
+        h("Destination"),
+        h("Amount"),
+        h("Scaling"),
+        h("Scale By"),
+        el("span", {}, []),
+      ]);
+    }
+
+    function buildDivider(label) {
+      if (label) {
+        return el("div", { class: "vxn-mm-divider-labeled" }, [
+          el("span", { class: "vxn-mm-divider-label" }, [label]),
+        ]);
+      }
+      return el("div", { class: "vxn-mm-divider" }, []);
+    }
+
+    function buildScaffold() {
+      list.appendChild(buildHeader());
+      list.appendChild(buildDivider("automatable"));
+      for (var i = 0; i < CLAP_SLOT_COUNT; i++) ensureRowDom(i);
+      list.appendChild(buildDivider(null));
+      for (var j = CLAP_SLOT_COUNT; j < SLOT_COUNT; j++) ensureRowDom(j);
     }
 
     function ensureRowDom(slot) {
@@ -4908,6 +5157,9 @@ function wireDrag(
       if (document.activeElement !== r.curve) {
         r.curve.value = String((row.curve | 0));
       }
+      if (document.activeElement !== r.scale) {
+        r.scale.value = String((row.scale | 0));
+      }
       // The bipolar fader's `set` no-ops while its own drag-gate is active,
       // so a snapshot echo can't stomp an in-progress depth drag.
       r.depthFader.set(clamp(+row.depth || 0, -1, 1));
@@ -4924,7 +5176,7 @@ function wireDrag(
       var table = window.__vxn.matrix.rows;
       for (var i = 0; i < SLOT_COUNT; i++) {
         var row = (table && table[i]) || {
-          source: 0, dest: 0, curve: 0, active: false, depth: 0.0,
+          source: 0, dest: 0, curve: 0, active: false, depth: 0.0, scale: 0,
         };
         paintRow(i, row);
       }
@@ -4978,6 +5230,7 @@ function wireDrag(
     window.__vxn.panels.modMatrix.onRowChanged = api.onRowChanged;
     window.__vxn.panels.modMatrix.renderAll = api.renderAll;
 
+    buildScaffold();
     renderAll();
 
     return api;
