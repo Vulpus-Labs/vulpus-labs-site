@@ -1,6 +1,30 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>{{ if .IsHome }}{{ site.Title }}{{ else }}{{ printf "%s | %s" .Title site.Title }}{{ end }}</title>
-<meta name="description" content="{{ if .Description }}{{ .Description }}{{ else }}{{ site.Params.description }}{{ end }}">
+<title>{{ if .IsHome }}{{ site.Title }} — {{ site.Params.tagline }}{{ else }}{{ printf "%s | %s" .Title site.Title }}{{ end }}</title>
+{{ $desc := "" }}
+{{ with .Description }}{{ $desc = . }}{{ else }}{{ with .Params.tagline }}{{ $desc = . }}{{ else }}{{ $desc = site.Params.description }}{{ end }}{{ end }}
+<meta name="description" content="{{ $desc }}">
+<meta name="theme-color" content="#08090c">
+<link rel="canonical" href="{{ .Permalink }}">
+<link rel="icon" href="{{ "favicon.ico" | relURL }}">
+
+<meta property="og:type" content="{{ if .IsPage }}article{{ else }}website{{ end }}">
+<meta property="og:site_name" content="{{ site.Title }}">
+<meta property="og:title" content="{{ if .IsHome }}{{ site.Title }}{{ else }}{{ .Title }}{{ end }}">
+<meta property="og:description" content="{{ $desc }}">
+<meta property="og:url" content="{{ .Permalink }}">
+{{ $og := "" }}
+{{ with .Resources.GetMatch "faceplate.png" }}{{ $og = .Permalink }}{{ end }}
+{{ if not $og }}{{ with resources.Get "logo.png" }}{{ $og = .Permalink }}{{ end }}{{ end }}
+{{ with $og }}
+<meta property="og:image" content="{{ . }}">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="{{ . }}">
+{{ end }}
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@500;600;700&display=swap">
+
 {{ partialCached "head/css.html" . }}
 {{ partialCached "head/js.html" . }}

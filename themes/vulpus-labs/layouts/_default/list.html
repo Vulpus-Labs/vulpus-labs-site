@@ -1,77 +1,51 @@
 {{ define "main" }}
-<div class="archive-header">
-  <h1>{{ .Title }}</h1>
-  {{ with .Content }}
-  <div class="archive-description">
-    {{ . }}
-  </div>
-  {{ end }}
+<div class="wrap wrap-prose">
+  <header class="archive-header">
+    <p class="eyebrow">{{ if eq .Type "posts" }}Blog{{ else }}{{ .Type | humanize }}{{ end }}</p>
+    <h1>{{ .Title }}</h1>
+    {{ with .Content }}<div class="archive-description">{{ . }}</div>{{ end }}
+  </header>
 </div>
 
-<div class="archive-posts">
+<div class="wrap wrap-prose">
   {{ $pages := .Pages }}
   {{ if eq .Type "posts" }}
+    {{ with ($pages.GroupByDate "2006 January").Reverse }}
+    <nav class="archive-jump" aria-label="Archive by month">
+      {{ range . }}
+      <a href="#{{ .Key | urlize }}">{{ .Key }} <span class="archive-count">{{ len .Pages }}</span></a>
+      {{ end }}
+    </nav>
+    {{ end }}
     {{ range ($pages.GroupByDate "2006 January").Reverse }}
-    <div class="archive-month" id="{{ .Key | urlize }}">
+    <section class="archive-month" id="{{ .Key | urlize }}">
       <h2 class="month-heading">{{ .Key }}</h2>
       {{ range .Pages }}
       <article class="post-card">
-        <div class="post-meta">
-          <time class="post-date" datetime="{{ .Date.Format "2006-01-02" }}">
-            📅 {{ .Date.Format "January 2, 2006" }}
-          </time>
-          {{ with .Params.readingTime }}
-          <span class="reading-time">⏱️ {{ . }} min read</span>
-          {{ end }}
-        </div>
-
-        <h3 class="post-title">
-          <a href="{{ .RelPermalink }}">{{ .Title }}</a>
-        </h3>
-
-        {{ with .Summary }}
-        <div class="post-summary">
-          {{ . }}
-        </div>
-        {{ end }}
-
-        <a href="{{ .RelPermalink }}" class="read-more">
-          Read more →
-        </a>
+        <p class="post-meta">
+          <time datetime="{{ .Date.Format "2006-01-02" }}">{{ .Date.Format "2 January 2006" }}</time>
+          {{ with .Params.readingTime }}<span>{{ . }} min read</span>{{ end }}
+        </p>
+        <h3 class="post-title"><a href="{{ .RelPermalink }}">{{ .Title }}</a></h3>
+        {{ with .Summary }}<p class="post-summary">{{ . | plainify | chomp | truncate 220 }}</p>{{ end }}
+        <a href="{{ .RelPermalink }}" class="read-more">Read more →</a>
       </article>
       {{ end }}
-    </div>
+    </section>
     {{ end }}
   {{ else }}
     {{ range $pages }}
     <article class="post-card">
-      <div class="post-meta">
-        <time class="post-date" datetime="{{ .Date.Format "2006-01-02" }}">
-          📅 {{ .Date.Format "January 2, 2006" }}
-        </time>
-        {{ with .Params.readingTime }}
-        <span class="reading-time">⏱️ {{ . }} min read</span>
-        {{ end }}
-      </div>
-
-      <h2 class="post-title">
-        <a href="{{ .RelPermalink }}">{{ .Title }}</a>
-      </h2>
-
-      {{ with .Summary }}
-      <div class="post-summary">
-        {{ . }}
-      </div>
-      {{ end }}
-
-      <a href="{{ .RelPermalink }}" class="read-more">
-        Read more →
-      </a>
+      <p class="post-meta">
+        <time datetime="{{ .Date.Format "2006-01-02" }}">{{ .Date.Format "2 January 2006" }}</time>
+        {{ with .Params.readingTime }}<span>{{ . }} min read</span>{{ end }}
+      </p>
+      <h2 class="post-title"><a href="{{ .RelPermalink }}">{{ .Title }}</a></h2>
+      {{ with .Summary }}<p class="post-summary">{{ . | plainify | chomp | truncate 220 }}</p>{{ end }}
+      <a href="{{ .RelPermalink }}" class="read-more">Read more →</a>
     </article>
     {{ else }}
-    <div class="post-card">
-      <p class="post-summary">No posts found in this archive.</p>
-    </div>
+    <p class="post-summary">Nothing here yet.</p>
     {{ end }}
   {{ end }}
 </div>

@@ -1,48 +1,131 @@
 {{ define "main" }}
-<div class="home-intro">
-  {{ with site.Params.description }}
-  <p class="site-description">{{ . }}</p>
-  {{ end }}
-</div>
+{{ $products := where site.RegularPages "Type" "products" }}
+{{ $vxn := (where $products "Params.range" "vxn").ByWeight }}
+{{ $other := (where $products "Params.range" "!=" "vxn").ByWeight }}
+{{ $lead := "" }}
+{{ range $vxn }}{{ if and (not $lead) .Params.webdemo }}{{ $lead = . }}{{ end }}{{ end }}
 
-<div class="recent-posts">
-  {{ $posts := where site.RegularPages "Type" "posts" }}
-  {{ range first 3 $posts }}
-  <article class="post-card">
-    <div class="post-meta">
-      <time class="post-date" datetime="{{ .Date.Format "2006-01-02" }}">
-        📅 {{ .Date.Format "January 2, 2006" }}
-      </time>
-      {{ with .Params.readingTime }}
-      <span class="reading-time">⏱️ {{ . }} min read</span>
+<section class="hero">
+  <div class="hero-grid" aria-hidden="true"></div>
+  <svg class="hero-wave" viewBox="0 0 1600 200" preserveAspectRatio="none" aria-hidden="true">
+    <path class="w1" d="M0,120 C25,60 75,60 100,120 S175,180 200,120 S275,60 300,120 S375,180 400,120 S475,60 500,120 S575,180 600,120 S675,60 700,120 S775,180 800,120 S875,60 900,120 S975,180 1000,120 S1075,60 1100,120 S1175,180 1200,120 S1275,60 1300,120 S1375,180 1400,120 S1475,60 1500,120 S1575,180 1600,120 S1675,60 1700,120 S1775,180 1800,120"/>
+    <path class="w2" d="M0,150 C40,100 80,200 120,150 S200,100 240,150 S320,200 360,150 S440,100 480,150 S560,200 600,150 S680,100 720,150 S800,200 840,150 S920,100 960,150 S1040,200 1080,150 S1160,100 1200,150 S1280,200 1320,150 S1400,100 1440,150 S1520,200 1560,150 S1640,100 1680,150 S1760,200 1800,150"/>
+    <path class="w3" d="M0,90 C50,30 100,150 150,90 S250,30 300,90 S400,150 450,90 S550,30 600,90 S700,150 750,90 S850,30 900,90 S1000,150 1050,90 S1150,30 1200,90 S1300,150 1350,90 S1450,30 1500,90 S1600,150 1650,90 S1750,30 1800,90"/>
+  </svg>
+
+  <div class="wrap hero-inner">
+   <div class="hero-copy">
+    <h1 class="hero-title">Plugin synths you can <em>play right now</em>.</h1>
+    <p class="hero-lede">
+      Two synthesizers, free, as CLAP and VST3 plugins for macOS and Windows.
+      Both run in this browser tab as well — no install, no account, no email
+      address. Play first, download later.
+    </p>
+    <div class="hero-actions">
+      {{ with $lead }}
+      <a class="btn btn-primary btn-lg" href="{{ .Params.webdemo | relURL }}"><span class="play-glyph"></span>Play {{ .Title }} in your browser</a>
+      {{ end }}
+      <a class="btn btn-secondary btn-lg" href="#range">See the range</a>
+    </div>
+    <div class="chip-row">
+      <span class="chip">CLAP</span>
+      <span class="chip">VST3</span>
+      <span class="chip">macOS</span>
+      <span class="chip">Windows</span>
+      <span class="chip">MIT-licensed</span>
+      <span class="chip chip-accent">Free, no account</span>
+    </div>
+   </div>
+
+   {{ $stack := slice }}
+   {{ range $p := $vxn }}{{ with $p.Resources.GetMatch "faceplate.png" }}{{ $stack = $stack | append (dict "img" . "page" $p) }}{{ end }}{{ end }}
+   {{ if ge (len $stack) 1 }}
+   <div class="hero-stack" aria-hidden="true">
+     {{ range $i, $s := first 2 $stack }}
+     {{ $crop := ($s.img).Resize "900x webp q80" }}
+     <div class="hero-stack-item hero-stack-{{ $i }}"{{ with ($s.page).Params.accent }} style="--accent: {{ . }}"{{ end }}>
+       <div class="shot">
+         <img class="shot-img hero-stack-img" src="{{ $crop.RelPermalink }}" width="{{ $crop.Width }}" height="{{ $crop.Height }}" alt="" loading="eager" decoding="async">
+       </div>
+     </div>
+     {{ end }}
+   </div>
+   {{ end }}
+  </div>
+</section>
+
+<section class="section" id="range">
+  <div class="wrap">
+    <div class="section-head">
+      <div>
+        <p class="eyebrow">The VXN range</p>
+        <h2 class="section-heading">Two synths, two engines</h2>
+        <p class="section-sub">
+          One analogue, one FM. Neither is a preset player: they are built to
+          be pulled apart, and both of them start in your browser.
+        </p>
+      </div>
+      <a class="btn btn-ghost btn-sm" href="{{ "/products/" | relURL }}">All products</a>
+    </div>
+  </div>
+
+  <div class="wrap">
+    {{ range $i, $p := $vxn }}
+    {{ partial "product-showcase.html" (dict "page" $p "heading" "h3" "eager" (eq $i 0)) }}
+    {{ end }}
+  </div>
+</section>
+
+{{ with $other }}
+<section class="section section-ruled">
+  <div class="wrap">
+    <p class="eyebrow">Also from Vulpus Labs</p>
+    <h2 class="section-heading">Build your own instead</h2>
+    <div class="card-grid" style="margin-top:2rem">
+      {{ range . }}
+      <article class="card">
+        <div class="showcase-titlerow">
+          <h3 class="card-title"><a href="{{ .RelPermalink }}">{{ .Title }}</a></h3>
+          {{ with .Params.status }}<span class="status-badge status-{{ . | urlize }}">{{ . }}</span>{{ end }}
+        </div>
+        {{ with .Params.tagline }}<p class="card-text">{{ . }}</p>{{ end }}
+        <div class="card-foot"><a class="read-more" href="{{ .RelPermalink }}">View product →</a></div>
+      </article>
+      {{ end }}
+      <article class="card">
+        <h3 class="card-title">
+          <a href="https://store.cherryaudio.com/manufacturers/vulpus-labs" target="_blank" rel="noopener noreferrer">Voltage Modular modules<span class="external-marker" aria-hidden="true">↗</span></a>
+        </h3>
+        <p class="card-text">Oscillators, filters and effects for Cherry Audio's Voltage Modular.</p>
+        <div class="card-foot"><a class="read-more" href="https://store.cherryaudio.com/manufacturers/vulpus-labs" target="_blank" rel="noopener noreferrer">Visit the store →</a></div>
+      </article>
+    </div>
+  </div>
+</section>
+{{ end }}
+
+{{ $posts := where site.RegularPages "Type" "posts" }}
+{{ with $posts }}
+<section class="section section-ruled">
+  <div class="wrap">
+    <div class="section-head">
+      <div>
+        <p class="eyebrow">From the blog</p>
+        <h2 class="section-heading">How it is built</h2>
+        <p class="section-sub">DSP notes, write-ups and the odd dead end.</p>
+      </div>
+      <a class="btn btn-ghost btn-sm" href="{{ "/posts/" | relURL }}">All posts</a>
+    </div>
+    <div class="card-grid">
+      {{ range first 3 . }}
+      <article class="card">
+        <p class="post-meta"><time datetime="{{ .Date.Format "2006-01-02" }}">{{ .Date.Format "2 Jan 2006" }}</time>{{ with .Params.readingTime }}<span>{{ . }} min</span>{{ end }}</p>
+        <h3 class="card-title"><a href="{{ .RelPermalink }}">{{ .Title }}</a></h3>
+        <div class="card-foot"><a class="read-more" href="{{ .RelPermalink }}">Read →</a></div>
+      </article>
       {{ end }}
     </div>
-
-    <h2 class="post-title">
-      <a href="{{ .RelPermalink }}">{{ .Title }}</a>
-    </h2>
-
-    {{ with .Summary }}
-    <div class="post-summary">
-      {{ . }}
-    </div>
-    {{ end }}
-
-    <a href="{{ .RelPermalink }}" class="read-more">
-      Read more →
-    </a>
-  </article>
-  {{ else }}
-  <div class="post-card">
-    <p class="post-summary">No posts yet. Create your first post with:</p>
-    <pre><code>hugo new content posts/my-first-post.md</code></pre>
   </div>
-  {{ end }}
-</div>
-
-{{ if gt (len $posts) 3 }}
-<div class="view-all">
-  <a href="{{ "/posts/" | relURL }}" class="read-more">View all posts →</a>
-</div>
+</section>
 {{ end }}
 {{ end }}

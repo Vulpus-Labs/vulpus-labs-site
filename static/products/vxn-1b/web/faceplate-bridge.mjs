@@ -8,71 +8,14 @@
 //         window.__vxn.applyPresetCorpus(snap)   on a corpus change
 //
 // Natively wry provides the first and `evaluate_script` the second. This module
-// provides both: an `ipc` shim that routes each opcode to the controller wasm
-// and a pump that turns controller ticks + telemetry frames into one
-// `applyViewEvents` call per animation frame.
+// provides both: an `ipc` shim routing each opcode to the controller wasm, and a
+// pump turning controller ticks + telemetry frames into one `applyViewEvents`
+// call per animation frame.
 //
-// # Where each opcode goes, and why
-//
-// The model and the engine are separate wasms with separate linear memories —
-// natively one `SharedParams` is visible to both threads and this split does not
-// exist at all. One rule decides where an opcode goes: **does the opcode have a presence in the model?**
-//
-//   - IT DOES → post it to the controller and nothing else. It reaches the
-//     engine on the next pump, as a diff: param VALUES through the store SAB
-//     mirror, non-param state (key mode, split point, LFO 2 link, matrix
-//     topology) through the echo resend below. That covers params, gestures,
-//     presets, folders and copy_layer.
-//   - IT DOES NOT → push it straight onto the ring. Only the scope tap and the
-//     tempo qualify: pure audio-thread view state with no CLAP id and no model
-//     presence, so there is no echo to carry them and routing them through the
-//     model would put view state into the patch.
-//
-// An earlier cut of this file ALSO pushed key/matrix ops onto the ring at route
-// time, "because the engine needs them too". That double-pushed every UI
-// topology edit — once from the router, once from the resend — and bought
-// nothing: the extra push is one tick earlier, which is the same tick a param
-// edit waits for anyway (params reach the SAB on the pump, not on the click).
-// Gestures stop at the controller for a different reason: the engine treats
-// them as a no-op ("controller / host-echo concern, they never reach
-// rendering" — codec.rs), and there is no host here to bracket edits for.
-//
-// # The load / restore / copy problem
-//
-// A preset load, a state restore and `copy_layer` all rewrite matrix topology
-// and the keyboard record inside the CONTROLLER, so the ring never hears about
-// them and the engine would keep playing the old routing. Rather than
-// enumerating those three causes, the pump uses the controller's own echoes as
-// the trigger: 0290 emits a matrix / key record exactly when either changes,
-// from any cause, so the bridge diffs each against what it last pushed and
-// resends the fields that moved. Load, restore, copy and any future cause are
-// covered by one mechanism.
-//
-// # Ordering (see also audio-host.mjs step 1 vs step 3)
-//
-// Slot DEPTH is a CLAP param (store SAB); slot TOPOLOGY is a ring event. A load
-// moves both, and nothing makes the two writes atomic against a block boundary,
-// so a block can see one and not the other.
-//
-// The worklet reads the store FIRST and the ring SECOND within one quantum
-// (`audio-host.mjs` process(): applyStoreToEngine at (1), drainRawInto at (2)).
-// Given that, pushing the ring BEFORE mirroring the store makes the harmful tear
-// impossible: for a block to see new depths with old topology it would need the
-// mirror (second) to land before the store read AND the ring push (first) to
-// land after the ring read — i.e. the first write after the second. The only
-// reachable tear is new-topology-with-old-depth, which is the right route at a
-// stale amount rather than a stale route at a new amount.
-//
-// **If audio-host.mjs ever reads the ring before the store, this inverts and
-// nothing here will fail — it will just occasionally click on preset load.**
-// The two orderings are load-bearing as a pair.
-//
-// This is a small effect and not a browser-only one: the native plugin has the
-// same window (`SharedParams::restore_from_bytes` writes params, then topology,
-// then the reload flag, while the audio thread folds params every block), and
-// the click-prone destinations are smoothed anyway (`mod_smoothing.rs`, 0208).
-// Getting the order right is free, so it is done; nothing more elaborate is
-// warranted.
+// Routing rule: an opcode with a presence in the MODEL goes to the controller
+// and nowhere else; one with none goes straight onto the ring (`routeOpcode`
+// argues each case). `pump`'s step (1)/(2) ordering is load-bearing — read the
+// comment there before touching it.
 
 import {
   LAYER_L1,
@@ -85,20 +28,34 @@ import {
 } from "./event-codec.mjs";
 import { WebController } from "./controller.mjs";
 
-/// Scope-tap wire codes (match `vxn1b_engine::ScopeTap::code()`), keyed by the
-/// strings the page sends.
-const SCOPE_TAP = { off: 0, upper: 1, lower: 2 };
+// ── The custom-op vocabulary ───────────────────────────────────────────────
+//
+// The JS half of `vxn1b_engine::vocab`, and the only copy of it outside Rust:
+// the page sends NAMES, these tables turn them into the ordinals the wire and
+// the controller carry. `vocab-agreement.test.mjs` asserts all four against the
+// built controller wasm, because every failure here is silent — a renamed name
+// makes the lookup `undefined` and `routeOpcode` drops the op (the knob moves,
+// the sound does not), and a reordered ordinal is worse: the op lands, on the
+// wrong field.
 
-/// Layer names the page uses → wire layer index.
-const LAYER = { upper: LAYER_L1, lower: LAYER_L2 };
+/// Scope tap names → `vxn1b_engine::ScopeTap::code()`.
+export const SCOPE_TAP = { off: 0, upper: 1, lower: 2 };
 
-/// Matrix field names the page uses → wire field index.
-const MATRIX_FIELD = {
+/// Layer names → wire layer index (`Layer`'s discriminant).
+export const LAYER = { upper: LAYER_L1, lower: LAYER_L2 };
+
+/// Matrix field names → wire field index.
+export const MATRIX_FIELD = {
   source: MATRIX_FIELD_SOURCE,
   dest: MATRIX_FIELD_DEST,
   curve: MATRIX_FIELD_CURVE,
   scale: MATRIX_FIELD_SCALE_SRC,
 };
+
+/// Split-point slider range and default, mirrored from `vxn1b_engine::vocab`
+/// (`SPLIT_POINT_MIN` / `MAX` / `DEFAULT_SPLIT_POINT`). The page stamps the
+/// input's `min`/`max`/`value` from here rather than hard-coding them in HTML.
+export const SPLIT_POINT = { min: 12, max: 96, default: 60 };
 
 /// Opcodes the page posts that have no controller handler, by design.
 /// `set_edit_layer` is handled in-page — the faceplate rebinds its cells
@@ -110,7 +67,7 @@ const KNOWN_UNHANDLED = new Set(["set_edit_layer"]);
 /// Meter frame layout — `MeterTap` order, from vxn-core-utils::meter. The page
 /// wants the named shape `vxn1b_ui_web::serialise_custom_payload` produces, so
 /// the flat telemetry region is mapped here rather than in the page.
-function meterEvent(frame) {
+export function meterEvent(frame) {
   return {
     kind: "meters",
     l1: [frame[0], frame[1]],
@@ -126,7 +83,7 @@ function meterEvent(frame) {
 /// Scope frame → the page's shape. Rounded to 3 dp exactly as the native
 /// serialiser does: the canvas is ~120 px tall, so finer is invisible, and a
 /// 384-sample frame at 30 Hz is worth not tripling in length.
-function scopeEvent(frame) {
+export function scopeEvent(frame) {
   const s = new Array(frame.length);
   for (let i = 0; i < frame.length; i++) {
     s[i] = Math.round(Math.min(2, Math.max(-2, frame[i])) * 1000) / 1000;
@@ -134,139 +91,170 @@ function scopeEvent(frame) {
   return { kind: "scope", s };
 }
 
+/// One entry per opcode the page can post, keyed by its `op` string. Each
+/// handler takes the whole routing context as one record and returns whether it
+/// handled the op, so adding an opcode is adding one entry — the shape
+/// `routeOpcode` used to spell out as a 13-arm switch.
+///
+/// `ctx` is `{ctrl, coord, msg, hooks}`: the controller wasm, the ring
+/// coordinator (used by exactly two opcodes), the decoded message, and the
+/// page-side hooks.
+///
+/// Null-prototyped so a bare lookup cannot reach an inherited member: an `op`
+/// of `"constructor"` has to miss, not hand back a callable.
+const OPCODE_HANDLERS = {
+  __proto__: null,
+
+  // ---- controller only: params + gestures ------------------------------
+  set_param: ({ ctrl, msg }) => {
+    ctrl.setParam(msg.id, msg.plain);
+    return true;
+  },
+  set_param_norm: ({ ctrl, msg }) => {
+    ctrl.setParamNorm(msg.id, msg.norm);
+    return true;
+  },
+  begin_gesture: ({ ctrl, msg }) => {
+    ctrl.beginGesture(msg.id);
+    return true;
+  },
+  end_gesture: ({ ctrl, msg }) => {
+    ctrl.endGesture(msg.id);
+    return true;
+  },
+  ready: ({ ctrl }) => {
+    ctrl.editorReady();
+    return true;
+  },
+
+  // ---- controller only: non-param state --------------------------------
+  //
+  // These have no CLAP id, so the store mirror cannot carry them — but they
+  // DO live in the model, so the pump's echo resend puts them on the ring on
+  // the next frame. Pushing here as well would double every edit.
+  set_key_mode: ({ ctrl, msg }) => {
+    ctrl.setKeyMode(msg.mode | 0);
+    return true;
+  },
+  set_split_point: ({ ctrl, msg }) => {
+    ctrl.setSplitPoint(msg.note | 0);
+    return true;
+  },
+  set_lfo2_link: ({ ctrl, msg }) => {
+    ctrl.setLfo2Link(!!msg.on);
+    return true;
+  },
+  set_matrix: ({ ctrl, msg }) => {
+    const layer = LAYER[msg.layer];
+    const field = MATRIX_FIELD[msg.field];
+    if (layer === undefined || field === undefined) return false;
+    ctrl.setMatrix(layer, msg.slot | 0, field, msg.value | 0);
+    return true;
+  },
+
+  // ---- controller only: bulk patch ops ---------------------------------
+  copy_layer: ({ ctrl, msg }) => {
+    const from = LAYER[msg.from];
+    const to = LAYER[msg.to];
+    if (from === undefined || to === undefined) return false;
+    // Params reach the engine through the mirror; topology through the echo
+    // resend in the pump. Nothing to push here.
+    ctrl.copyLayer(from, to);
+    return true;
+  },
+  reset_layer: ({ ctrl, msg }) => {
+    const layer = LAYER[msg.layer];
+    if (layer === undefined) return false;
+    // Same route as copy_layer: params reach the engine through the mirror,
+    // topology through the echo resend in the pump.
+    ctrl.resetLayer(layer);
+    return true;
+  },
+
+  // ---- controller only: presets + folders ------------------------------
+  load_factory: ({ ctrl, msg }) => {
+    ctrl.loadFactory(msg.index | 0);
+    return true;
+  },
+  load_user: ({ ctrl, msg }) => {
+    ctrl.loadUser(msg.path);
+    return true;
+  },
+  step_preset: ({ ctrl, msg }) => {
+    ctrl.stepPreset(msg.delta | 0);
+    return true;
+  },
+  save_preset: ({ ctrl, msg }) => {
+    ctrl.savePreset(msg.name, msg.folder ?? null);
+    return true;
+  },
+  rename_preset: ({ ctrl, msg }) => {
+    ctrl.renamePreset(msg.path, msg.new_name);
+    return true;
+  },
+  delete_preset: ({ ctrl, msg }) => {
+    ctrl.deletePreset(msg.path);
+    return true;
+  },
+  move_preset: ({ ctrl, msg }) => {
+    ctrl.movePreset(msg.path, msg.dest_folder ?? null);
+    return true;
+  },
+  new_folder: ({ ctrl, msg }) => {
+    ctrl.newFolder(msg.suggested);
+    return true;
+  },
+  rename_folder: ({ ctrl, msg }) => {
+    ctrl.renameFolder(msg.old_name, msg.new_name);
+    return true;
+  },
+  delete_folder: ({ ctrl, msg }) => {
+    ctrl.deleteFolder(msg.name);
+    return true;
+  },
+
+  // ---- ring only -------------------------------------------------------
+  set_tempo: ({ coord, msg }) => {
+    // No host transport in a browser, so BPM comes from a UI control
+    // (E045 delta 5). Ring-only: `sync.rs` resolves subdivisions against it
+    // on the audio side, and it is not part of the patch — a preset must not
+    // carry the tempo you happened to be at.
+    const bpm = Number(msg.bpm);
+    if (!Number.isFinite(bpm) || bpm <= 0) return false;
+    if (coord) coord.setTempo(bpm);
+    return true;
+  },
+  set_scope_source: ({ coord, msg }) => {
+    const tap = SCOPE_TAP[msg.source];
+    if (tap === undefined) return false;
+    if (coord) coord.setScopeTap(tap);
+    return true;
+  },
+
+  // ---- neither: answered in-page ---------------------------------------
+  request_text_input: ({ msg, hooks }) => {
+    // The native opcode exists because the plugin editor needs an NSWindow
+    // outside the host's event monitor. A page can prompt itself, so this
+    // never reaches the controller — whose OpenTextInput / TextInputResult
+    // variants 0290 deliberately does not pack.
+    if (hooks.promptText) hooks.promptText(msg.id, msg.title ?? "", msg.initial ?? "");
+    return true;
+  },
+};
+
 /// Route one page opcode. Pure with respect to its arguments — no DOM, no
 /// timers — so the destination table is testable with fakes. `coord` is used
 /// for exactly one opcode (the scope tap); everything else with a model
 /// presence reaches the engine through the pump's diffs.
 ///
 /// Returns `true` if the opcode was handled. An unknown or non-string `op` is
-/// dropped and returns `false` rather than being guessed at: VXN1b's page never
-/// posts a numeric `op` (vxn-2's does, for its operator tab, which is why its
-/// router has to sniff the type first).
+/// dropped and returns `false` rather than being guessed at — VXN1b's page only
+/// ever posts a string `op`.
 export function routeOpcode(ctrl, coord, msg, hooks = {}) {
   if (!msg || typeof msg.op !== "string") return false;
-  switch (msg.op) {
-    // ---- controller only: params + gestures ------------------------------
-    case "set_param":
-      ctrl.setParam(msg.id, msg.plain);
-      return true;
-    case "set_param_norm":
-      ctrl.setParamNorm(msg.id, msg.norm);
-      return true;
-    case "begin_gesture":
-      ctrl.beginGesture(msg.id);
-      return true;
-    case "end_gesture":
-      ctrl.endGesture(msg.id);
-      return true;
-    case "ready":
-      ctrl.editorReady();
-      return true;
-
-    // ---- controller only: non-param state --------------------------------
-    //
-    // These have no CLAP id, so the store mirror cannot carry them — but they
-    // DO live in the model, so the pump's echo resend puts them on the ring on
-    // the next frame. Pushing here as well would double every edit.
-    case "set_key_mode":
-      ctrl.setKeyMode(msg.mode | 0);
-      return true;
-    case "set_split_point":
-      ctrl.setSplitPoint(msg.note | 0);
-      return true;
-    case "set_lfo2_link":
-      ctrl.setLfo2Link(!!msg.on);
-      return true;
-    case "set_matrix": {
-      const layer = LAYER[msg.layer];
-      const field = MATRIX_FIELD[msg.field];
-      if (layer === undefined || field === undefined) return false;
-      ctrl.setMatrix(layer, msg.slot | 0, field, msg.value | 0);
-      return true;
-    }
-
-    // ---- controller only: bulk patch ops ---------------------------------
-    case "copy_layer": {
-      const from = LAYER[msg.from];
-      const to = LAYER[msg.to];
-      if (from === undefined || to === undefined) return false;
-      // Params reach the engine through the mirror; topology through the echo
-      // resend in the pump. Nothing to push here.
-      ctrl.copyLayer(from, to);
-      return true;
-    }
-
-    case "reset_layer": {
-      const layer = LAYER[msg.layer];
-      if (layer === undefined) return false;
-      // Same route as copy_layer: params reach the engine through the mirror,
-      // topology through the echo resend in the pump.
-      ctrl.resetLayer(layer);
-      return true;
-    }
-
-    // ---- controller only: presets + folders ------------------------------
-    case "load_factory":
-      ctrl.loadFactory(msg.index | 0);
-      return true;
-    case "load_user":
-      ctrl.loadUser(msg.path);
-      return true;
-    case "step_preset":
-      ctrl.stepPreset(msg.delta | 0);
-      return true;
-    case "save_preset":
-      ctrl.savePreset(msg.name, msg.folder ?? null);
-      return true;
-    case "rename_preset":
-      ctrl.renamePreset(msg.path, msg.new_name);
-      return true;
-    case "delete_preset":
-      ctrl.deletePreset(msg.path);
-      return true;
-    case "move_preset":
-      ctrl.movePreset(msg.path, msg.dest_folder ?? null);
-      return true;
-    case "new_folder":
-      ctrl.newFolder(msg.suggested);
-      return true;
-    case "rename_folder":
-      ctrl.renameFolder(msg.old_name, msg.new_name);
-      return true;
-    case "delete_folder":
-      ctrl.deleteFolder(msg.name);
-      return true;
-
-    // ---- ring only -------------------------------------------------------
-    case "set_tempo": {
-      // No host transport in a browser, so BPM comes from a UI control
-      // (E045 delta 5). Ring-only: `sync.rs` resolves subdivisions against it
-      // on the audio side, and it is not part of the patch — a preset must not
-      // carry the tempo you happened to be at.
-      const bpm = Number(msg.bpm);
-      if (!Number.isFinite(bpm) || bpm <= 0) return false;
-      if (coord) coord.setTempo(bpm);
-      return true;
-    }
-    case "set_scope_source": {
-      const tap = SCOPE_TAP[msg.source];
-      if (tap === undefined) return false;
-      if (coord) coord.setScopeTap(tap);
-      return true;
-    }
-
-    // ---- neither: answered in-page ---------------------------------------
-    case "request_text_input":
-      // The native opcode exists because the plugin editor needs an NSWindow
-      // outside the host's event monitor. A page can prompt itself, so this
-      // never reaches the controller — whose OpenTextInput / TextInputResult
-      // variants 0290 deliberately does not pack.
-      if (hooks.promptText) hooks.promptText(msg.id, msg.title ?? "", msg.initial ?? "");
-      return true;
-
-    default:
-      return false;
-  }
+  const handler = OPCODE_HANDLERS[msg.op];
+  if (!handler) return false;
+  return handler({ ctrl, coord, msg, hooks });
 }
 
 /// Drives the controller wasm and the page: one pump per animation frame.
@@ -353,7 +341,8 @@ export class FaceplateBridge {
   /// Tell the engine everything again: re-push the whole topology and key
   /// record, and rewrite every param slot.
   ///
-  /// Called when the worklet reports ready. Two things make it necessary, both
+  /// Called by the gesture gate once `host.start()` resolves — which is BEFORE
+  /// the worklet posts `ready`, not after. Two things make it necessary, both
   /// consequences of the faceplate being live before the audio gesture:
   /// `WebHost.start()` seeds the store with the ENGINE's defaults (clobbering
   /// anything edited while waiting), and ring pushes made before audio existed
@@ -531,8 +520,32 @@ export class FaceplateBridge {
   pump() {
     const events = this.controller.tick();
 
-    // (1) Engine resync from the echoes, BEFORE the mirror — see the ordering
-    // note at the top of this file. Topology first, depths second.
+    // (1) Engine resync from the echoes, BEFORE the mirror at (2). Topology
+    // first, depths second — and that order is LOAD-BEARING.
+    //
+    // Slot DEPTH is a CLAP param (store SAB); slot TOPOLOGY is a ring event. A
+    // load moves both, and nothing makes the two writes atomic against a block
+    // boundary, so a block can see one and not the other.
+    //
+    // The worklet reads the store FIRST and the ring SECOND within one quantum
+    // (`audio-host.mjs` process(): applyStoreToEngine at (1), drainRawInto at
+    // (2)). Given that, pushing the ring BEFORE mirroring the store makes the
+    // harmful tear impossible: for a block to see new depths with old topology
+    // it would need the mirror (second) to land before the store read AND the
+    // ring push (first) to land after the ring read — i.e. the first write
+    // after the second. The only reachable tear is new-topology-with-old-depth,
+    // which is the right route at a stale amount rather than a stale route at a
+    // new amount.
+    //
+    // **If audio-host.mjs ever reads the ring before the store, this inverts
+    // and nothing here will fail — it will just occasionally click on preset
+    // load.** The two orderings are load-bearing as a pair.
+    //
+    // This is a small effect and not a browser-only one: the native plugin has
+    // the same window (`SharedParams::restore_from_bytes` writes params, then
+    // topology, then the reload flag, while the audio thread folds params every
+    // block), and the click-prone destinations are smoothed anyway
+    // (`mod_smoothing.rs`, 0208).
     let corpusDirty = false;
     // Whether anything in the PATCH moved. Computed here, before the telemetry
     // frames are appended below, so a sounding note never reads as an edit.

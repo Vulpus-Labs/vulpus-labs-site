@@ -1,48 +1,183 @@
 {{ define "main" }}
-<article class="product">
-  <header class="post-header product-header">
-    <div class="product-title-row">
-      <h1 class="post-title">{{ .Title }}</h1>
-      {{ with .Params.status }}
-      <span class="status-badge status-{{ . | urlize }}">{{ . }}</span>
-      {{ end }}
-    </div>
-    {{ with .Params.tagline }}
-    <p class="product-tagline">{{ . }}</p>
-    {{ end }}
-    <div class="product-meta">
-      {{ with .Params.version }}<span class="product-version">v{{ . }}</span>{{ end }}
-      {{ with .Params.license }}<span class="product-license">{{ . }}</span>{{ end }}
-    </div>
-  </header>
+{{ $page := . }}
+{{ $repo := or .Params.releaseRepo site.Params.releaseRepo }}
+{{ $release := .Params.release }}
+{{ $demo := default "" .Params.webdemo }}
+{{ $shot := .Resources.GetMatch "faceplate.png" }}
+{{ $extraShots := slice }}
+{{ range .Resources.Match "faceplate-*.png" }}{{ $extraShots = $extraShots | append . }}{{ end }}
 
-  <div class="post-content product-content">
-    {{ .Content }}
+{{/* Resolve audio examples up front so the section stays hidden until files land.
+     An entry names either a `file` glob matched against the page bundle, or a
+     `url` served from elsewhere on the site. */}}
+{{ $examples := slice }}
+{{ range $a := .Params.audio }}
+  {{ with $a.url }}
+    {{ $examples = $examples | append (dict "src" ($a.url | relURL) "title" $a.title "caption" $a.caption) }}
+  {{ else }}
+    {{ with $page.Resources.GetMatch $a.file }}
+      {{ $examples = $examples | append (dict "src" .RelPermalink "title" $a.title "caption" $a.caption) }}
+    {{ end }}
+  {{ end }}
+{{ end }}
+
+<article class="product"{{ with .Params.accent }} style="--accent: {{ . }}"{{ end }}>
+  <div class="wrap">
+    <section class="product-hero">
+      <div class="product-hero-body">
+        <p class="eyebrow">{{ if eq .Params.range "vxn" }}The VXN range{{ else }}Vulpus Labs{{ end }}</p>
+        <div class="showcase-titlerow">
+          <h1 class="product-hero-title">{{ .Title }}</h1>
+          {{ with .Params.status }}<span class="status-badge status-{{ . | urlize }}">{{ . }}</span>{{ end }}
+        </div>
+        {{ with .Params.tagline }}<p class="product-tagline">{{ . }}</p>{{ end }}
+        <div class="chip-row">
+          {{ with .Params.version }}<span class="chip">v{{ . }}</span>{{ end }}
+          {{ range .Params.formats }}<span class="chip">{{ . }}</span>{{ end }}
+          {{ with .Params.license }}<span class="chip">{{ . }}</span>{{ end }}
+          {{ if $demo }}<span class="chip chip-accent">Runs in the browser</span>{{ end }}
+        </div>
+        <div class="product-hero-actions">
+          {{ with $demo }}
+          <a class="btn btn-primary btn-lg" href="{{ . | relURL }}"><span class="play-glyph"></span>Play it in your browser</a>
+          {{ end }}
+          {{ if .Params.downloads }}
+          <a class="btn btn-secondary btn-lg" href="#downloads">Download ↓</a>
+          {{ end }}
+        </div>
+        {{ if $demo }}
+        <p class="also-tagline">No install, no account. Works in Chrome, Edge and Firefox — play it from
+          your computer keyboard, or plug in a MIDI controller.</p>
+        {{ end }}
+      </div>
+
+      <div class="product-hero-media">
+        {{ with $shot }}
+          {{ partial "shot.html" (dict "img" . "label" (printf "%s — faceplate" $page.Title) "href" (cond (ne $demo "") ($demo | relURL) "") "cta" "Play in your browser" "eager" true) }}
+        {{ end }}
+      </div>
+    </section>
   </div>
 
-  {{ with .Params.downloads }}
-  <section class="downloads">
-    <h2>Downloads</h2>
-    <p class="downloads-note">
-      All binaries are unsigned. On <strong>macOS</strong>, clear the quarantine
-      flag after unpacking: <code>xattr -dr com.apple.quarantine &lt;file&gt;</code>.
-      On <strong>Windows</strong>, SmartScreen may warn — choose
-      <em>More info → Run anyway</em>.
-    </p>
-    <div class="download-grid">
-      {{ range . }}
-      <a class="download-card" href="{{ printf "/downloads/%s" .file | relURL }}" download>
-        <span class="download-platform">{{ .platform }}</span>
-        <span class="download-format">{{ .format }}</span>
-        {{ with .arch }}<span class="download-arch">{{ . }}</span>{{ end }}
-        <span class="download-action">Download&nbsp;↓</span>
-      </a>
+  {{ with $extraShots }}
+  <section class="section-tight">
+    <div class="wrap">
+      <div class="product-gallery">
+        {{ range . }}
+        <figure>
+          {{ $lab := .Name | strings.TrimPrefix "faceplate-" | strings.TrimSuffix ".png" | replaceRE "-" " " | humanize }}
+          {{ partial "shot.html" (dict "img" . "label" (printf "%s — %s" $page.Title $lab)) }}
+        </figure>
+        {{ end }}
+      </div>
+    </div>
+  </section>
+  {{ end }}
+
+  {{ with $examples }}
+  <section class="section-tight">
+    <div class="wrap">
+      <p class="eyebrow">Sound examples</p>
+      <h2 class="section-heading" style="margin-bottom:1.25rem">Hear it</h2>
+      <div class="audio-list">
+        {{ range . }}
+        <figure class="audio-example">
+          {{ with .title }}<figcaption class="audio-title">{{ . }}</figcaption>{{ end }}
+          <audio controls preload="none" src="{{ .src }}"></audio>
+          {{ with .caption }}<figcaption class="audio-caption">{{ $page.RenderString . }}</figcaption>{{ end }}
+        </figure>
+        {{ end }}
+      </div>
+    </div>
+  </section>
+  {{ end }}
+
+  <section class="section-tight">
+    <div class="wrap wrap-prose">
+      <div class="post-content product-content">
+        {{ .Content }}
+      </div>
+    </div>
+  </section>
+
+  {{ with $demo }}
+  <section class="section-tight">
+    <div class="wrap">
+      <div class="demo-panel">
+        <div>
+          <h2>Still deciding?</h2>
+          <p>The whole synth runs in the tab. Every control, every preset, the
+            same sound the plugin makes — and nothing to uninstall afterwards.</p>
+        </div>
+        <a class="btn btn-primary" href="{{ . | relURL }}"><span class="play-glyph"></span>Launch the web synth</a>
+      </div>
+    </div>
+  </section>
+  {{ end }}
+
+  <section class="section" id="downloads">
+    <div class="wrap">
+      <p class="eyebrow">Downloads</p>
+      <h2 class="section-heading" style="margin-bottom:1rem">Get the plugin</h2>
+      {{ with .Params.downloads }}
+      {{ with $release }}
+      <p class="downloads-release">
+        Latest release:
+        <a href="https://github.com/{{ $repo }}/releases/tag/{{ . }}" target="_blank" rel="noopener noreferrer">{{ . }}</a>
+        on GitHub.
+      </p>
+      {{ end }}
+      <div class="download-grid">
+        {{ range . }}
+        {{ $href := .url }}
+        {{ with .asset }}{{ $href = printf "https://github.com/%s/releases/download/%s/%s" $repo $release . }}{{ end }}
+        <a class="download-card" href="{{ $href }}">
+          <span class="download-os">{{ partial "os-icon.html" .platform }}{{ .platform }}</span>
+          <span class="download-format">{{ .format }}</span>
+          {{ with .arch }}<span class="download-arch">{{ . }}</span>{{ end }}
+          <span class="download-action">Download ↓</span>
+        </a>
+        {{ end }}
+      </div>
+      <p class="downloads-note">
+        All binaries are unsigned. On <strong>macOS</strong>, clear the quarantine
+        flag after unpacking: <code>xattr -dr com.apple.quarantine &lt;file&gt;</code>.
+        On <strong>Windows</strong>, SmartScreen may warn — choose
+        <em>More info → Run anyway</em>.
+      </p>
+      {{ else }}
+      <p class="downloads-note">No download is available for this product yet.</p>
+      {{ end }}
+
+      {{ with .Params.extras }}
+      <h3 class="downloads-extras-heading">Also in this release</h3>
+      <ul class="download-extras">
+        {{ range . }}
+        {{ $href := .url }}
+        {{ with .asset }}{{ $href = printf "https://github.com/%s/releases/download/%s/%s" $repo $release . }}{{ end }}
+        <li><a href="{{ $href }}" target="_blank" rel="noopener noreferrer">{{ .label }}</a></li>
+        {{ end }}
+      </ul>
       {{ end }}
     </div>
   </section>
-  {{ else }}
-  <section class="downloads">
-    <p class="downloads-note">No download is available for this product yet.</p>
+
+  {{ $siblings := where (where site.RegularPages "Type" "products") "Permalink" "!=" .Permalink }}
+  {{ with $siblings.ByWeight }}
+  <section class="section section-ruled">
+    <div class="wrap">
+      <p class="eyebrow">Also from Vulpus Labs</p>
+      <h2 class="section-heading" style="margin-bottom:1.5rem">Something else to play</h2>
+      <ul class="also-list">
+        {{ range . }}
+        <li class="also-item">
+          <a class="also-title" href="{{ .RelPermalink }}">{{ .Title }}</a>
+          {{ with .Params.tagline }}<span class="also-tagline">{{ . }}</span>{{ end }}
+          {{ with .Params.webdemo }}<a class="chip chip-accent" href="{{ . | relURL }}" style="text-decoration:none">Play in browser</a>{{ end }}
+        </li>
+        {{ end }}
+      </ul>
+    </div>
   </section>
   {{ end }}
 </article>

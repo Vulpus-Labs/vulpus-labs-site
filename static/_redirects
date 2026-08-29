@@ -1,0 +1,4 @@
+# VXN1 is retired; VXN1b supersedes it.
+/products/vxn-1/web/*  /products/vxn-1b/web/:splat  301
+/products/vxn-1/*      /products/vxn-1b/            301
+/products/vxn-1        /products/vxn-1b/            301

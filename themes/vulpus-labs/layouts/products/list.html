@@ -1,30 +1,48 @@
 {{ define "main" }}
-<div class="archive-header">
-  <h1>{{ .Title }}</h1>
-  {{ with .Content }}
-  <div class="archive-description">{{ . }}</div>
-  {{ end }}
+{{ $vxn := (where .Pages "Params.range" "vxn").ByWeight }}
+{{ $other := (where .Pages "Params.range" "!=" "vxn").ByWeight }}
+
+<div class="wrap">
+  <header class="archive-header">
+    <p class="eyebrow">Products</p>
+    <h1>{{ .Title }}</h1>
+    {{ with .Content }}<div class="archive-description">{{ . }}</div>{{ end }}
+  </header>
 </div>
 
-<div class="product-cards">
-  {{ range .Pages }}
-  <article class="post-card product-card">
-    <div class="product-title-row">
-      <h2 class="post-title">
-        <a href="{{ .RelPermalink }}">{{ .Title }}</a>
-      </h2>
-      {{ with .Params.status }}
-      <span class="status-badge status-{{ . | urlize }}">{{ . }}</span>
+{{ with $vxn }}
+<section class="section-tight">
+  <div class="wrap">
+    <p class="eyebrow">The VXN range</p>
+    {{ range $i, $p := . }}
+    {{ partial "product-showcase.html" (dict "page" $p "heading" "h2" "eager" (eq $i 0)) }}
+    {{ end }}
+  </div>
+</section>
+{{ end }}
+
+{{ with $other }}
+<section class="section section-ruled">
+  <div class="wrap">
+    <p class="eyebrow">Also from Vulpus Labs</p>
+    <h2 class="section-heading" style="margin-bottom:2rem">Build your own instead</h2>
+    <div class="card-grid">
+      {{ range . }}
+      <article class="card"{{ with .Params.accent }} style="--accent: {{ . }}"{{ end }}>
+        <div class="showcase-titlerow">
+          <h3 class="card-title"><a href="{{ .RelPermalink }}">{{ .Title }}</a></h3>
+          {{ with .Params.status }}<span class="status-badge status-{{ . | urlize }}">{{ . }}</span>{{ end }}
+        </div>
+        {{ with .Params.tagline }}<p class="card-text">{{ . }}</p>{{ end }}
+        <div class="chip-row">
+          {{ with .Params.version }}<span class="chip">v{{ . }}</span>{{ end }}
+          {{ range .Params.formats }}<span class="chip">{{ . }}</span>{{ end }}
+        </div>
+        <div class="card-foot"><a class="read-more" href="{{ .RelPermalink }}">View product →</a></div>
+      </article>
       {{ end }}
     </div>
-    {{ with .Params.tagline }}
-    <p class="post-summary">{{ . }}</p>
-    {{ end }}
-    <div class="product-meta">
-      {{ with .Params.version }}<span class="product-version">v{{ . }}</span>{{ end }}
-    </div>
-    <a href="{{ .RelPermalink }}" class="read-more">View product →</a>
-  </article>
-  {{ end }}
-</div>
+  </div>
+</section>
+{{ end }}
 {{ end }}

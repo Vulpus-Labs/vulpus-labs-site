@@ -16,13 +16,12 @@
 //                  domain state (key mode, split point, LFO 2 link, matrix
 //                  topology, scope tap, tempo)
 //   param SAB      every CLAP-id param, block-granular, latest-value-wins,
-//                  plus the audio->main readback the diff pump reads
+//                  main -> worklet only (0297 removed the readback region)
 //   telemetry SAB  meter and scope frames, worklet -> main
 //   the port       lifecycle only: ready, trap, reset, destroy
 //
-// vxn-1 sends its key mode and split point over the PORT, because its wire
-// predates having anywhere better to put them. VXN1b's ride the ring with
-// everything else.
+// The port carries no domain state. Key mode and split point in particular ride
+// the ring, so they are applied at a sample offset like everything else.
 //
 // ===========================================================================
 // SCOPE: THIS IS A DEMO (ticket 0297)
@@ -36,8 +35,8 @@
 //
 // What IS here is not plugin-grade robustness but browser fact: the gesture gate
 // (autoplay policy — without it there is no sound at all) and suspend/resume
-// mirroring with a voice flush (tabs get backgrounded constantly, and coming
-// back with stuck notes is not exotic, it is Tuesday).
+// mirroring with a voice flush (a backgrounded tab that comes back with stuck
+// notes is the common case, not an edge one).
 
 import { EventRing, createRingSAB, DEFAULT_CAPACITY } from "./event-ring.mjs";
 import { ParamStore, createParamSAB, TOTAL_PARAMS } from "./param-store.mjs";
@@ -259,14 +258,16 @@ export class WebHost {
         this._onCpu(m.load, m.peak);
         break;
       case "trap":
-        // The runner already caught it and kicked async recovery; this only
-        // observes. `ready` flips back true on the next `ready` after re-init.
+        // The runner caught it, went silent and STAYED DOWN — 0297. There is no
+        // re-instantiate and no second `ready`, so `ready` is cleared here for
+        // good and the only recovery is a page reload.
         //
-        // IMPORTANT: the rebuilt engine has lost every piece of non-automatable
-        // state (key mode, split point, LFO 2 link, matrix topology, scope tap,
-        // tempo). Params restore themselves from the store; that state does not,
-        // and the controller has to re-broadcast it. The faceplate bridge (0290)
-        // is what listens for this.
+        // That is deliberate: a rebuilt engine would reload its params from the
+        // store for free, but not key mode, split point, LFO 2 link, matrix
+        // topology, scope tap or tempo — none of which live there. It would
+        // resume playing a different patch with nothing on screen saying so.
+        // `onTrap` therefore reports rather than repairs (the faceplate bridge
+        // logs it and tells the user to reload).
         this.ready = false;
         this.trapCount = m.count != null ? m.count : this.trapCount + 1;
         this._onTrap(m.message, this.trapCount);
@@ -356,65 +357,67 @@ export class WebHost {
   // loop. All return the ring's block-writer boolean (false iff it is
   // momentarily full — the caller can retry; in practice it is sized so this
   // never fires). `offset` is the sample offset within the next quantum for
-  // sample-accurate placement; 0 means "as soon as possible".
+  // sample-accurate placement; 0 means "as soon as possible". It sits in the
+  // same position here, on `EventRing.push*` and on the codec's `ev.*` builders:
+  // after the event's own fields, defaulted (0312).
   //
   // Notes carry a MIDI channel because VXN1b is MPE-aware; a non-MPE caller
   // simply omits it and gets channel 0.
 
   noteOn(note, velocity = 1, offset = 0, channel = 0) {
-    return this.ring.pushNoteOn(offset, note, velocity, channel);
+    return this.ring.pushNoteOn(note, velocity, offset, channel);
   }
   noteOff(note, offset = 0, channel = 0) {
-    return this.ring.pushNoteOff(offset, note, channel);
+    return this.ring.pushNoteOff(note, offset, channel);
   }
   polyPressure(note, value, offset = 0, channel = 0) {
-    return this.ring.pushPolyPressure(offset, note, value, channel);
+    return this.ring.pushPolyPressure(note, value, offset, channel);
   }
   channelPressure(value, offset = 0, channel = 0) {
-    return this.ring.pushChannelPressure(offset, value, channel);
+    return this.ring.pushChannelPressure(value, offset, channel);
   }
   pitchBend(value, offset = 0) {
-    return this.ring.pushPitchBend(offset, value);
+    return this.ring.pushPitchBend(value, offset);
   }
   modWheel(value, offset = 0) {
-    return this.ring.pushModWheel(offset, value);
+    return this.ring.pushModWheel(value, offset);
   }
 
   /// Sample-accurate param automation. A plain edit should go through
   /// `setParam` (the store) instead — this is for automation that has to land at
   /// a specific frame.
   paramAt(id, plain, offset = 0) {
-    return this.ring.pushParam(offset, id, plain);
+    return this.ring.pushParam(id, plain, offset);
   }
   gestureBegin(id, offset = 0) {
-    return this.ring.pushGestureBegin(offset, id);
+    return this.ring.pushGestureBegin(id, offset);
   }
   gestureEnd(id, offset = 0) {
-    return this.ring.pushGestureEnd(offset, id);
+    return this.ring.pushGestureEnd(id, offset);
   }
 
   // Non-automatable domain state. None of it has a CLAP id, so none of it
   // occupies a store slot; it all rides the ring.
   setKeyMode(mode, offset = 0) {
-    return this.ring.pushKeyMode(offset, mode & 0xff);
+    return this.ring.pushKeyMode(mode & 0xff, offset);
   }
   setSplitPoint(note, offset = 0) {
-    return this.ring.pushSplitPoint(offset, note & 0xff);
+    return this.ring.pushSplitPoint(note & 0xff, offset);
   }
   setLfo2Link(on, offset = 0) {
-    return this.ring.pushLfo2Link(offset, on);
+    return this.ring.pushLfo2Link(on, offset);
   }
   /// One matrix slot's topology field. Slot DEPTH is a CLAP param and goes
   /// through `setParam` instead — that split is what lets a slot be automated
   /// without its routing changing underneath the automation.
   setMatrix(layer, slot, field, value, offset = 0) {
-    return this.ring.pushMatrixEdit(offset, layer, slot, field, value);
+    return this.ring.pushMatrixEdit(layer, slot, field, value, offset);
   }
   setScopeTap(tap, offset = 0) {
-    return this.ring.pushScopeTap(offset, tap & 0xff);
+    return this.ring.pushScopeTap(tap & 0xff, offset);
   }
   setTempo(bpm, offset = 0) {
-    return this.ring.pushTempo(offset, bpm);
+    return this.ring.pushTempo(bpm, offset);
   }
 
   // ---- param store --------------------------------------------------------

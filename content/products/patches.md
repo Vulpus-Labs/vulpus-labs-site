@@ -4,29 +4,47 @@ date = 2026-06-07
 type = "products"
 weight = 10
 tagline = "A modular audio instrument with a text-based patch language"
+accent = "#3fd8b8"
 status = "shipping"
-version = "0.7.2"
+version = "0.7.3-rc.2"
+release = "v0.7.3-rc.2"
+releaseRepo = "Vulpus-Labs/patches"
+formats = ["CLAP", "Standalone"]
 license = "See LICENSE"
+
 [[downloads]]
 platform = "macOS"
-format = "CLAP plugin"
-arch = "Universal"
-file = "patches/patches-clap-macos-0.7.2.zip"
+format = "CLAP plugin + player"
+arch = "Apple Silicon"
+asset = "patches-0.7.3-rc.2-macos-aarch64.tar.gz"
+
 [[downloads]]
 platform = "macOS"
-format = "Standalone player"
-arch = "Universal"
-file = "patches/patches-player-macos-0.7.2.zip"
+format = "CLAP plugin + player"
+arch = "Intel"
+asset = "patches-0.7.3-rc.2-macos-x86_64.tar.gz"
+
 [[downloads]]
 platform = "Windows"
-format = "CLAP plugin"
+format = "CLAP plugin + player"
 arch = "x64"
-file = "patches/patches-clap-windows-0.7.2.zip"
-[[downloads]]
-platform = "Windows"
-format = "Standalone player"
-arch = "x64"
-file = "patches/patches-player-windows-0.7.2.zip"
+asset = "patches-0.7.3-rc.2-windows-x86_64.zip"
+
+[[extras]]
+label = "VS Code extension — macOS (Apple Silicon)"
+asset = "patches-vscode-darwin-arm64-0.0.1.vsix"
+
+[[extras]]
+label = "VS Code extension — macOS (Intel)"
+asset = "patches-vscode-darwin-x64-0.0.1.vsix"
+
+[[extras]]
+label = "VS Code extension — Windows x64"
+asset = "patches-vscode-win32-x64-0.0.1.vsix"
+
+[[extras]]
+label = "VS Code extension — Linux x64"
+asset = "patches-vscode-linux-x64-0.0.1.vsix"
 +++
 
 **Patches** describes a graph of oscillators, filters, envelopes, sequencers,
@@ -72,7 +90,8 @@ patch {
 The full manual covers the DSL, the module library, and OS-specific install
 steps: <https://vulpus-labs.github.io/patches/>.
 
-The VS Code extension is distributed through GitHub releases:
+The VS Code extension ships alongside each release — download the `.vsix` for
+your platform above and install it with:
 
 ```sh
 code --install-extension patches-vscode-<platform>-<arch>-<ver>.vsix

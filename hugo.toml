@@ -1,44 +1,41 @@
 baseURL = 'https://vulpuslabs.com/'
-languageCode = 'en-us'
+locale = 'en-us'
 title = 'Vulpus Labs'
 theme = 'vulpus-labs'
 
 [menus]
 [[menus.main]]
-name = 'Home'
-pageRef = '/'
-weight = 10
-
-[[menus.main]]
 name = 'Products'
 pageRef = '/products'
-weight = 20
+weight = 10
 
 [[menus.main]]
 name = 'Blog'
 pageRef = '/posts'
+weight = 20
+
+[[menus.main]]
+name = 'Repos'
+url = 'https://github.com/Vulpus-Labs'
 weight = 30
+[menus.main.params]
+external = true
+
+[[menus.main]]
+name = 'Store'
+url = 'https://store.cherryaudio.com/manufacturers/vulpus-labs'
+weight = 40
+[menus.main.params]
+external = true
+
+[[menus.main]]
+name = 'Contact'
+pageRef = '/contact'
+weight = 60
 
 [params]
-description = 'Independent software development'
+description = 'Free CLAP and VST3 synthesizers built in Rust — playable in your browser before you download.'
+tagline = 'Synthesizers and modular audio tools, built in Rust.'
 
-# Sidebar resource links (customize these URLs)
-[[params.links]]
-title = 'Documentation'
-url = 'https://github.com/Vulpus-Labs/vulpus-labs-vm/tree/main/module-docs'
-icon = '📚'
-
-[[params.links]]
-title = 'GitHub Repositories'
-url = 'https://github.com/Vulpus-Labs'
-icon = '💻'
-
-[[params.links]]
-title = 'Products'
-url = '/products/'
-icon = '🚀'
-
-[[params.links]]
-title = 'Cherry Audio Store'
-url = 'https://store.cherryaudio.com/manufacturers/vulpus-labs'
-icon = '🛒'
+# Repository that hosts the VXN release binaries.
+releaseRepo = 'Vulpus-Labs/vxn-1'

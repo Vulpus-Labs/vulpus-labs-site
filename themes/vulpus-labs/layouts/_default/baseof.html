@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="{{ site.Language.LanguageCode }}" dir="{{ or site.Language.LanguageDirection `ltr` }}">
+<html lang="{{ site.Language.Locale }}" dir="{{ or site.Language.Direction `ltr` }}">
 <head>
   {{ partial "head.html" . }}
 </head>
@@ -10,13 +10,7 @@
     </header>
 
     <div class="content-wrapper">
-      <main class="main-content">
-        {{ block "main" . }}{{ end }}
-      </main>
-
-      <aside class="sidebar">
-        {{ partial "sidebar.html" . }}
-      </aside>
+      {{ block "main" . }}{{ end }}
     </div>
 
     <footer class="site-footer">

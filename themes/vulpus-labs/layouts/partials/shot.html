@@ -1,0 +1,17 @@
+{{/*  Framed faceplate screenshot.
+      dict: img (image resource), label, href (optional), cta (optional), eager (optional) */}}
+{{ $img := .img }}
+{{ $href := default "" .href }}
+{{ $w1 := $img.Resize "760x webp q80" }}
+{{ $w2 := $img.Resize "1440x webp q80" }}
+{{ if $href }}<a class="shot" href="{{ $href }}">{{ else }}<div class="shot">{{ end }}
+  <img class="shot-img"
+       src="{{ $w2.RelPermalink }}"
+       srcset="{{ $w1.RelPermalink }} 760w, {{ $w2.RelPermalink }} 1440w"
+       sizes="(max-width: 900px) 100vw, 620px"
+       width="{{ $w2.Width }}" height="{{ $w2.Height }}"
+       loading="{{ cond (default false .eager) "eager" "lazy" }}"
+       decoding="async"
+       alt="{{ .label }}">
+  {{ with .cta }}<span class="shot-cta"><span class="play-glyph"></span>{{ . }}</span>{{ end }}
+{{ if $href }}</a>{{ else }}</div>{{ end }}

@@ -1,16 +1,15 @@
 <div class="site-header-inner">
   <div class="site-branding">
     <a href="{{ "/" | relURL }}" class="site-logo-link" aria-label="Home">
-      {{ $logo := resources.Get "logo.png" }}
-      {{ if $logo }}
-        <img src="{{ $logo.RelPermalink }}" alt="Vulpus Labs Logo" class="site-logo-img">
+      {{ with resources.Get "logo.png" }}
+        <img src="{{ .RelPermalink }}" alt="" class="site-logo-img" width="38" height="38">
       {{ else }}
         <div class="site-logo-placeholder">🦊</div>
       {{ end }}
     </a>
     <div class="site-title-wrapper">
       <a href="{{ "/" | relURL }}" class="site-title">{{ site.Title }}</a>
-      <div class="site-tagline">know many things</div>
+      <span class="site-tagline">know many things</span>
     </div>
   </div>
 
@@ -18,10 +17,12 @@
   <nav class="site-nav" aria-label="Primary">
     <ul>
       {{ range . }}
+      {{ $external := .Params.external }}
       <li>
         <a href="{{ .URL }}"
-          {{- if $.IsMenuCurrent .Menu . }} class="active" aria-current="page"
-          {{- else if $.HasMenuCurrent .Menu . }} class="active" aria-current="true"{{ end }}>{{ .Name }}</a>
+          {{- if $external }} class="external" target="_blank" rel="noopener noreferrer"
+          {{- else if $.IsMenuCurrent .Menu . }} class="active" aria-current="page"
+          {{- else if $.HasMenuCurrent .Menu . }} class="active" aria-current="true"{{ end }}>{{ .Name }}{{ if $external }}<span class="external-marker" aria-hidden="true">↗</span>{{ end }}</a>
       </li>
       {{ end }}
     </ul>

@@ -15,19 +15,21 @@
 // `faceplate-bridge.mjs`'s job, so the two destinations stay legible in one
 // place rather than being buried in half the setters here.
 //
-// Ported from vxn-2's `controller.mjs`, with three shape differences:
-//   - 6 record tags, not 8 (no operator tab, no KS/EG curves; VXN1b adds the
-//     matrix snapshot and the keyboard record).
-//   - No factory asset. 0290 embeds the bank, so the corpus JSON is readable
-//     immediately after `vxnc_new()` — there is nothing to fetch and no
-//     `loadFactoryAsset`.
-//   - Two-layer param space, so `patchCount()` is exposed for the id split.
+// Two things that catch people out:
+//   - There is no factory asset to fetch. 0290 embeds the bank, so the corpus
+//     JSON is readable immediately after `vxnc_new()`.
+//   - `patchCount` is stored but never used to compute an id — the page gets
+//     `__PATCH_COUNT__` baked in from Rust. It is read so the boot handshake
+//     can check it against the JS mirror (0312).
 
-import { TOTAL_PARAMS } from "./param-store.mjs";
+import { PATCH_COUNT, GLOBAL_COUNT, TOTAL_PARAMS } from "./param-store.mjs";
 
 const DEFAULT_CONTROLLER_WASM_URL = "./vxn1b_web_controller.wasm";
 
-// ViewEvent record tags — MUST match vxn1b-web-controller/src/lib.rs (VE_*).
+// ViewEvent record tags, PresetSource discriminants and journal tags — the JS
+// half of `vxn1b-web-controller`'s `VE_*` / `PRESET_SRC_*` / `JW_*`. Asserted
+// against the built wasm by `vocab-agreement.test.mjs` (0316); this used to be
+// a comment saying they "MUST match", which is not a mechanism.
 export const VE_PARAM_CHANGED = 1;
 export const VE_MATRIX_SNAPSHOT = 2;
 export const VE_KEY_STATE = 3;
@@ -35,12 +37,10 @@ export const VE_PRESET_LOADED = 4;
 export const VE_CORPUS_CHANGED = 5;
 export const VE_STATUS = 6;
 
-// PresetSource discriminants inside VE_PRESET_LOADED (match lib.rs).
-const PRESET_SRC_NONE = 0;
-const PRESET_SRC_FACTORY = 1;
-const PRESET_SRC_USER = 2;
+export const PRESET_SRC_NONE = 0;
+export const PRESET_SRC_FACTORY = 1;
+export const PRESET_SRC_USER = 2;
 
-// Persistence-journal wire tags (match lib.rs JW_*).
 export const JW_PUT = 1;
 export const JW_DELETE = 2;
 export const JW_PUT_FOLDER = 3;
@@ -49,11 +49,63 @@ export const JW_DELETE_FOLDER = 4;
 // Sentinel length for an absent optional opcode argument (folder = root).
 export const ARG_NONE = 0xffffffff;
 
-// Matrix geometry, mirrored from the Rust packer. Kept local rather than
-// imported from event-codec.mjs so a decode bug can't be masked by the same
-// constant being wrong in both places — `wasm-agreement` pins the real ones.
-const LAYERS = 2;
-const SLOTS_PER_LAYER = 16;
+// Matrix geometry, from the one JS declaration of it. It used to be re-declared
+// here on an anti-masking argument, which is a real argument only when something
+// compares the two copies — nothing did (0316). Both are now the same constants,
+// and `vocab-agreement.test.mjs` pins them to `vxn1b_engine::vocab`.
+import { LAYER_COUNT as LAYERS, MATRIX_SLOTS as SLOTS_PER_LAYER } from "./event-codec.mjs";
+
+/// A little-endian read cursor over a region of the wasm heap. Both decoders
+/// below walk the same wire vocabulary — LE u32 / u8 / f32, length-prefixed
+/// UTF-8, length-prefixed blobs — and each used to re-create that vocabulary as
+/// a stack of closures over a shared `off`. One class, two callers.
+///
+/// Holds `buffer` + `ptr` as well as the `DataView` because the string and blob
+/// reads need a `Uint8Array` over the same window, which a `DataView` cannot
+/// hand out.
+class Cursor {
+  constructor(buffer, ptr, len) {
+    this.buffer = buffer;
+    this.ptr = ptr;
+    this.view = new DataView(buffer, ptr, len);
+    this.dec = new TextDecoder();
+    this.off = 0;
+  }
+
+  u32() {
+    const v = this.view.getUint32(this.off, true);
+    this.off += 4;
+    return v;
+  }
+
+  f32() {
+    const v = this.view.getFloat32(this.off, true);
+    this.off += 4;
+    return v;
+  }
+
+  u8() {
+    return this.view.getUint8(this.off++);
+  }
+
+  /// Length-prefixed UTF-8. Decoded immediately, so the transient view can't
+  /// outlive the heap it points into.
+  str() {
+    const n = this.u32();
+    const s = this.dec.decode(new Uint8Array(this.buffer, this.ptr + this.off, n));
+    this.off += n;
+    return s;
+  }
+
+  /// Length-prefixed blob. Copied, not a view: the next opcode's `_stage` can
+  /// resize (and detach) the wasm heap this points into.
+  bytes() {
+    const n = this.u32();
+    const b = new Uint8Array(this.buffer, this.ptr + this.off, n).slice();
+    this.off += n;
+    return b;
+  }
+}
 
 /// Decode the packed ViewEvent drain into event objects whose shape matches
 /// what the page's dispatcher consumes — the SAME JSON the native serialisers
@@ -65,39 +117,19 @@ const SLOTS_PER_LAYER = 16;
 /// actually produced: drift then fails in CI rather than silently at runtime.
 export function decodeViewEvents(buffer, ptr, len) {
   if (!len) return [];
-  const view = new DataView(buffer, ptr, len);
-  const dec = new TextDecoder();
-  let off = 0;
-  const u32 = () => {
-    const v = view.getUint32(off, true);
-    off += 4;
-    return v;
-  };
-  const f32 = () => {
-    const v = view.getFloat32(off, true);
-    off += 4;
-    return v;
-  };
-  const u8 = () => view.getUint8(off++);
-  const str = () => {
-    const n = u32();
-    const bytes = new Uint8Array(buffer, ptr + off, n);
-    off += n;
-    return dec.decode(bytes);
-  };
-
-  const count = u32();
+  const c = new Cursor(buffer, ptr, len);
+  const count = c.u32();
   const out = [];
   for (let i = 0; i < count; i++) {
-    const tag = u32();
+    const tag = c.u32();
     switch (tag) {
       case VE_PARAM_CHANGED:
         out.push({
           kind: "param_changed",
-          id: u32(),
-          plain: f32(),
-          norm: f32(),
-          display: str(),
+          id: c.u32(),
+          plain: c.f32(),
+          norm: c.f32(),
+          display: c.str(),
         });
         break;
       case VE_MATRIX_SNAPSHOT: {
@@ -108,7 +140,7 @@ export function decodeViewEvents(buffer, ptr, len) {
         for (let l = 0; l < LAYERS; l++) {
           const layer = [];
           for (let s = 0; s < SLOTS_PER_LAYER; s++) {
-            layer.push({ source: u8(), dest: u8(), curve: u8(), scale: u8() });
+            layer.push({ source: c.u8(), dest: c.u8(), curve: c.u8(), scale: c.u8() });
           }
           slots.push(layer);
         }
@@ -117,27 +149,27 @@ export function decodeViewEvents(buffer, ptr, len) {
       }
       case VE_KEY_STATE:
         // `link` is a bool in the native echo; the wire carries 0/1.
-        out.push({ kind: "keys", mode: u8(), split: u8(), link: u8() !== 0 });
+        out.push({ kind: "keys", mode: c.u8(), split: c.u8(), link: c.u8() !== 0 });
         break;
       case VE_PRESET_LOADED: {
-        const name = str();
-        const srcKind = u32();
+        const name = c.str();
+        const srcKind = c.u32();
         let source = null;
-        if (srcKind === PRESET_SRC_FACTORY) source = { kind: "factory", index: u32() };
-        else if (srcKind === PRESET_SRC_USER) source = { kind: "user", path: str() };
-        const nWarn = u32();
+        if (srcKind === PRESET_SRC_FACTORY) source = { kind: "factory", index: c.u32() };
+        else if (srcKind === PRESET_SRC_USER) source = { kind: "user", path: c.str() };
+        const nWarn = c.u32();
         const warnings = [];
-        for (let w = 0; w < nWarn; w++) warnings.push(str());
+        for (let w = 0; w < nWarn; w++) warnings.push(c.str());
         out.push({ kind: "preset_loaded", name, source, warnings });
         break;
       }
       case VE_CORPUS_CHANGED: {
-        const has = u32();
-        out.push({ kind: "preset_corpus_changed", follow: has === 1 ? str() : null });
+        const has = c.u32();
+        out.push({ kind: "preset_corpus_changed", follow: has === 1 ? c.str() : null });
         break;
       }
       case VE_STATUS:
-        out.push({ kind: "status", line: str() });
+        out.push({ kind: "status", line: c.str() });
         break;
       default:
         // A tag we don't know means the Rust packer moved and this file did
@@ -153,47 +185,26 @@ export function decodeViewEvents(buffer, ptr, len) {
 /// shape the shared `preset-persistence.mjs` (0284) applies to IndexedDB.
 export function decodeJournal(buffer, ptr, len) {
   if (!len) return [];
-  const view = new DataView(buffer, ptr, len);
-  const dec = new TextDecoder();
-  let off = 0;
-  const u32 = () => {
-    const v = view.getUint32(off, true);
-    off += 4;
-    return v;
-  };
-  const str = () => {
-    const n = u32();
-    const s = dec.decode(new Uint8Array(buffer, ptr + off, n));
-    off += n;
-    return s;
-  };
-  const bytes = () => {
-    const n = u32();
-    // Copied, not a view: the next opcode's `_stage` can resize (and detach)
-    // the wasm heap this points into.
-    const b = new Uint8Array(buffer, ptr + off, n).slice();
-    off += n;
-    return b;
-  };
-  const count = u32();
+  const c = new Cursor(buffer, ptr, len);
+  const count = c.u32();
   const ops = [];
   for (let i = 0; i < count; i++) {
-    const tag = u32();
+    const tag = c.u32();
     switch (tag) {
       // The `kind` strings and the key/name split are `preset-storage.mjs`'s
       // contract, not ours: `applyWrites` switches on them, and folder ops carry
       // `name` where preset ops carry `key`.
       case JW_PUT:
-        ops.push({ kind: "put", key: str(), bytes: bytes() });
+        ops.push({ kind: "put", key: c.str(), bytes: c.bytes() });
         break;
       case JW_DELETE:
-        ops.push({ kind: "delete", key: str() });
+        ops.push({ kind: "delete", key: c.str() });
         break;
       case JW_PUT_FOLDER:
-        ops.push({ kind: "put_folder", name: str() });
+        ops.push({ kind: "put_folder", name: c.str() });
         break;
       case JW_DELETE_FOLDER:
-        ops.push({ kind: "delete_folder", name: str() });
+        ops.push({ kind: "delete_folder", name: c.str() });
         break;
       default:
         throw new Error(`controller: unknown journal tag ${tag}`);
@@ -231,17 +242,28 @@ export class WebController {
     const { instance } = await WebAssembly.instantiate(bytes, {});
     this.x = instance.exports;
 
-    // The param count is owned by the wasm (vxn1b-engine); assert the JS mirror
-    // agrees so layout drift is caught at boot rather than as silent corruption
-    // of whichever half is shorter.
+    // The param counts are owned by the wasm (vxn1b-engine); assert the JS
+    // mirror agrees so layout drift is caught at boot rather than as silent
+    // corruption of whichever half is shorter.
+    //
+    // All THREE counts, not the total alone: a compensating drift (+1 patch,
+    // -2 global) leaves the total intact while every Layer 2 and global id the
+    // mirror computes is wrong — a boot that passes the handshake and then
+    // writes the wrong params (0312).
     const total = this.x.vxnc_total_params();
-    if (total !== TOTAL_PARAMS) {
-      throw new Error(
-        `controller TOTAL_PARAMS ${total} != JS mirror ${TOTAL_PARAMS} — param layout drift`,
-      );
+    const patch = this.x.vxnc_patch_count();
+    const global = this.x.vxnc_global_count();
+    for (const [what, got, want] of [
+      ["PATCH_COUNT", patch, PATCH_COUNT],
+      ["GLOBAL_COUNT", global, GLOBAL_COUNT],
+      ["TOTAL_PARAMS", total, TOTAL_PARAMS],
+    ]) {
+      if (got !== want) {
+        throw new Error(`controller ${what} ${got} != JS mirror ${want} — param layout drift`);
+      }
     }
     this.totalParams = total;
-    this.patchCount = this.x.vxnc_patch_count();
+    this.patchCount = patch;
     this.x.vxnc_new();
     return this;
   }

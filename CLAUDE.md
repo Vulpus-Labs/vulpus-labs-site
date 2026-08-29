@@ -57,32 +57,95 @@ Site configuration is in `hugo.toml` at the root. Key settings:
 
 ### Theme Design
 
-The custom "vulpus-labs" theme embodies the brand values:
+The custom "vulpus-labs" theme presents the products as a portfolio: the site
+exists to get people playing the browser builds and then downloading the
+plugins.
 
 **Brand Identity:**
 - Independent, innovative, transparent software development
-- Logo: `themes/vulpus-labs/assets/logo.png` - stylized fox head
+- Logo: `themes/vulpus-labs/assets/logo.png` - stylized fox head (white, on transparent)
 - Tagline: "know many things" (inspired by Archilochus)
 
 **Visual Design:**
-- Modern, tech-centric dark theme
-- Color scheme: Dark blues and grays with bright accent colors
-- Typography optimized for technical content
-- Responsive layout (desktop and mobile)
+- The palette is taken from the VXN faceplates themselves: near-black charcoal
+  surfaces, ice-blue panel headers, ember-orange controls
+- Display type is Space Grotesk, mono is JetBrains Mono (both from Google
+  Fonts, linked in `partials/head.html`); body text uses the system sans stack
+- `--accent` is a CSS custom property. It defaults to the brand ember, and each
+  product overrides it inline from its `accent` front-matter key, so a product
+  page, its showcase block and its buttons pick up that synth's own colour
+- Responsive; honours `prefers-reduced-motion`
 
 **Layout Features:**
-- Homepage shows three most recent posts
-- Persistent sidebar with:
-  - Resource links (configurable in hugo.toml)
-  - Monthly archive navigation with post counts
-- Clean post cards with metadata (date, reading time)
-- Code-friendly styling for technical content
+- Sticky translucent header; nav (Products, Blog, Repos, Store, Contact) from
+  `[menus.main]` in hugo.toml, entries with `params.external = true` open in a
+  new tab
+- Templates are full-bleed: `baseof.html` no longer constrains width. Each
+  section supplies its own `.wrap` (max 1180px) or `.wrap .wrap-prose`
+  (max 46rem, for running text)
+- Homepage: hero (headline, CTA, spec chips, tilted faceplate stack) → one
+  showcase slab per VXN product, alternating sides → other products → blog
+- Product pages: hero with faceplate shot and a browser CTA, gallery, sound
+  examples, prose, a repeat web-demo call-out, downloads, cross-links to the
+  rest of the range
+- No sidebar — the monthly archive is a jump-link row on `/posts/`
 
 **Key Template Files:**
-- `themes/vulpus-labs/layouts/_default/baseof.html` - Base structure with header, content wrapper, sidebar, footer
-- `themes/vulpus-labs/layouts/index.html` - Homepage with recent posts
-- `themes/vulpus-labs/layouts/partials/sidebar.html` - Sidebar with links and archives
-- `themes/vulpus-labs/assets/css/main.css` - Complete styling (processed by Hugo Pipes)
+- `themes/vulpus-labs/layouts/_default/baseof.html` - header, content, footer
+- `themes/vulpus-labs/layouts/index.html` - homepage
+- `themes/vulpus-labs/layouts/products/single.html` - product page
+- `themes/vulpus-labs/layouts/products/list.html` - products index
+- `themes/vulpus-labs/layouts/_default/single.html` - posts and standalone
+  pages; the date line is omitted when the page has no date (e.g. /contact/)
+- `themes/vulpus-labs/layouts/partials/shot.html` - a faceplate screenshot in a
+  faux plugin window; resizes to webp and can wrap the shot in a link
+- `themes/vulpus-labs/layouts/partials/product-showcase.html` - one product as a
+  showcase slab, shared by the homepage and the products index
+- `themes/vulpus-labs/layouts/partials/os-icon.html` - platform glyph for download cards
+- `themes/vulpus-labs/assets/css/main.css` - complete styling (Hugo Pipes)
+
+**Product screenshots:**
+
+Product page bundles carry `faceplate.png` (the hero shot) and any number of
+`faceplate-<detail>.png` files, which render as a gallery below the hero. They
+are generated from the shipped web builds:
+
+```bash
+npm i puppeteer                          # not committed; the site has no build deps
+node scripts/capture-faceplates.mjs
+```
+
+Regenerate them whenever a synth's faceplate changes. Hugo resizes them to webp
+at build time, so commit the full-size PNGs.
 
 **Front Matter:**
+
 Posts should include `readingTime` parameter (minutes) for display in post cards.
+
+Products (`type = "products"`) use:
+
+- `range = "vxn"` - groups the page into the VXN range on the homepage and
+  products list
+- `accent` - hex colour driving `--accent` on that product's pages and cards
+- `tagline` - one line under the title; `blurb` - the extra sentence shown in
+  showcase slabs
+- `version` - display version (`v0.1.1`); `release` - the git tag downloads
+  resolve against
+- `releaseRepo` - overrides `params.releaseRepo` in hugo.toml (default
+  `Vulpus-Labs/vxn-1`)
+- `webdemo` - path to the browser build, e.g. `/products/vxn-2/web/`
+- `formats` - array shown as chips, e.g. `["CLAP", "VST3"]`
+- `[[downloads]]` - `platform`, `format`, `arch`, and either `asset` (a GitHub
+  release asset name, resolved to
+  `https://github.com/<repo>/releases/download/<release>/<asset>`) or a full
+  `url`
+- `[[extras]]` - `label` plus `asset`/`url`, for manuals and side artifacts
+- `[[audio]]` - either `file` (a glob matched against the page bundle's
+  resources) or `url` (a path served from `static/`, e.g.
+  `/media/ravel_vxn1.m4a`), plus optional `title` and `caption` (rendered as
+  markdown, so it can carry attribution links). A `file` entry
+  renders only once the file exists, so entries can be declared before the audio
+  lands; a `url` entry always renders, so the file has to be there.
+
+Product pages that carry audio or screenshots must be page bundles
+(`content/products/<name>/index.md`) so the media sits beside the copy.

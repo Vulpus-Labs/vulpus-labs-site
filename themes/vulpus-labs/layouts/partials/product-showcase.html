@@ -1,0 +1,45 @@
+{{/*  One VXN product, presented as a portfolio slab.
+      dict: page, heading (h2/h3), eager */}}
+{{ $p := .page }}
+{{ $h := default "h2" .heading }}
+{{ $eager := default false .eager }}
+{{ $shot := $p.Resources.GetMatch "faceplate.png" }}
+{{ $demo := default "" $p.Params.webdemo }}
+{{ $shotHref := $p.RelPermalink }}
+{{ $shotCta := "See the product" }}
+{{ if $demo }}
+  {{ $shotHref = $demo | relURL }}
+  {{ $shotCta = "Play in your browser" }}
+{{ end }}
+<article class="showcase"{{ with $p.Params.accent }} style="--accent: {{ . }}"{{ end }}>
+  <div class="showcase-body">
+    <div class="showcase-titlerow">
+      {{ if eq $h "h3" }}
+      <h3 class="showcase-name"><a href="{{ $p.RelPermalink }}">{{ $p.Title }}</a></h3>
+      {{ else }}
+      <h2 class="showcase-name"><a href="{{ $p.RelPermalink }}">{{ $p.Title }}</a></h2>
+      {{ end }}
+      {{ with $p.Params.status }}<span class="status-badge status-{{ . | urlize }}">{{ . }}</span>{{ end }}
+    </div>
+    {{ with $p.Params.tagline }}<p class="showcase-tagline">{{ . }}</p>{{ end }}
+    {{ with $p.Params.blurb }}<p class="showcase-blurb">{{ . }}</p>{{ end }}
+    <div class="chip-row showcase-specs">
+      {{ with $p.Params.version }}<span class="chip">v{{ . }}</span>{{ end }}
+      {{ range $p.Params.formats }}<span class="chip">{{ . }}</span>{{ end }}
+      {{ with $p.Params.license }}<span class="chip">{{ . }}</span>{{ end }}
+      {{ if $demo }}<span class="chip chip-accent">Runs in the browser</span>{{ end }}
+    </div>
+    <div class="showcase-actions">
+      {{ with $demo }}
+      <a class="btn btn-primary" href="{{ . | relURL }}"><span class="play-glyph"></span>Play it now</a>
+      {{ end }}
+      <a class="btn btn-secondary" href="{{ $p.RelPermalink }}">Details &amp; downloads</a>
+    </div>
+  </div>
+
+  <div class="showcase-media">
+    {{ with $shot }}
+      {{ partial "shot.html" (dict "img" . "label" (printf "%s — faceplate" $p.Title) "href" $shotHref "cta" $shotCta "eager" $eager) }}
+    {{ end }}
+  </div>
+</article>
