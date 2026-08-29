@@ -8,11 +8,15 @@ tagline = "Dual-layer subtractive polysynth with a mod matrix — CLAP and VST3"
 accent = "#5aa8f5"
 blurb = "Two independent layers per patch, each with a 16-slot mod matrix and stacking up to 32 voices a note — thick unison, wide supersaw, or a chord that changes timbre across its own width."
 status = "shipping"
-version = "0.0.3"
-release = "vxn-1b-0.0.3"
+version = "0.2.0"
+release = "vxn-1b-0.2.0"
 formats = ["CLAP", "VST3"]
 webdemo = "/products/vxn-1b/web/"
 license = "MIT"
+
+[install]
+clap = "vxn1b.clap"
+vst3 = "VXN1b.vst3"
 
 [[downloads]]
 platform = "macOS"
@@ -69,22 +73,16 @@ return.
 
 ## Two layers
 
-A patch is two independent parameter sets — Layer 1 and Layer 2 — with their
-own matrices, played together or split. Level, pan, detune and mute are per
-layer; tuning, volume, drift, the limiter, oversampling and the FX chain are
-global.
+A patch is two independent voices with their own matrices, played together or
+split across the keyboard — a pad under a lead, or one sound thickened against
+a detuned copy of itself.
 
 ## Mod matrix
 
-16 slots per layer. Each slot is a `source → destination` pair with a depth, a
-curve (linear, exponential, logarithmic, bipolar) and a secondary scale source
-acting as a per-route VCA.
-
-**Sources**: Env 1/2, LFO 1/2, velocity, key, mod wheel, pitch wheel,
-aftertouch, per-note random, stack spread, stack position.
-**Destinations**: pitch, cross-mod sweep, cross-mod amount, PWM (both
-oscillators together or each alone), cutoff, resonance, HPF cutoff, amp, pan,
-Env 1/2 time scale, Env 1/2 sustain, LFO 1 rate.
+Sixteen slots per layer. Each takes a source — envelopes, LFOs, velocity, the
+wheels, aftertouch, per-note randomness — and points it at anything worth
+moving, through a linear, exponential, logarithmic or bipolar curve. A second
+source can scale the whole route, so one modulation can gate another.
 
 ## Voice stacking
 
@@ -110,10 +108,8 @@ All of it works the same in Poly or Solo, with legato on its own switch.
 
 ## Automation
 
-The host sees **185 parameters** — 75 per layer, plus 35 globals — with each
-Layer 1 control and its Layer 2 twin as separate targets. Matrix depths
-automate; the routing behind them lives in the patch, so a slot can be swept
-without its topology changing underneath it.
+185 host parameters, with each layer's controls addressed separately, so
+anything you can set you can also automate or map to a controller.
 
 ## Install
 
@@ -127,6 +123,3 @@ plugins in your DAW.
 
 The Windows CLAP download is the bare `.clap` file — copy it straight in. Every
 other download is a zip archive.
-
-VXN1b versions independently of the shared `0.x` line that
-[VXN2](/products/vxn-2/) rides, and tags its releases `vxn-1b-<version>`.

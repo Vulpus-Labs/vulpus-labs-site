@@ -139,6 +139,9 @@ Products (`type = "products"`) use:
   release asset name, resolved to
   `https://github.com/<repo>/releases/download/<release>/<asset>`) or a full
   `url`
+- `[install]` - `clap` and `vst3`, the installed bundle filenames (e.g.
+  `vxn1b.clap`). They fill in the `xattr` de-quarantine commands in the callout
+  under the download grid; without them the callout falls back to a generic path
 - `[[extras]]` - `label` plus `asset`/`url`, for manuals and side artifacts
 - `[[audio]]` - either `file` (a glob matched against the page bundle's
   resources) or `url` (a path served from `static/`, e.g.

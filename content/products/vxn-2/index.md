@@ -8,11 +8,15 @@ tagline = "6-operator FM synth with voice stacking — CLAP and VST3"
 accent = "#ff8a3d"
 blurb = "Six-operator FM with all thirty-two operator arrangements, a 16-slot mod matrix, and stacking that turns one note into eight."
 status = "shipping"
-version = "0.1.1"
-release = "0.1.1"
+version = "0.2.0"
+release = "0.2.0"
 formats = ["CLAP", "VST3"]
 webdemo = "/products/vxn-2/web/"
 license = "MIT"
+
+[install]
+clap = "VXN2.clap"
+vst3 = "VXN2.vst3"
 
 [[downloads]]
 platform = "macOS"
@@ -87,75 +91,35 @@ core stays sweet.
 
 ## Per-operator control
 
-FM lives or dies on what the modulators do over time, so every operator carries
-the full set:
-
-- **Tuning by ratio.** Whole-number ratios for the usual harmonic material,
-  and just intervals — 3/2, 5/4, 7/4 — for tunings that sit differently under
-  the ear. A fine offset sweeps continuously between the detents, including
-  ratios that never quite repeat. Fixed mode pins an operator to an absolute
-  frequency instead, which is where bells, mallets and struck metal come from.
-- **Detune in cents** on top of the ratio, for thickening and beating.
-- **A four-stage envelope** per operator, with rates and levels — the control
-  that makes an FM sound evolve rather than sit.
-- **Velocity sensitivity** and full **keyboard scaling**: a break point, its
-  own depth and curve either side, and rate scaling, so a patch stays even from
-  the bottom of the keyboard to the top.
-- **Pan** for any operator you can hear, greyed out on the ones currently doing
-  the modulating.
+Every operator has its own four-stage envelope, so an FM sound evolves rather
+than sits — the modulators can fade in behind a carrier, or bite hard on the
+attack and vanish. Tuning is by ratio, with just intervals and a continuous
+fine offset for ratios that never quite repeat, or Fixed mode for the absolute
+frequencies that give you bells, mallets and struck metal. Velocity sensitivity
+and keyboard scaling keep a patch even from the bottom of the keyboard to the
+top.
 
 ## Modulation
 
-- **LFO 1** is global: one sweep shared by every voice, tempo-syncable, for
-  patch-wide movement.
-- **LFO 2** is per-voice, key-triggered, with delay and fade-in — the breathy
-  one. Every voice and every stack lane runs its own.
-- **Pitch envelope** with signed levels, so pitch can swing up or down into the
-  note, plus a depth macro.
-- **Mod envelope** — a spare ADSR with no fixed job, routed wherever you send
-  it.
+Two LFOs — one shared across the patch and tempo-syncable, one per voice with
+delay and fade-in for the breathy, humanising kind of movement. A pitch
+envelope that can swing up or down into a note. A spare envelope with no fixed
+job. All of it lands in a sixteen-slot matrix that reaches per-operator pitch,
+level and pan, the filter, the stack macros and the effects, through linear,
+exponential, logarithmic or bipolar curves.
 
-### Mod matrix
+## Filter and effects
 
-Sixteen slots. Each maps a source onto one of **29 destinations**, with a depth
-and a curve (linear, exponential, logarithmic, bipolar).
-
-**Sources**: LFO 1/2, pitch envelope, mod envelope, mod wheel, aftertouch,
-velocity, key, stack position, stack spread, per-note random.
-**Destinations**: per-operator pitch, level and pan, global pitch, the LFO and
-stack macros, filter cutoff and resonance, FX mix, feedback.
-
-Route key through a bipolar curve and you have a keyboard split without
-leaving the patch. The first eight slot depths are exposed to the host as
-automatable parameters, which is enough for a set of performance macros.
-
-## Filter
-
-An oversampled ladder filter sits after the stack, and it is off by default —
-switched off it leaves the signal path entirely rather than sitting in it doing
-nothing. Switched on: low-pass, high-pass, band-pass or notch, 12 or
-24 dB/octave, drive on the way in, self-oscillation at full resonance, and
-1× to 8× oversampling if you are pushing it hard. Cutoff and resonance are both
-matrix destinations.
-
-## Effects
-
-A fixed chain: **dynamics → phaser → delay → reverb**.
-
-- **Dynamics** — a peak compressor into a saturator, first in the chain so it
-  evens out FM's sharp transients before the time effects get hold of them.
-- **Phaser** — four all-pass stages per channel, sweeping in opposite
-  directions left and right for width.
-- **Delay** — clean, with tempo sync, feedback and ping-pong.
-- **Reverb** — size, decay, damping and mix.
-
-Every effect drops to a clean bypass when it is off, fading its wet signal out
-first so nothing clicks.
+An oversampled ladder sits after the stack, off by default and out of the
+signal path entirely when it is: low-pass through notch, 12 or 24 dB/octave,
+drive on the way in and self-oscillation at full resonance, for when you want
+FM to sit behind something subtractive. After it, dynamics, phaser, delay and
+reverb — the compressor first, so it evens out FM's sharp transients before the
+time effects get hold of them.
 
 ## Voicing
 
-Up to sixteen voices, or Solo with legato and portamento; glide is available
-per note in Poly as well. Master tune and volume finish the chain.
+Up to sixteen voices, or Solo with legato and portamento.
 
 ## Install
 

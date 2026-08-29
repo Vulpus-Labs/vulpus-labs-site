@@ -897,6 +897,43 @@ a.shot:focus-visible .shot-cta {
   color: var(--accent);
 }
 
+.downloads-callout {
+  margin-top: 1.5rem;
+  padding: 1.25rem 1.5rem;
+  background: var(--panel);
+  border: 1px solid var(--line-soft);
+  border-left: 2px solid var(--accent);
+  border-radius: var(--radius);
+}
+
+.downloads-callout h3 {
+  font-size: 1rem;
+  margin-bottom: 0.6rem;
+}
+
+.downloads-callout p {
+  color: var(--text-dim);
+  font-size: 0.9375rem;
+  line-height: 1.65;
+}
+
+.downloads-callout pre {
+  margin: 0.85rem 0;
+  padding: 0.85rem 1rem;
+  background: var(--ink-2);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius);
+  overflow-x: auto;
+}
+
+.downloads-callout code {
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  line-height: 1.7;
+  color: var(--ice);
+  white-space: pre;
+}
+
 .downloads-note {
   color: var(--text-faint);
   font-size: 0.875rem;

@@ -139,12 +139,19 @@
         </a>
         {{ end }}
       </div>
-      <p class="downloads-note">
-        All binaries are unsigned. On <strong>macOS</strong>, clear the quarantine
-        flag after unpacking: <code>xattr -dr com.apple.quarantine &lt;file&gt;</code>.
-        On <strong>Windows</strong>, SmartScreen may warn — choose
-        <em>More info → Run anyway</em>.
-      </p>
+      <aside class="downloads-callout">
+        <h3>These binaries are unsigned</h3>
+        <p><strong>macOS</strong> quarantines anything downloaded from the web, and
+          a quarantined plugin is skipped silently by your DAW's scan — it simply
+          never appears. After unpacking and copying the plugin into place, clear
+          the flag:</p>
+        {{ $clap := "" }}{{ $vst3 := "" }}
+        {{ with $page.Params.install }}{{ $clap = .clap }}{{ $vst3 = .vst3 }}{{ end }}
+        <pre><code>{{ with $clap }}xattr -dr com.apple.quarantine ~/Library/Audio/Plug-Ins/CLAP/{{ . }}
+{{ end }}{{ with $vst3 }}xattr -dr com.apple.quarantine ~/Library/Audio/Plug-Ins/VST3/{{ . }}{{ end }}{{ if not $clap }}xattr -dr com.apple.quarantine path/to/the/plugin{{ end }}</code></pre>
+        <p><strong>Windows</strong> shows a SmartScreen warning on first load instead —
+          choose <em>More info → Run anyway</em>.</p>
+      </aside>
       {{ else }}
       <p class="downloads-note">No download is available for this product yet.</p>
       {{ end }}
