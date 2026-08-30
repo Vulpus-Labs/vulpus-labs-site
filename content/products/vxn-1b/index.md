@@ -55,61 +55,24 @@ caption = "Performed by VXN1b from [Bernd Krueger](http://piano-midi.de/)’s ar
 
 **VXN1b** is a dual-layer subtractive polysynth, shipped as a
 [CLAP](https://cleveraudio.org/) and a VST3 plugin for macOS and Windows. A
-patch is two independent layers, each with its own analogue-style voice and its
-own 16-slot modulation matrix.
+patch is two independent layers, each with its own voice and 16-slot modulation matrix. Place a pad under a lead, or thicken a sound with a detuned copy of itself.
 
-Nothing is hard-wired. Every modulation route in the instrument is a slot you
-assign yourself, which buys a lot of freedom and asks for a little patience in
-return.
+No modulation route is hard-wired: every modulatable parameter is assignable from every modulation source.
 
 ## The voice
 
 - **Oscillators.** Two, with variable pulse width, plus a sub and a noise
   source. Hard sync, phase modulation and ring modulation are available as
   cross-modulation modes between the pair.
-- **Filter.** A 4-pole ZDF ladder with a switchable high-pass.
-- **Envelopes and LFOs.** Two ADSRs and two LFOs, per layer.
+- **Filter.** A 4-pole ZDF ladder capable of overdrive and self-oscillating resonance.
+- **Envelopes and LFOs.** Two ADSRs and two LFOs per layer.
 - **Effects.** A bucket-brigade chorus, phaser, delay, reverb and dynamics.
-
-## Two layers
-
-A patch is two independent voices with their own matrices, played together or
-split across the keyboard — a pad under a lead, or one sound thickened against
-a detuned copy of itself.
-
-## Mod matrix
-
-Sixteen slots per layer. Each takes a source — envelopes, LFOs, velocity, the
-wheels, aftertouch, per-note randomness — and points it at anything worth
-moving, through a linear, exponential, logarithmic or bipolar curve. A second
-source can scale the whole route, so one modulation can gate another.
 
 ## Voice stacking
 
-Play one note and hear up to 32.
+By default, each layer is 32-note polyphonic. But you can choose to stack voices: 16 doubled, 8 quadrupled, and so on all the way to having all 32 notes playing in unison at once.
 
-Detune fans them out in pitch. A little thickens the unison and sets a slow
-beat running underneath it. A lot opens into the wide supersaw that cuts
-through a busy mix. Space the lanes evenly for a smooth chorus, cluster them to
-hold the stack near the centre with a few outliers hanging off the edges, or
-scatter them so no two chords land the same way twice.
-
-Phase offset sets how the stack starts. Line the lanes up and the attack is
-hard and focused. Push them apart and it softens and blooms — a string section
-rather than a single player.
-
-Spread is a modulation source in its own right. Route it to pan and one note
-fills the stereo field. Route it to cutoff and the lanes sit at different
-depths behind the filter. Route it to cross-modulation and the stack grades
-from clean in the middle to metallic at the edges. Route it to pulse width and
-it runs hollow to full — a fatter chord with no detuning at all.
-
-All of it works the same in Poly or Solo, with legato on its own switch.
-
-## Automation
-
-185 host parameters, with each layer's controls addressed separately, so
-anything you can set you can also automate or map to a controller.
+Within the stack, voices can be detuned and phased, fanning them out in pitch and start phase. There is also a routable "spread" modulation source which can be applied to any attribute the voice possesses, from pan to pulse width or cross-modulation depth.
 
 ## Install
 
