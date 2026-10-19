@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PolyKritter: web demo</title>
+  <style>
+    body { margin: 0; min-height: 100vh; display: grid; place-content: center; gap: 16px;
+           background: #202024; color: #c8c8cc; font: 14px system-ui, sans-serif; }
+    canvas { display: block; margin: 0 auto; }
+    #keyboard { width: 842px; height: 120px; }
+    /* The page's own controls, out of the faceplate's way. */
+    #audio { position: fixed; top: 12px; left: 12px; width: 100px; display: grid; gap: 6px; }
+    #cpu { display: grid; grid-template-columns: auto 1fr; gap: 6px; align-items: center; font-size: 12px;
+           font-variant-numeric: tabular-nums; }
+    #cpu-bar { height: 6px; background: #3a3a40; border-radius: 3px; overflow: hidden; }
+    #cpu-fill { height: 100%; width: 0; background: #5bbf6a; transition: width 0.2s; }
+    #status { font-size: 12px; color: #8c8c92; }
+
+    /* The splash: over everything while the page loads behind it. */
+    #splash { position: fixed; inset: 0; z-index: 10; display: grid; place-items: center;
+              background: rgb(16 15 17 / 0.8); transition: opacity 0.25s; }
+    #splash.gone { opacity: 0; pointer-events: none; }
+    #splash .card { max-width: 520px; margin: 16px; padding: 32px 36px; text-align: center; display: grid; gap: 18px;
+                    background: #151417; border: 1px solid #3a3438; border-radius: 10px;
+                    box-shadow: 0 12px 48px rgb(0 0 0 / 0.6); }
+    #splash img { width: 432px; max-width: 100%; height: auto; margin: 0 auto; }
+    #splash p { margin: 0; line-height: 1.5; }
+    #splash a { color: #ff6d78; }
+    #splash .browsers { font-size: 13px; color: #9a9aa0; }
+    #splash .browsers.safari { color: #ffb0b0; font-weight: 600; }
+    #splash .prompt { font-size: 16px; color: #f0f0f2; min-height: 1.5em; }
+    #splash .prompt.loading { color: #8c8c92; }
+    #splash .hint { font-size: 12px; color: #8c8c92; }
+  </style>
+</head>
+<body>
+  <div id="splash" role="dialog" aria-label="PolyKritter web demo">
+    <div class="card">
+      <img src="logo.png" alt="PolyKritter, virtual analog poly synth">
+      <p>This is the web demo of the <strong>PolyKritter</strong> synth by Vulpus Labs.
+         For more details, see
+         <a href="https://vulpuslabs.com/products/polykritter" target="_blank" rel="noopener">vulpuslabs.com/products/polykritter</a>.</p>
+      <p class="browsers" id="browsers">Best in Chrome, Edge or Firefox. Safari is not supported.</p>
+      <p class="prompt loading" id="prompt">Loading…</p>
+      <p class="hint">Play with the on-screen keyboard, or the computer keys A to ' (Z and X change the octave).</p>
+    </div>
+  </div>
+  <div id="audio">
+    <div id="cpu" title="The engine's share of the audio thread">
+      <span id="cpu-text">CPU –</span><div id="cpu-bar"><div id="cpu-fill"></div></div>
+    </div>
+    <div id="status"></div>
+  </div>
+  <canvas id="faceplate"></canvas>
+  <div id="keyboard"></div>
+  <script type="module">
+    import init, { start } from "./pkg/kritter_web.js";
+    import { startAudio } from "./silkscreen-audio.mjs";
+    import { mountKeyboard } from "./silkscreen-keyboard.mjs";
+
+    const splash = document.getElementById("splash");
+    const prompt = document.getElementById("prompt");
+    const status = document.getElementById("status");
+
+    // Any key (or a click off the link) dismisses the splash once the page
+    // has loaded, and starts the sound. The key is the splash's: it doesn't
+    // also play a note, and while loading, keys do nothing. Shortcuts pass
+    // (Cmd-R still reloads), and so does Escape, which browsers don't count
+    // as the gesture audio needs.
+    let loaded = false;
+    const dismiss = (e) => {
+      if (e.type === "keydown" && (e.metaKey || e.ctrlKey || e.altKey || e.key === "Escape")) return;
+      if (e.type === "pointerdown" && e.target.closest("a")) return;
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      if (!loaded) return;
+      window.removeEventListener("keydown", dismiss, { capture: true });
+      splash.removeEventListener("pointerdown", dismiss);
+      splash.classList.add("gone");
+      resume();
+    };
+    window.addEventListener("keydown", dismiss, { capture: true });
+    splash.addEventListener("pointerdown", dismiss);
+
+    // Safari (but not the Chromium and Firefox builds that also say
+    // "Safari" in their user agents) gets the warning in red.
+    const ua = navigator.userAgent;
+    if (/Safari\//.test(ua) && !/Chrome\/|Chromium\/|CriOS\/|Edg\/|Firefox\/|FxiOS\//.test(ua)) {
+      const b = document.getElementById("browsers");
+      b.classList.add("safari");
+      b.textContent = "You appear to be using Safari, which is not supported. Use Chrome, Edge or Firefox.";
+    }
+
+    await init();
+    const page = start(document.getElementById("faceplate"));
+    // For poking from the console: page.midi(0x90, 60, 100), audio.ctx.
+    window.page = page;
+    window.keyboard = mountKeyboard(document.getElementById("keyboard"), {
+      onMidi: ([status, d1, d2]) => page.midi(status, d1, d2),
+      low: 36,
+      octaves: 4,
+      // While a menu or the matrix is open, keys are the editor's.
+      keysTaken: () => page.editorWantsKeys(),
+    });
+
+    const cpuText = document.getElementById("cpu-text");
+    const cpuFill = document.getElementById("cpu-fill");
+    const showLoad = (load) => {
+      const pct = load * 100;
+      cpuText.textContent = `CPU ${pct.toFixed(pct < 10 ? 1 : 0)}%`;
+      cpuFill.style.width = `${Math.min(100, pct)}%`;
+      cpuFill.style.background = load > 0.8 ? "#e0533d" : load > 0.5 ? "#e0a23d" : "#5bbf6a";
+    };
+
+    // Everything loads behind the splash, the audio graph included, with
+    // the AudioContext suspended. Browsers let it run only from a user
+    // gesture, so the key press that dismisses the splash resumes it.
+    let audio = null;
+    let failed = null;
+    if (page.sab) {
+      try {
+        audio = await startAudio({
+          sab: page.sab,
+          engineUrl: "./kritter_web_engine.wasm",
+          workletUrl: "./silkscreen-worklet.js",
+          source: "none",
+          onLoad: showLoad,
+          suspended: true,
+        });
+        window.audio = audio;
+      } catch (e) {
+        failed = String(e.message || e);
+        console.error(e);
+      }
+    } else {
+      failed = "Not cross-origin isolated, so no audio. Serve with cargo xtask web kritter --serve.";
+    }
+    prompt.classList.remove("loading");
+    prompt.textContent = failed ? `${failed} Press any key to see the editor.` : "Press any key to start.";
+
+    const resume = () => audio?.resume().catch((e) => (status.textContent = String(e.message || e)));
+    if (failed) {
+      status.textContent = failed;
+    } else {
+      // Browsers can suspend the context again; any later press or key
+      // restarts it.
+      for (const type of ["pointerdown", "keydown"]) {
+        window.addEventListener(type, () => audio.ctx.state !== "running" && resume(), { capture: true });
+      }
+    }
+    loaded = true;
+  </script>
+</body>
+</html>
