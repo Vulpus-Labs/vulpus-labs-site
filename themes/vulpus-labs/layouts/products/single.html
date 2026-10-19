@@ -46,8 +46,8 @@
           {{ end }}
         </div>
         {{ if $demo }}
-        <p class="also-tagline">No install, no account. Works in Chrome, Edge and Firefox — play it from
-          your computer keyboard, or plug in a MIDI controller.</p>
+        <p class="also-tagline">{{ with .Params.demoNote }}{{ . | markdownify }}{{ else }}No install, no account. Works in Chrome, Edge and Firefox — play it from
+          your computer keyboard, or plug in a MIDI controller.{{ end }}</p>
         {{ end }}
       </div>
 
@@ -106,8 +106,8 @@
       <div class="demo-panel">
         <div>
           <h2>Still deciding?</h2>
-          <p>The whole synth runs in the tab. Every control, every preset, the
-            same sound the plugin makes — and nothing to uninstall afterwards.</p>
+          <p>{{ with $page.Params.demoPitch }}{{ . | markdownify }}{{ else }}The whole synth runs in the tab. Every control, every preset, the
+            same sound the plugin makes — and nothing to uninstall afterwards.{{ end }}</p>
         </div>
         <a class="btn btn-primary" href="{{ . | relURL }}"><span class="play-glyph"></span>Launch the web synth</a>
       </div>

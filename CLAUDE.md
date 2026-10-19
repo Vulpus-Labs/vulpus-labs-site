@@ -135,6 +135,10 @@ Products (`type = "products"`) use:
   `Vulpus-Labs/vxn-1`)
 - `webdemo` - path to the browser build, e.g. `/products/vxn-2/web/`
 - `formats` - array shown as chips, e.g. `["CLAP", "VST3"]`
+- `demoNote` - replaces the line under the hero's browser button (default:
+  "No install, no account… or plug in a MIDI controller"), for a demo that
+  differs, e.g. one without Web MIDI; `demoPitch` - likewise for the
+  "Still deciding?" call-out's sentence. Both are rendered as markdown
 - `[[downloads]]` - `platform`, `format`, `arch`, and either `asset` (a GitHub
   release asset name, resolved to
   `https://github.com/<repo>/releases/download/<release>/<asset>`) or a full

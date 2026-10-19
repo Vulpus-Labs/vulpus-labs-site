@@ -9,6 +9,7 @@
  *
  *   npm i puppeteer          # once, not committed — the site has no build deps
  *   node scripts/capture-faceplates.mjs
+ *   ONLY=polykritter node scripts/capture-faceplates.mjs   # one product's shots
  *
  * The web builds need cross-origin isolation (SharedArrayBuffer), so this
  * serves them over a local server that sets COOP/COEP, mirroring static/_headers.
@@ -24,12 +25,19 @@ const PORT = 8899;
 
 /* Each target: where the web build lives, where the PNG goes, any panel to click
  * first (matched on the button's visible text), and whether to frame the
- * faceplate itself or the overlay that click opened. */
+ * faceplate itself or the overlay that click opened.
+ *
+ * PolyKritter (silkscreen) draws its faceplate on a canvas, so its panels are
+ * opened by `canvasClick`, a point in the faceplate's own units (it is
+ * `logicalWidth` wide), and its splash goes on a key press (`key`). */
 const TARGETS = [
   { slug: 'vxn-1b', out: 'faceplate.png' },
   { slug: 'vxn-1b', out: 'faceplate-fx.png', click: 'fx / global' },
   { slug: 'vxn-2', out: 'faceplate.png' },
   { slug: 'vxn-2', out: 'faceplate-matrix.png', click: 'mod matrix', shoot: 'overlay' },
+  { slug: 'polykritter', out: 'faceplate.png', key: true },
+  { slug: 'polykritter', out: 'faceplate-delay.png', key: true, logicalWidth: 842, canvasClick: [527, 278] },
+  { slug: 'polykritter', out: 'faceplate-matrix.png', key: true, logicalWidth: 842, canvasClick: [56, 396] },
 ];
 
 const MIME = {
@@ -70,7 +78,7 @@ try {
 const server = await serve(path.join(root, 'static', 'products'));
 const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox', '--disable-gpu'] });
 
-for (const t of TARGETS) {
+for (const t of TARGETS.filter((t) => !process.env.ONLY || t.slug === process.env.ONLY)) {
   const page = await browser.newPage();
   await page.setViewport({ width: 1700, height: t.shoot === 'overlay' ? 1800 : 1300, deviceScaleFactor: 2 });
   await page.goto(`http://127.0.0.1:${PORT}/${t.slug}/web/index.html`, { waitUntil: 'networkidle2', timeout: 60000 });
@@ -83,6 +91,21 @@ for (const t of TARGETS) {
     }
   });
   await sleep(1500);
+  if (t.key) {
+    await page.keyboard.press('Space');
+    await sleep(1500);
+  }
+  if (t.canvasClick) {
+    const r = await page.evaluate(() => {
+      const b = document.querySelector('#faceplate').getBoundingClientRect();
+      return { x: b.x, y: b.y, w: b.width };
+    });
+    const k = r.w / t.logicalWidth;
+    await page.mouse.click(r.x + t.canvasClick[0] * k, r.y + t.canvasClick[1] * k);
+    /* Move off, so no hover or tooltip is in the shot. */
+    await page.mouse.move(2, 2);
+    await sleep(2500);
+  }
 
   if (t.click) {
     await page.evaluate((label) => {
@@ -127,6 +150,8 @@ for (const t of TARGETS) {
   }) : await page.evaluate(() => {
     const rootEl = document.querySelector('.vxn-faceplate, #faceplate, .faceplate');
     const r = rootEl.getBoundingClientRect();
+    /* A canvas faceplate (PolyKritter) has no children: its box is the shot. */
+    if (!rootEl.children.length) return { x: r.left, y: r.top, w: r.width, h: r.height };
     let bottom = r.top, right = r.left;
     const walk = (n) => {
       for (const c of n.children) {
