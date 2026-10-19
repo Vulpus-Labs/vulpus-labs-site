@@ -9,7 +9,7 @@ blurb = "Every voice is a whole Kritter: two oscillators, the effect section, a 
 status = "in development"
 formats = ["CLAP", "Browser"]
 webdemo = "/products/polykritter/web/"
-demoNote = "No install, no account. Works in Chrome, Edge and Firefox — play it from the on-screen keyboard or your computer keys."
+demoNote = "No install, no account. Works in Chrome, Edge and Firefox — play it from the on-screen keyboard, your computer keys, or a MIDI controller."
 demoPitch = "The whole synth runs in the tab: the same engine, the same faceplate and every control of the plugin — and nothing to uninstall afterwards."
 +++
 
@@ -21,9 +21,10 @@ there.
 
 It is in development as a [CLAP](https://cleveraudio.org/) plugin, and you
 can play it now in your browser: the web demo is the same engine and the same
-faceplate, compiled to WebAssembly. Play it from the on-screen keyboard or
-from your computer keys (A to ' for the notes, Z and X for the octave). It
-works best in Chrome, Edge or Firefox; Safari is not supported.
+faceplate, compiled to WebAssembly. Play it from the on-screen keyboard,
+from your computer keys (A to ' for the notes, Z and X for the octave), or
+from a MIDI controller. It works best in Chrome, Edge or Firefox; Safari is
+not supported.
 
 ## The voice
 
