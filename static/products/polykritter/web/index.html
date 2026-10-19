@@ -101,13 +101,19 @@
     window.addEventListener("keydown", dismiss, { capture: true });
     splash.addEventListener("pointerdown", dismiss);
 
-    // Safari (but not the Chromium and Firefox builds that also say
-    // "Safari" in their user agents) gets the warning in red.
+    // Safari gets the browser note in red: on a Mac, Safari itself (not the
+    // Chromium and Firefox builds that also say "Safari" in their user
+    // agents); on an iPhone or iPad, every browser, as all of them are
+    // WebKit there.
     const ua = navigator.userAgent;
-    if (/Safari\//.test(ua) && !/Chrome\/|Chromium\/|CriOS\/|Edg\/|Firefox\/|FxiOS\//.test(ua)) {
+    const ios = /iPhone|iPad|iPod/.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+    const safari = /Safari\//.test(ua) && !/Chrome\/|Chromium\/|Edg\/|Firefox\//.test(ua);
+    if (ios || safari) {
       const b = document.getElementById("browsers");
       b.classList.add("safari");
-      b.textContent = "You appear to be using Safari, which is not supported. Use Chrome, Edge or Firefox.";
+      b.textContent = ios
+        ? "On iPhone and iPad every browser runs on Safari's engine, which is not supported. If you try it, turn the volume up."
+        : "You appear to be using Safari, which is not supported. Use Chrome, Edge or Firefox.";
     }
 
     await init();
