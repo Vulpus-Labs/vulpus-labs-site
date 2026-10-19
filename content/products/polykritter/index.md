@@ -13,10 +13,11 @@ demoNote = "No install, no account. Works in Chrome, Edge and Firefox — play i
 demoPitch = "The whole synth runs in the tab: the same engine, the same faceplate and every control of the plugin — and nothing to uninstall afterwards."
 +++
 
-**PolyKritter** is Kritter, the Vulpus Labs virtual analog monosynth, played
-polyphonically. Each voice is a whole Kritter voice, and every voice shares
-one panel: each control is where it is on Kritter, does what it does there,
-and starts where it starts there.
+**PolyKritter** is [Kritter][kritter], the Vulpus Labs virtual analog
+monosynth, played polyphonically. Each voice is a whole [Kritter][kritter]
+voice, and every voice shares one panel: each control is where it is on
+[Kritter][kritter], does what it does there, and starts where it starts
+there.
 
 It is in development as a [CLAP](https://cleveraudio.org/) plugin, and you
 can play it now in your browser: the web demo is the same engine and the same
@@ -34,7 +35,7 @@ works best in Chrome, Edge or Firefox; Safari is not supported.
   or LO) or DUET, and BALANCE sets VCO 1 against it.
 - **Filters.** A high-pass and a low-pass diode filter, with resonance,
   envelope and vibrato on the cutoff.
-- **Envelope, vibrato, repeat and glide.** Kritter's envelope with SUSTAIN and
+- **Envelope, vibrato, repeat and glide.** [Kritter][kritter]'s envelope with SUSTAIN and
   LONG, a vibrato with delayed fade-in, REPEAT to re-strike held notes from
   one shared clock, and portamento with the Bender's swoop.
 
@@ -75,3 +76,5 @@ and an optional scaling source:
   input.
 - **Output.** A lookahead limiter after GAIN, and a scope and meters across
   the top and side of the panel.
+
+[kritter]: https://store.cherryaudio.com/modules/kritter
