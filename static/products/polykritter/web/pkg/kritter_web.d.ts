@@ -79,9 +79,9 @@ export interface InitOutput {
     readonly webhost_panels: (a: number) => number;
     readonly webhost_puts: (a: number) => number;
     readonly webhost_stop: (a: number) => void;
-    readonly wasm_bindgen__convert__closures_____invoke__hd65b1ef292acd183: (a: number, b: number, c: number) => void;
+    readonly wasm_bindgen__convert__closures_____invoke__hba8bcbf3f813da15: (a: number, b: number, c: number) => void;
     readonly wasm_bindgen__convert__closures_____invoke__h945b9629a7aa37dc: (a: number, b: number, c: any) => [number, number];
-    readonly wasm_bindgen__convert__closures_____invoke__h38ac8b9eb271b208: (a: number, b: number, c: any) => void;
+    readonly wasm_bindgen__convert__closures_____invoke__haa758b7c3f6e0154: (a: number, b: number, c: any) => void;
     readonly __wbindgen_malloc: (a: number, b: number) => number;
     readonly __wbindgen_realloc: (a: number, b: number, c: number, d: number) => number;
     readonly __wbindgen_exn_store: (a: number) => void;

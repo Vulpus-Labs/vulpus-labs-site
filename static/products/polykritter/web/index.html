@@ -19,8 +19,12 @@
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:image" content="https://vulpuslabs.com/products/polykritter/web/og-image.png">
   <style>
-    body { margin: 0; min-height: 100vh; display: grid; place-content: center; gap: 16px;
+    /* The stage centres with auto margins, which never go negative: on a
+       screen narrower than the faceplate it starts at the left edge and the
+       page scrolls to the rest, where centring would cut its left side off. */
+    body { margin: 0; min-height: 100vh; display: flex;
            background: #202024; color: #c8c8cc; font: 14px system-ui, sans-serif; }
+    #stage { margin: auto; padding: 16px; display: grid; gap: 16px; }
     canvas { display: block; margin: 0 auto; }
     #keyboard { width: 842px; height: 120px; }
     /* The page's own controls, out of the faceplate's way. */
@@ -68,8 +72,10 @@
     <div id="midi" title="Web MIDI inputs">MIDI –</div>
     <div id="status"></div>
   </div>
-  <canvas id="faceplate"></canvas>
-  <div id="keyboard"></div>
+  <div id="stage">
+    <canvas id="faceplate"></canvas>
+    <div id="keyboard"></div>
+  </div>
   <script type="module">
     import init, { start } from "./pkg/kritter_web.js";
     import { startAudio } from "./silkscreen-audio.mjs";
