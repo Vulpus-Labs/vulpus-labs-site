@@ -15,7 +15,8 @@
            font-variant-numeric: tabular-nums; }
     #cpu-bar { height: 6px; background: #3a3a40; border-radius: 3px; overflow: hidden; }
     #cpu-fill { height: 100%; width: 0; background: #5bbf6a; transition: width 0.2s; }
-    #status { font-size: 12px; color: #8c8c92; }
+    #status, #midi { font-size: 12px; color: #8c8c92; }
+    #midi { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
     /* The splash: over everything while the page loads behind it. */
     #splash { position: fixed; inset: 0; z-index: 10; display: grid; place-items: center;
@@ -43,13 +44,14 @@
          <a href="https://vulpuslabs.com/products/polykritter" target="_blank" rel="noopener">vulpuslabs.com/products/polykritter</a>.</p>
       <p class="browsers" id="browsers">Best in Chrome, Edge or Firefox. Safari is not supported.</p>
       <p class="prompt loading" id="prompt">Loading…</p>
-      <p class="hint">Play with the on-screen keyboard, or the computer keys A to ' (Z and X change the octave).</p>
+      <p class="hint">Play with the on-screen keyboard, the computer keys A to ' (Z and X change the octave), or a MIDI controller.</p>
     </div>
   </div>
   <div id="audio">
     <div id="cpu" title="The engine's share of the audio thread">
       <span id="cpu-text">CPU –</span><div id="cpu-bar"><div id="cpu-fill"></div></div>
     </div>
+    <div id="midi" title="Web MIDI inputs">MIDI –</div>
     <div id="status"></div>
   </div>
   <canvas id="faceplate"></canvas>
@@ -58,6 +60,7 @@
     import init, { start } from "./pkg/kritter_web.js";
     import { startAudio } from "./silkscreen-audio.mjs";
     import { mountKeyboard } from "./silkscreen-keyboard.mjs";
+    import { attachMidi } from "./silkscreen-midi.mjs";
 
     const splash = document.getElementById("splash");
     const prompt = document.getElementById("prompt");
@@ -79,6 +82,7 @@
       splash.removeEventListener("pointerdown", dismiss);
       splash.classList.add("gone");
       resume();
+      startMidi();
     };
     window.addEventListener("keydown", dismiss, { capture: true });
     splash.addEventListener("pointerdown", dismiss);
@@ -139,6 +143,27 @@
     prompt.classList.remove("loading");
     prompt.textContent = failed ? `${failed} Press any key to see the editor.` : "Press any key to start.";
 
+    // Web MIDI, from the gesture that dismissed the splash, so the browser's
+    // permission prompt has one to come from (as vxn-1b's does). Its notes
+    // light the on-screen keys too.
+    const midiLine = document.getElementById("midi");
+    const startMidi = async () => {
+      if (!audio) return;
+      const midi = await attachMidi({
+        onMidi: (m) => {
+          page.midi(m[0], m[1], m[2]);
+          window.keyboard.show(m);
+        },
+        onInputs: (names) => {
+          midiLine.textContent = names.length ? `MIDI: ${names.join(", ")}` : "MIDI: no inputs";
+          midiLine.title = names.join("\n") || "Plug in a MIDI controller";
+        },
+      });
+      if (!midi.granted) {
+        midiLine.textContent = "MIDI: off";
+        midiLine.title = String(midi.error?.message ?? midi.error);
+      }
+    };
     const resume = () => audio?.resume().catch((e) => (status.textContent = String(e.message || e)));
     if (failed) {
       status.textContent = failed;

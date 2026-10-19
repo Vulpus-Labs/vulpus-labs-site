@@ -179,7 +179,8 @@ const STYLE = `
  * @param {boolean} [o.computerKeys]  play from the computer keyboard too
  * @param {() => boolean} [o.keysTaken]  true while something else (the
  *        editor's menus) wants the keys; computer keys stand aside
- * @returns {{ releaseAll(): void, setLow(low: number): void, destroy(): void }}
+ * @returns {{ releaseAll(): void, setLow(low: number): void, show(message: number[]): void,
+ *             destroy(): void }}
  */
 export function mountKeyboard(
   container,
@@ -201,13 +202,15 @@ export function mountKeyboard(
   container.append(root);
 
   const voices = new Voices(channel);
+  // Keys held from outside the strip (a MIDI controller), lit but not sent.
+  const outside = new Set();
   // Computer keys start an octave above the strip's lowest C.
   let base = clampBase(low, octaves, low + 12);
   let layout;
   let elements = new Map();
   const send = (messages) => {
     for (const m of messages) onMidi(m);
-    const held = voices.keys();
+    const held = new Set([...voices.keys(), ...outside]);
     for (const [key, el] of elements) el.classList.toggle("down", held.has(key));
   };
 
@@ -300,6 +303,16 @@ export function mountKeyboard(
   draw();
   return {
     releaseAll,
+    /// Light keys for a message that reached the engine another way (Web
+    /// MIDI): note on and off, and all notes off (CC 123).
+    show([status, d1, d2]) {
+      const type = status & 0xf0;
+      if (type === 0x90 && d2 > 0) outside.add(d1);
+      else if (type === 0x80 || type === 0x90) outside.delete(d1);
+      else if (type === 0xb0 && d1 === 123) outside.clear();
+      else return;
+      send([]);
+    },
     setLow,
     destroy() {
       releaseAll();
