@@ -3,7 +3,7 @@
 
 /**
  * The running page: the editor, the buffer to hand the worklet, and the
- * MIDI ring's writer for the keyboard.
+ * MIDI ring's writer for the keyboard, over a [`PresetPage`].
  */
 export class KritterPage {
     private constructor();
@@ -45,7 +45,7 @@ export class KritterPage {
     puts(): number;
     /**
      * Save the current sound as user preset `name` at the root, for the
-     * console and checks (the faceplate's bar is 0141's).
+     * console and checks.
      */
     savePreset(name: string): void;
     /**
