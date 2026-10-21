@@ -123,7 +123,8 @@
     }
 
     await init();
-    const page = start(document.getElementById("faceplate"));
+    // Awaits the user's presets (IndexedDB) before mounting.
+    const page = await start(document.getElementById("faceplate"));
     // For poking from the console: page.midi(0x90, 60, 100), audio.ctx.
     window.page = page;
     window.keyboard = mountKeyboard(document.getElementById("keyboard"), {
