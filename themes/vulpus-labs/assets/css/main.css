@@ -1431,3 +1431,23 @@ a.shot:focus-visible .shot-cta {
     transition-duration: 0.001ms !important;
   }
 }
+
+/* Manuals (/manuals/): a card per manual, its panel as the cover. */
+.manual-card .shot {
+  margin-bottom: 0.75rem;
+}
+
+.manual-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem 1rem;
+}
+
+.manual-actions-lead {
+  margin-block: 1.5rem 2rem;
+}
+
+.archive-header .chip-row {
+  margin-top: 1rem;
+}

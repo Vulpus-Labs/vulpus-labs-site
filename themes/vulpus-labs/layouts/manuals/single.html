@@ -1,0 +1,29 @@
+{{ define "main" }}
+{{ $pdf := .Resources.GetMatch .Params.pdf }}
+<div class="wrap wrap-prose"{{ with .Params.accent }} style="--accent: {{ . }}"{{ end }}>
+  <header class="archive-header">
+    <p class="eyebrow"><a href="{{ "manuals/" | relURL }}">Manuals</a></p>
+    <h1>{{ .Title }}</h1>
+    {{ with .Params.summary }}<p class="archive-description">{{ . }}</p>{{ end }}
+    <div class="chip-row">
+      {{ with .Params.platform }}<span class="chip">{{ . }}</span>{{ end }}
+      <span class="chip">PDF{{ with .Params.pages }} · {{ . }} pages{{ end }}</span>
+      <span class="chip">{{ .Date.Format "2 January 2006" }}</span>
+    </div>
+  </header>
+
+  {{ with .Resources.GetMatch "faceplate.png" }}
+  {{ partial "shot.html" (dict "img" . "label" (printf "%s panel" $.Title) "eager" true) }}
+  {{ end }}
+
+  <div class="manual-actions manual-actions-lead">
+    {{ with $pdf }}
+    <a class="btn btn-primary" href="{{ .RelPermalink }}" download>Download PDF</a>
+    <a class="btn btn-secondary" href="{{ .RelPermalink }}" target="_blank" rel="noopener">Open in browser</a>
+    {{ end }}
+    {{ with .Params.store }}<a class="btn btn-ghost" href="{{ . }}" target="_blank" rel="noopener">Store</a>{{ end }}
+  </div>
+
+  <div class="post-content">{{ .Content }}</div>
+</div>
+{{ end }}

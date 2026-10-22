@@ -154,5 +154,12 @@ Products (`type = "products"`) use:
   renders only once the file exists, so entries can be declared before the audio
   lands; a `url` entry always renders, so the file has to be there.
 
+**Manuals** (`/manuals/`, `layouts/manuals/`): one page bundle per manual,
+`content/manuals/<name>/index.md` beside its PDF and a `faceplate.png` cover.
+Front matter: `title`, `date`, `weight`, `platform` (a chip, e.g. "Voltage
+Modular module"), `accent`, `summary`, `pdf` (the bundle's file name), `pages`,
+and optionally `store`. The PDFs are built in their own repositories (e.g.
+`vm-pro/poly-kritter/manual/build.sh`) and copied in.
+
 Product pages that carry audio or screenshots must be page bundles
 (`content/products/<name>/index.md`) so the media sits beside the copy.
