@@ -6,7 +6,7 @@ platform = "Voltage Modular module"
 accent = "#e2262e"
 summary = "Up to sixteen Kritter voices on one panel, driven by poly cables, with a patchbay of CV inputs and outputs."
 pdf = "PolyKritter-Manual.pdf"
-pages = 21
+pages = 22
 store = "https://store.cherryaudio.com/manufacturers/vulpus-labs"
 +++
 
