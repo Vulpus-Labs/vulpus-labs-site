@@ -6,7 +6,7 @@ platform = "Voltage Modular modules"
 accent = "#c8402a"
 summary = "Five modules for drones: Littoral, Fluvial, Calderal, Alluvial and Glacial, in one manual."
 pdf = "Radish-Manual.pdf"
-pages = 37
+pages = 40
 store = "https://store.cherryaudio.com/manufacturers/vulpus-labs"
 +++
 
