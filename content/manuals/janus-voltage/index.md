@@ -21,5 +21,5 @@ The manual covers:
 - ENV's stages, curves and GRAIN, LFO's gated delay and restarts, and SLU's glides;
 - SUM's VCA, stereo spread and AUTO level, HPF's positions, and BBD's sweep, hiss, drift and
   ripple;
-- seven patches, each drawn as the modules' panels with their cables;
+- six patches, building on one classic voice, most drawn as the modules' panels with their cables;
 - two appendices on how BBD and DCO are built.
