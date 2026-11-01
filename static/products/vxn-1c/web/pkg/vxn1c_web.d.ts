@@ -123,11 +123,11 @@ export interface InitOutput {
     readonly webhost_panels: (a: number) => number;
     readonly webhost_puts: (a: number) => number;
     readonly webhost_stop: (a: number) => void;
-    readonly wasm_bindgen__convert__closures_____invoke__hc7c07d0c256e8439: (a: number, b: number, c: number) => void;
-    readonly wasm_bindgen__convert__closures_____invoke__h20de225a3517def9: (a: number, b: number, c: any, d: any) => void;
-    readonly wasm_bindgen__convert__closures_____invoke__h945b9629a7aa37dc: (a: number, b: number, c: any) => [number, number];
-    readonly wasm_bindgen__convert__closures_____invoke__h2c3d51778d15fc98: (a: number, b: number, c: any) => void;
-    readonly wasm_bindgen__convert__closures_____invoke__h1f60fbc9ca9f93d5: (a: number, b: number) => void;
+    readonly wasm_bindgen__convert__closures_____invoke__h5e49811666bb5fac: (a: number, b: number, c: number) => void;
+    readonly wasm_bindgen__convert__closures_____invoke__h1707fddd86a6f68e: (a: number, b: number, c: any, d: any) => void;
+    readonly wasm_bindgen__convert__closures_____invoke__h3ae15ede0744e005: (a: number, b: number, c: any) => [number, number];
+    readonly wasm_bindgen__convert__closures_____invoke__h5b4249efc1962cfd: (a: number, b: number, c: any) => void;
+    readonly wasm_bindgen__convert__closures_____invoke__h34eeeeb7456ccd61: (a: number, b: number) => void;
     readonly __wbindgen_malloc: (a: number, b: number) => number;
     readonly __wbindgen_realloc: (a: number, b: number, c: number, d: number) => number;
     readonly __wbindgen_exn_store: (a: number) => void;
