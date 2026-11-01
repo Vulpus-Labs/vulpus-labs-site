@@ -4,7 +4,20 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>vxn-1c: web demo</title>
+  <!-- Link previews (Open Graph, X): the faceplate. Crawlers want absolute
+       URLs, so these name the published page, where deploy-web.sh puts it. -->
   <meta name="description" content="Play vxn-1c, the dual-layer virtual analogue synth from Vulpus Labs, in your browser.">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Vulpus Labs">
+  <meta property="og:title" content="vxn-1c: web demo">
+  <meta property="og:description" content="Play vxn-1c, the dual-layer virtual analogue synth from Vulpus Labs, in your browser.">
+  <meta property="og:url" content="https://vulpuslabs.com/products/vxn-1c/web/">
+  <meta property="og:image" content="https://vulpuslabs.com/products/vxn-1c/web/og-image.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="663">
+  <meta property="og:image:alt" content="The vxn-1c faceplate">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="https://vulpuslabs.com/products/vxn-1c/web/og-image.png">
   <style>
     /* The stage centres with auto margins, which never go negative: on a
        screen narrower than the faceplate it starts at the left edge and the
@@ -41,6 +54,12 @@
   </style>
 </head>
 <body>
+  <!-- The faceplate as an image, for link previewers that ignore Open
+       Graph and take the page's first large picture. Hidden from view and
+       from screen readers, not display:none, which some skip; its own size
+       attributes say how large it is. -->
+  <img src="og-image.png" width="1200" height="663" alt="" aria-hidden="true"
+       style="position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); pointer-events:none">
   <div id="splash" role="dialog" aria-label="vxn-1c web demo">
     <div class="card">
       <h1>vxn-1c</h1>
