@@ -135,6 +135,14 @@ export class KritterPage {
         wasm.kritterpage_setParam(this.__wbg_ptr, index, value);
     }
     /**
+     * Show the faceplate at `zoom` CSS pixels per logical pixel, sharp at
+     * any zoom; `silkscreen-fit.mjs` fits it to the page with this.
+     * @param {number} zoom
+     */
+    setZoom(zoom) {
+        wasm.kritterpage_setZoom(this.__wbg_ptr, zoom);
+    }
+    /**
      * Share the current sound (as the browser's Share does) and return
      * the link.
      * @returns {string | undefined}
@@ -193,11 +201,29 @@ export class WebHost {
         return ret >>> 0;
     }
     /**
+     * Show the faceplate at `zoom` CSS pixels per logical pixel, from the
+     * next frame. The editor renders at `devicePixelRatio × zoom`, so a
+     * zoomed faceplate stays sharp; input maps through the canvas's box at
+     * any zoom. Clamped to 0.25–4.
+     * @param {number} zoom
+     */
+    setZoom(zoom) {
+        wasm.webhost_setZoom(this.__wbg_ptr, zoom);
+    }
+    /**
      * Stop the loop and remove the input listeners. The canvas keeps its
      * last frame.
      */
     stop() {
         wasm.webhost_stop(this.__wbg_ptr);
+    }
+    /**
+     * The zoom last asked for.
+     * @returns {number}
+     */
+    zoom() {
+        const ret = wasm.webhost_zoom(this.__wbg_ptr);
+        return ret;
     }
 }
 if (Symbol.dispose) WebHost.prototype[Symbol.dispose] = WebHost.prototype.free;
@@ -298,6 +324,10 @@ function __wbg_get_imports() {
             const ret = arg0.call(arg1);
             return ret;
         }, arguments); },
+        __wbg_cancelable_b718bc29611f8105: function(arg0) {
+            const ret = arg0.cancelable;
+            return ret;
+        },
         __wbg_changedTouches_df984754af5ef0fa: function(arg0) {
             const ret = arg0.changedTouches;
             return ret;
@@ -1058,17 +1088,17 @@ function __wbg_get_imports() {
             return ret;
         },
         __wbindgen_generic_0000000000000002: function(arg0, arg1) {
-            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [F64], shim_idx: 287, ret: Unit, inner_ret: Some(Unit) }, mutable: true }) -> Externref`.
+            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [F64], shim_idx: 274, ret: Unit, inner_ret: Some(Unit) }, mutable: true }) -> Externref`.
             const ret = makeMutClosure(arg0, arg1, wasm_bindgen__convert__closures_____invoke__h5e49811666bb5fac);
             return ret;
         },
         __wbindgen_generic_0000000000000003: function(arg0, arg1) {
-            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [NamedExternref("Event")], shim_idx: 285, ret: Unit, inner_ret: Some(Unit) }, mutable: true }) -> Externref`.
+            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [NamedExternref("Event")], shim_idx: 272, ret: Unit, inner_ret: Some(Unit) }, mutable: true }) -> Externref`.
             const ret = makeMutClosure(arg0, arg1, wasm_bindgen__convert__closures_____invoke__h5b4249efc1962cfd);
             return ret;
         },
         __wbindgen_generic_0000000000000004: function(arg0, arg1) {
-            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [], shim_idx: 283, ret: Unit, inner_ret: Some(Unit) }, mutable: true }) -> Externref`.
+            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [], shim_idx: 270, ret: Unit, inner_ret: Some(Unit) }, mutable: true }) -> Externref`.
             const ret = makeMutClosure(arg0, arg1, wasm_bindgen__convert__closures_____invoke__h34eeeeb7456ccd61);
             return ret;
         },
