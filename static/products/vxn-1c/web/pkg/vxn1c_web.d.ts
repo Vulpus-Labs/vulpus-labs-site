@@ -54,6 +54,11 @@ export class Vxn1cPage {
      */
     setParam(index: number, value: number): void;
     /**
+     * Show the faceplate at `zoom` CSS pixels per logical pixel, sharp at
+     * any zoom; `silkscreen-fit.mjs` fits it to the page with this.
+     */
+    setZoom(zoom: number): void;
+    /**
      * Share the current sound (as the browser's Share does) and return
      * the link.
      */
@@ -88,10 +93,21 @@ export class WebHost {
      */
     puts(): number;
     /**
+     * Show the faceplate at `zoom` CSS pixels per logical pixel, from the
+     * next frame. The editor renders at `devicePixelRatio × zoom`, so a
+     * zoomed faceplate stays sharp; input maps through the canvas's box at
+     * any zoom. Clamped to 0.25–4.
+     */
+    setZoom(zoom: number): void;
+    /**
      * Stop the loop and remove the input listeners. The canvas keeps its
      * last frame.
      */
     stop(): void;
+    /**
+     * The zoom last asked for.
+     */
+    zoom(): number;
 }
 
 /**
@@ -118,11 +134,14 @@ export interface InitOutput {
     readonly vxn1cpage_sab: (a: number) => any;
     readonly vxn1cpage_savePreset: (a: number, b: number, c: number) => [number, number];
     readonly vxn1cpage_setParam: (a: number, b: number, c: number) => void;
+    readonly vxn1cpage_setZoom: (a: number, b: number) => void;
     readonly vxn1cpage_shareLink: (a: number) => [number, number];
     readonly webhost_binds: (a: number) => number;
     readonly webhost_panels: (a: number) => number;
     readonly webhost_puts: (a: number) => number;
+    readonly webhost_setZoom: (a: number, b: number) => void;
     readonly webhost_stop: (a: number) => void;
+    readonly webhost_zoom: (a: number) => number;
     readonly wasm_bindgen__convert__closures_____invoke__h5e49811666bb5fac: (a: number, b: number, c: number) => void;
     readonly wasm_bindgen__convert__closures_____invoke__h1707fddd86a6f68e: (a: number, b: number, c: any, d: any) => void;
     readonly wasm_bindgen__convert__closures_____invoke__h3ae15ede0744e005: (a: number, b: number, c: any) => [number, number];
