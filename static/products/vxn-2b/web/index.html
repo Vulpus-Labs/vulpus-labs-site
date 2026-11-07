@@ -31,7 +31,9 @@
     #stage { flex: 1 1 auto; min-height: 0; overflow: auto; display: flex; }
     #face { margin: auto; padding: 16px 16px 0; }
     canvas { display: block; margin: 0 auto; }
-    /* Wider than the window, the bar scrolls sideways on its own. */
+    /* The keyboard takes the faceplate's width once it's fitted
+       (silkscreen-fit.mjs); wider than the window, the bar scrolls sideways
+       on its own. */
     #keys { flex: none; display: flex; overflow-x: auto; padding: 16px; border-top: 1px solid #2e2e34; }
     #keyboard { flex: none; margin: 0 auto; width: 1120px; height: 120px; }
     /* The page's own controls, out of the faceplate's way. */
@@ -86,6 +88,7 @@
     import init, { start } from "./pkg/vxn2b_web.js";
     import { startAudio } from "./silkscreen-audio.mjs";
     import { mountKeyboard } from "./silkscreen-keyboard.mjs";
+    import { fitFaceplate } from "./silkscreen-fit.mjs";
     import { attachMidi } from "./silkscreen-midi.mjs";
 
     const splash = document.getElementById("splash");
@@ -139,6 +142,14 @@
       octaves: 5,
       // While a menu or the matrix is open, keys are the editor's.
       keysTaken: () => page.editorWantsKeys(),
+    });
+    // The faceplate as large as fits above the keyboard, which matches its
+    // width; on a phone, its own size (silkscreen-fit.mjs).
+    window.fit = fitFaceplate({
+      page,
+      stage: document.getElementById("stage"),
+      canvas: document.getElementById("faceplate"),
+      keyboard: document.getElementById("keyboard"),
     });
 
     const cpuText = document.getElementById("cpu-text");
