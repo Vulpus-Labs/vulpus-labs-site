@@ -19,14 +19,21 @@
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:image" content="https://vulpuslabs.com/products/vxn-2b/web/og-image.png">
   <style>
-    /* The stage centres with auto margins, which never go negative: on a
-       screen narrower than the faceplate it starts at the left edge and the
-       page scrolls to the rest, where centring would cut its left side off. */
-    body { margin: 0; min-height: 100vh; display: flex;
+    /* The faceplate scrolls; the keyboard doesn't. The body is the viewport
+       (dvh: a phone's collapsing toolbars), a column of the faceplate's
+       scroller over a bar pinned to the bottom, so the keys' front edges,
+       where velocity is highest, are always on screen.
+       The faceplate centres with auto margins, which never go negative: on a
+       screen narrower or shorter than it, it starts at the top left and the
+       scroller reaches the rest, where centring would cut it off. */
+    body { margin: 0; height: 100vh; height: 100dvh; display: flex; flex-direction: column; overflow: hidden;
            background: #202024; color: #c8c8cc; font: 14px system-ui, sans-serif; }
-    #stage { margin: auto; padding: 16px; display: grid; gap: 16px; }
+    #stage { flex: 1 1 auto; min-height: 0; overflow: auto; display: flex; }
+    #face { margin: auto; padding: 16px 16px 0; }
     canvas { display: block; margin: 0 auto; }
-    #keyboard { width: 1120px; height: 120px; }
+    /* Wider than the window, the bar scrolls sideways on its own. */
+    #keys { flex: none; display: flex; overflow-x: auto; padding: 16px; border-top: 1px solid #2e2e34; }
+    #keyboard { flex: none; margin: 0 auto; width: 1120px; height: 120px; }
     /* The page's own controls, out of the faceplate's way. */
     #audio { position: fixed; top: 12px; left: 12px; width: 100px; display: grid; gap: 6px; }
     #cpu { display: grid; grid-template-columns: auto 1fr; gap: 6px; align-items: center; font-size: 12px;
@@ -72,9 +79,9 @@
     <div id="status"></div>
   </div>
   <div id="stage">
-    <canvas id="faceplate"></canvas>
-    <div id="keyboard"></div>
+    <div id="face"><canvas id="faceplate"></canvas></div>
   </div>
+  <div id="keys"><div id="keyboard"></div></div>
   <script type="module">
     import init, { start } from "./pkg/vxn2b_web.js";
     import { startAudio } from "./silkscreen-audio.mjs";
