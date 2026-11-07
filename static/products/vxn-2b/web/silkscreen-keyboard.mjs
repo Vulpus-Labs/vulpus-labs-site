@@ -9,7 +9,7 @@
 // white keys from C, the row above the black keys, and Z and X shift the
 // octave. The mapped keys show their letters on the strip.
 //
-// The logic (layout, hit testing, velocity, glide, the computer keys) is
+// The logic (layout, hit testing, velocity by depth down the key, glide, the computer keys) is
 // pure and exported for tests; mountKeyboard is the DOM around it. The pointer is captured on the
 // strip and keys are found from coordinates, not DOM hit tests, so a drag
 // glides from key to key, and off the strip it releases.
@@ -49,10 +49,17 @@ export function keyAt(layout, x, y) {
   return white ? white.key : null;
 }
 
-/// MIDI velocity for a press `y` (0..1) down the strip: deeper is louder,
+/// How far down `key` a press at `y` (0..1 down the strip) lands, as a
+/// share of that key's own length: a black key is shorter than the strip,
+/// so its front edge is 1 as a white key's is.
+export function keyDepth(key, y) {
+  return y / (isBlack(key) ? BLACK_HEIGHT : 1);
+}
+
+/// MIDI velocity for a press `depth` (0..1) down its key: deeper is louder,
 /// as on a key pressed nearer its front edge.
-export function velocityAt(y) {
-  const v = 0.3 + 0.7 * Math.min(Math.max(y, 0), 1);
+export function velocityAt(depth) {
+  const v = 0.3 + 0.7 * Math.min(Math.max(depth, 0), 1);
   return Math.max(1, Math.min(127, Math.round(v * 127)));
 }
 
@@ -238,7 +245,8 @@ export function mountKeyboard(
     const r = strip.getBoundingClientRect();
     const x = ((e.clientX - r.left) / r.width) * layout.whites;
     const y = (e.clientY - r.top) / r.height;
-    return { key: keyAt(layout, x, y), velocity: velocityAt(y) };
+    const key = keyAt(layout, x, y);
+    return { key, velocity: key === null ? 0 : velocityAt(keyDepth(key, y)) };
   };
 
   const listeners = [];
