@@ -1,0 +1,37 @@
+/* tslint:disable */
+/* eslint-disable */
+export const memory: WebAssembly.Memory;
+export const __wbg_vxn2bpage_free: (a: number, b: number) => void;
+export const __wbg_webhost_free: (a: number, b: number) => void;
+export const start: (a: any) => any;
+export const vxn2bpage_editorWantsKeys: (a: number) => number;
+export const vxn2bpage_getParam: (a: number, b: number) => number;
+export const vxn2bpage_midi: (a: number, b: number, c: number, d: number) => number;
+export const vxn2bpage_presetKeys: (a: number) => [number, number];
+export const vxn2bpage_presetName: (a: number) => [number, number];
+export const vxn2bpage_presetProblem: (a: number) => [number, number];
+export const vxn2bpage_presetsPending: (a: number) => number;
+export const vxn2bpage_puts: (a: number) => number;
+export const vxn2bpage_sab: (a: number) => any;
+export const vxn2bpage_savePreset: (a: number, b: number, c: number) => [number, number];
+export const vxn2bpage_setParam: (a: number, b: number, c: number) => void;
+export const vxn2bpage_shareLink: (a: number) => [number, number];
+export const webhost_binds: (a: number) => number;
+export const webhost_panels: (a: number) => number;
+export const webhost_puts: (a: number) => number;
+export const webhost_stop: (a: number) => void;
+export const wasm_bindgen__convert__closures_____invoke__h5e49811666bb5fac: (a: number, b: number, c: number) => void;
+export const wasm_bindgen__convert__closures_____invoke__h1707fddd86a6f68e: (a: number, b: number, c: any, d: any) => void;
+export const wasm_bindgen__convert__closures_____invoke__h3ae15ede0744e005: (a: number, b: number, c: any) => [number, number];
+export const wasm_bindgen__convert__closures_____invoke__h5b4249efc1962cfd: (a: number, b: number, c: any) => void;
+export const wasm_bindgen__convert__closures_____invoke__h34eeeeb7456ccd61: (a: number, b: number) => void;
+export const __wbindgen_malloc: (a: number, b: number) => number;
+export const __wbindgen_realloc: (a: number, b: number, c: number, d: number) => number;
+export const __wbindgen_exn_store: (a: number) => void;
+export const __externref_table_alloc: () => number;
+export const __wbindgen_externrefs: WebAssembly.Table;
+export const __wbindgen_destroy_closure: (a: number, b: number) => void;
+export const __externref_drop_slice: (a: number, b: number) => void;
+export const __wbindgen_free: (a: number, b: number, c: number) => void;
+export const __externref_table_dealloc: (a: number) => void;
+export const __wbindgen_start: () => void;
