@@ -1,8 +1,9 @@
 /* @ts-self-types="./vxn1c_web.d.ts" */
 
 /**
- * The running page: the editor, the buffer to hand the worklet, and the
- * MIDI ring's writer for the keyboard, over a [`PresetPage`].
+ * The running page: the editor, the buffer to hand the worklet,
+ * and the MIDI ring's writer for the keyboard, over a
+ * [`PresetPage`](silkscreen_host_web::PresetPage).
  */
 export class Vxn1cPage {
     static __wrap(ptr) {
@@ -22,8 +23,9 @@ export class Vxn1cPage {
         wasm.__wbg_vxn1cpage_free(ptr, 0);
     }
     /**
-     * Whether the editor wants the keys: a panel (a menu, the matrix) is
-     * open. The page's computer-keyboard notes stand aside while it does.
+     * Whether the editor wants the keys: a panel (a menu, the
+     * matrix) is open. The page's computer-keyboard notes stand
+     * aside while it does.
      * @returns {boolean}
      */
     editorWantsKeys() {
@@ -40,8 +42,8 @@ export class Vxn1cPage {
         return ret;
     }
     /**
-     * Send one MIDI 1.0 channel message to the engine. Returns `false` if
-     * there's no engine link or the ring is full.
+     * Send one MIDI 1.0 channel message to the engine. Returns
+     * `false` if there's no engine link or the ring is full.
      * @param {number} status
      * @param {number} data1
      * @param {number} data2
@@ -104,8 +106,8 @@ export class Vxn1cPage {
         return ret >>> 0;
     }
     /**
-     * The shared buffer for `startAudio`, or `undefined` if the page isn't
-     * cross-origin isolated.
+     * The shared buffer for `startAudio`, or `undefined` if the
+     * page isn't cross-origin isolated.
      * @returns {SharedArrayBuffer | undefined}
      */
     get sab() {
@@ -113,8 +115,8 @@ export class Vxn1cPage {
         return ret;
     }
     /**
-     * Save the current sound as user preset `name` at the root, for the
-     * console and checks.
+     * Save the current sound as user preset `name` at the root,
+     * for the console and checks.
      * @param {string} name
      */
     savePreset(name) {
@@ -126,8 +128,8 @@ export class Vxn1cPage {
         }
     }
     /**
-     * Set param `index` to plain `value` as the user would, for the
-     * console and checks.
+     * Set param `index` to plain `value` as the user would, for
+     * the console and checks.
      * @param {number} index
      * @param {number} value
      */
@@ -135,16 +137,17 @@ export class Vxn1cPage {
         wasm.vxn1cpage_setParam(this.__wbg_ptr, index, value);
     }
     /**
-     * Show the faceplate at `zoom` CSS pixels per logical pixel, sharp at
-     * any zoom; `silkscreen-fit.mjs` fits it to the page with this.
+     * Show the faceplate at `zoom` CSS pixels per logical pixel,
+     * sharp at any zoom; `silkscreen-fit.mjs` fits it to the page
+     * with this.
      * @param {number} zoom
      */
     setZoom(zoom) {
         wasm.vxn1cpage_setZoom(this.__wbg_ptr, zoom);
     }
     /**
-     * Share the current sound (as the browser's Share does) and return
-     * the link.
+     * Share the current sound (as the browser's Share does) and
+     * return the link.
      * @returns {string | undefined}
      */
     shareLink() {
@@ -229,7 +232,7 @@ export class WebHost {
 if (Symbol.dispose) WebHost.prototype[Symbol.dispose] = WebHost.prototype.free;
 
 /**
- * Open the user's presets, then mount the vxn1c editor on `canvas` and
+ * Open the user's presets, then mount the editor on `canvas` and
  * start drawing.
  * @param {HTMLCanvasElement} canvas
  * @returns {Promise<Vxn1cPage>}
@@ -1083,22 +1086,22 @@ function __wbg_get_imports() {
             return ret;
         },
         __wbindgen_generic_0000000000000001: function(arg0, arg1) {
-            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [Externref], shim_idx: 833, ret: Result(Unit), inner_ret: Some(Result(Unit)) }, mutable: true }) -> Externref`.
+            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [Externref], shim_idx: 835, ret: Result(Unit), inner_ret: Some(Result(Unit)) }, mutable: true }) -> Externref`.
             const ret = makeMutClosure(arg0, arg1, wasm_bindgen__convert__closures_____invoke__h3ae15ede0744e005);
             return ret;
         },
         __wbindgen_generic_0000000000000002: function(arg0, arg1) {
-            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [F64], shim_idx: 319, ret: Unit, inner_ret: Some(Unit) }, mutable: true }) -> Externref`.
+            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [F64], shim_idx: 320, ret: Unit, inner_ret: Some(Unit) }, mutable: true }) -> Externref`.
             const ret = makeMutClosure(arg0, arg1, wasm_bindgen__convert__closures_____invoke__h5e49811666bb5fac);
             return ret;
         },
         __wbindgen_generic_0000000000000003: function(arg0, arg1) {
-            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [NamedExternref("Event")], shim_idx: 317, ret: Unit, inner_ret: Some(Unit) }, mutable: true }) -> Externref`.
+            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [NamedExternref("Event")], shim_idx: 318, ret: Unit, inner_ret: Some(Unit) }, mutable: true }) -> Externref`.
             const ret = makeMutClosure(arg0, arg1, wasm_bindgen__convert__closures_____invoke__h5b4249efc1962cfd);
             return ret;
         },
         __wbindgen_generic_0000000000000004: function(arg0, arg1) {
-            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [], shim_idx: 315, ret: Unit, inner_ret: Some(Unit) }, mutable: true }) -> Externref`.
+            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [], shim_idx: 316, ret: Unit, inner_ret: Some(Unit) }, mutable: true }) -> Externref`.
             const ret = makeMutClosure(arg0, arg1, wasm_bindgen__convert__closures_____invoke__h34eeeeb7456ccd61);
             return ret;
         },
