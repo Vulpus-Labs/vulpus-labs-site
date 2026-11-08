@@ -2,16 +2,18 @@
 /* eslint-disable */
 
 /**
- * The running page: the editor, the buffer to hand the worklet, and the
- * MIDI ring's writer for the keyboard, over a [`PresetPage`].
+ * The running page: the editor, the buffer to hand the worklet,
+ * and the MIDI ring's writer for the keyboard, over a
+ * [`PresetPage`](silkscreen_host_web::PresetPage).
  */
 export class Vxn2bPage {
     private constructor();
     free(): void;
     [Symbol.dispose](): void;
     /**
-     * Whether the editor wants the keys: a panel (a menu, the matrix) is
-     * open. The page's computer-keyboard notes stand aside while it does.
+     * Whether the editor wants the keys: a panel (a menu, the
+     * matrix) is open. The page's computer-keyboard notes stand
+     * aside while it does.
      */
     editorWantsKeys(): boolean;
     /**
@@ -19,8 +21,8 @@ export class Vxn2bPage {
      */
     getParam(index: number): number;
     /**
-     * Send one MIDI 1.0 channel message to the engine. Returns `false` if
-     * there's no engine link or the ring is full.
+     * Send one MIDI 1.0 channel message to the engine. Returns
+     * `false` if there's no engine link or the ring is full.
      */
     midi(status: number, data1: number, data2: number): boolean;
     /**
@@ -44,28 +46,29 @@ export class Vxn2bPage {
      */
     puts(): number;
     /**
-     * Save the current sound as user preset `name` at the root, for the
-     * console and checks.
+     * Save the current sound as user preset `name` at the root,
+     * for the console and checks.
      */
     savePreset(name: string): void;
     /**
-     * Set param `index` to plain `value` as the user would, for the
-     * console and checks.
+     * Set param `index` to plain `value` as the user would, for
+     * the console and checks.
      */
     setParam(index: number, value: number): void;
     /**
-     * Show the faceplate at `zoom` CSS pixels per logical pixel, sharp at
-     * any zoom; `silkscreen-fit.mjs` fits it to the page with this.
+     * Show the faceplate at `zoom` CSS pixels per logical pixel,
+     * sharp at any zoom; `silkscreen-fit.mjs` fits it to the page
+     * with this.
      */
     setZoom(zoom: number): void;
     /**
-     * Share the current sound (as the browser's Share does) and return
-     * the link.
+     * Share the current sound (as the browser's Share does) and
+     * return the link.
      */
     shareLink(): string | undefined;
     /**
-     * The shared buffer for `startAudio`, or `undefined` if the page isn't
-     * cross-origin isolated.
+     * The shared buffer for `startAudio`, or `undefined` if the
+     * page isn't cross-origin isolated.
      */
     readonly sab: SharedArrayBuffer | undefined;
 }
@@ -111,7 +114,7 @@ export class WebHost {
 }
 
 /**
- * Open the user's presets, then mount the vxn2b editor on `canvas` and
+ * Open the user's presets, then mount the editor on `canvas` and
  * start drawing.
  */
 export function start(canvas: HTMLCanvasElement): Promise<Vxn2bPage>;
