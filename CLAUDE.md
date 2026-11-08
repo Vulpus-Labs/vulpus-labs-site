@@ -133,7 +133,7 @@ Products (`type = "products"`) use:
   resolve against
 - `releaseRepo` - overrides `params.releaseRepo` in hugo.toml (default
   `Vulpus-Labs/vxn-1`)
-- `webdemo` - path to the browser build, e.g. `/products/vxn-2/web/`
+- `webdemo` - path to the browser build, e.g. `/products/vxn-2b/web/`
 - `formats` - array shown as chips, e.g. `["CLAP", "VST3"]`
 - `demoNote` - replaces the line under the hero's browser button (default:
   "No install, no account… or plug in a MIDI controller"), for a demo that
@@ -147,6 +147,19 @@ Products (`type = "products"`) use:
   `vxn1b.clap`). They fill in the `xattr` de-quarantine commands in the callout
   under the download grid; without them the callout falls back to a generic path
 - `[[extras]]` - `label` plus `asset`/`url`, for manuals and side artifacts
+- `store` - the product's store page (KVR Marketplace). When set, the hero and
+  the downloads section offer "Buy on <storeName>" in place of the download
+  grid; `storeName` defaults to "KVR Marketplace"
+- `storeSoon` - markdown shown in the downloads section while there is neither
+  a `store` nor `downloads` (e.g. "coming soon to KVR Marketplace")
+- `manual` - path to the product's manual page, e.g. `/manuals/vxn-1c/`; adds a
+  Manual button to the hero
+- `[[legacy]]` - a superseded product still offered for download, rendered as
+  a "Previous version" section (`#previous`) below the downloads: `title`,
+  `version`, `release`, optional `repo`, `note` (markdown), `[legacy.install]`
+  and `[[legacy.downloads]]` as above. vxn-1c carries VXN1b's, vxn-2b VXN2's;
+  `/products/vxn-1b/` and `/products/vxn-2/` redirect to them
+  (`static/_redirects`)
 - `[[audio]]` - either `file` (a glob matched against the page bundle's
   resources) or `url` (a path served from `static/`, e.g.
   `/media/ravel_vxn1.m4a`), plus optional `title` and `caption` (rendered as

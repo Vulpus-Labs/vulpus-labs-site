@@ -1,4 +1,14 @@
-# VXN1 is retired; VXN1b supersedes it.
-/products/vxn-1/web/*  /products/vxn-1b/web/:splat  301
-/products/vxn-1/*      /products/vxn-1b/            301
-/products/vxn-1        /products/vxn-1b/            301
+# VXN1 is retired; VXN1b superseded it, and vxn-1c supersedes VXN1b.
+/products/vxn-1/web/*   /products/vxn-1c/web/:splat  301
+/products/vxn-1/*       /products/vxn-1c/            301
+/products/vxn-1         /products/vxn-1c/            301
+
+# VXN1b is superseded by vxn-1c; its downloads are on vxn-1c's page.
+/products/vxn-1b/web/*  /products/vxn-1c/web/:splat  301
+/products/vxn-1b/*      /products/vxn-1c/            301
+/products/vxn-1b        /products/vxn-1c/            301
+
+# VXN2 is superseded by vxn-2b; its downloads are on vxn-2b's page.
+/products/vxn-2/web/*   /products/vxn-2b/web/:splat  301
+/products/vxn-2/*       /products/vxn-2b/            301
+/products/vxn-2         /products/vxn-2b/            301

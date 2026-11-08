@@ -3,6 +3,7 @@
 {{ $repo := or .Params.releaseRepo site.Params.releaseRepo }}
 {{ $release := .Params.release }}
 {{ $demo := default "" .Params.webdemo }}
+{{ $storeName := default "KVR Marketplace" .Params.storeName }}
 {{ $shot := .Resources.GetMatch "faceplate.png" }}
 {{ $extraShots := slice }}
 {{ range .Resources.Match "faceplate-*.png" }}{{ $extraShots = $extraShots | append . }}{{ end }}
@@ -41,8 +42,15 @@
           {{ with $demo }}
           <a class="btn btn-primary btn-lg" href="{{ . | relURL }}"><span class="play-glyph"></span>Play it in your browser</a>
           {{ end }}
-          {{ if .Params.downloads }}
+          {{ with .Params.store }}
+          <a class="btn btn-secondary btn-lg" href="{{ . }}" target="_blank" rel="noopener noreferrer">Buy on {{ $storeName }}</a>
+          {{ else }}{{ if .Params.downloads }}
           <a class="btn btn-secondary btn-lg" href="#downloads">Download ↓</a>
+          {{ else }}{{ with .Params.legacy }}
+          <a class="btn btn-secondary btn-lg" href="#previous">{{ (index . 0).title }} download ↓</a>
+          {{ end }}{{ end }}{{ end }}
+          {{ with .Params.manual }}
+          <a class="btn btn-secondary btn-lg" href="{{ . | relURL }}">Manual</a>
           {{ end }}
         </div>
         {{ if $demo }}
@@ -119,7 +127,13 @@
     <div class="wrap">
       <p class="eyebrow">Downloads</p>
       <h2 class="section-heading" style="margin-bottom:1rem">Get the plugin</h2>
-      {{ with .Params.downloads }}
+      {{ with .Params.store }}
+      <p class="downloads-release">
+        {{ $page.Title }} is sold through
+        <a href="{{ . }}" target="_blank" rel="noopener noreferrer">{{ $storeName }}</a>.
+      </p>
+      <a class="btn btn-primary" href="{{ . }}" target="_blank" rel="noopener noreferrer">Buy on {{ $storeName }}</a>
+      {{ else }}{{ with .Params.downloads }}
       {{ with $release }}
       <p class="downloads-release">
         Latest release:
@@ -127,34 +141,10 @@
         on GitHub.
       </p>
       {{ end }}
-      <div class="download-grid">
-        {{ range . }}
-        {{ $href := .url }}
-        {{ with .asset }}{{ $href = printf "https://github.com/%s/releases/download/%s/%s" $repo $release . }}{{ end }}
-        <a class="download-card" href="{{ $href }}">
-          <span class="download-os">{{ partial "os-icon.html" .platform }}{{ .platform }}</span>
-          <span class="download-format">{{ .format }}</span>
-          {{ with .arch }}<span class="download-arch">{{ . }}</span>{{ end }}
-          <span class="download-action">Download ↓</span>
-        </a>
-        {{ end }}
-      </div>
-      <aside class="downloads-callout">
-        <h3>These binaries are unsigned</h3>
-        <p><strong>macOS</strong> quarantines anything downloaded from the web, and
-          a quarantined plugin is skipped silently by your DAW's scan — it simply
-          never appears. After unpacking and copying the plugin into place, clear
-          the flag:</p>
-        {{ $clap := "" }}{{ $vst3 := "" }}
-        {{ with $page.Params.install }}{{ $clap = .clap }}{{ $vst3 = .vst3 }}{{ end }}
-        <pre><code>{{ with $clap }}xattr -dr com.apple.quarantine ~/Library/Audio/Plug-Ins/CLAP/{{ . }}
-{{ end }}{{ with $vst3 }}xattr -dr com.apple.quarantine ~/Library/Audio/Plug-Ins/VST3/{{ . }}{{ end }}{{ if not $clap }}xattr -dr com.apple.quarantine path/to/the/plugin{{ end }}</code></pre>
-        <p><strong>Windows</strong> shows a SmartScreen warning on first load instead —
-          choose <em>More info → Run anyway</em>.</p>
-      </aside>
+      {{ partial "download-grid.html" (dict "downloads" . "repo" $repo "release" $release "install" $page.Params.install) }}
       {{ else }}
-      <p class="downloads-note">No download is available for this product yet.</p>
-      {{ end }}
+      <p class="downloads-note">{{ with $page.Params.storeSoon }}{{ . | markdownify }}{{ else }}No download is available for this product yet.{{ end }}</p>
+      {{ end }}{{ end }}
 
       {{ with .Params.extras }}
       <h3 class="downloads-extras-heading">Also in this release</h3>
@@ -168,6 +158,26 @@
       {{ end }}
     </div>
   </section>
+
+  {{/* Earlier products this one supersedes, still downloadable. */}}
+  {{ range .Params.legacy }}
+  {{ $lrepo := or .repo $repo }}
+  <section class="section section-ruled" id="previous">
+    <div class="wrap">
+      <p class="eyebrow">Previous version</p>
+      <h2 class="section-heading" style="margin-bottom:1rem">{{ .title }}{{ with .version }} <span class="chip">v{{ . }}</span>{{ end }}</h2>
+      {{ with .note }}<div class="downloads-release">{{ $page.RenderString . }}</div>{{ end }}
+      {{ with .release }}
+      <p class="downloads-release">
+        Release
+        <a href="https://github.com/{{ $lrepo }}/releases/tag/{{ . }}" target="_blank" rel="noopener noreferrer">{{ . }}</a>
+        on GitHub.
+      </p>
+      {{ end }}
+      {{ partial "download-grid.html" (dict "downloads" .downloads "repo" $lrepo "release" .release "install" .install) }}
+    </div>
+  </section>
+  {{ end }}
 
   {{ $siblings := where (where site.RegularPages "Type" "products") "Permalink" "!=" .Permalink }}
   {{ with $siblings.ByWeight }}

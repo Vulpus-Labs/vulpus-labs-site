@@ -438,6 +438,7 @@ img {
   background: color-mix(in srgb, var(--signal) 10%, transparent);
 }
 
+.status-coming-soon,
 .status-beta,
 .status-in-beta {
   color: var(--ember-2);

@@ -29,12 +29,13 @@ const PORT = 8899;
  *
  * PolyKritter (silkscreen) draws its faceplate on a canvas, so its panels are
  * opened by `canvasClick`, a point in the faceplate's own units (it is
- * `logicalWidth` wide), and its splash goes on a key press (`key`). */
+ * `logicalWidth` wide), and its splash goes on a key press (`key`).
+ *
+ * vxn-1c's and vxn-2b's shots are not taken here: they are the faces their
+ * manuals' generators draw through silkscreen's harness (ui-new
+ * `examples/<synth>/manual/data/faces/`), copied in, which are the same pixels
+ * the web canvas draws at 2×. */
 const TARGETS = [
-  { slug: 'vxn-1b', out: 'faceplate.png' },
-  { slug: 'vxn-1b', out: 'faceplate-fx.png', click: 'fx / global' },
-  { slug: 'vxn-2', out: 'faceplate.png' },
-  { slug: 'vxn-2', out: 'faceplate-matrix.png', click: 'mod matrix', shoot: 'overlay' },
   { slug: 'polykritter', out: 'faceplate.png', key: true },
   { slug: 'polykritter', out: 'faceplate-delay.png', key: true, logicalWidth: 842, canvasClick: [527, 278] },
   { slug: 'polykritter', out: 'faceplate-matrix.png', key: true, logicalWidth: 842, canvasClick: [56, 396] },
