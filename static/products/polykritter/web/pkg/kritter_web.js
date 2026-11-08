@@ -1,8 +1,9 @@
 /* @ts-self-types="./kritter_web.d.ts" */
 
 /**
- * The running page: the editor, the buffer to hand the worklet, and the
- * MIDI ring's writer for the keyboard, over a [`PresetPage`].
+ * The running page: the editor, the buffer to hand the worklet,
+ * and the MIDI ring's writer for the keyboard, over a
+ * [`PresetPage`](silkscreen_host_web::PresetPage).
  */
 export class KritterPage {
     static __wrap(ptr) {
@@ -22,8 +23,9 @@ export class KritterPage {
         wasm.__wbg_kritterpage_free(ptr, 0);
     }
     /**
-     * Whether the editor wants the keys: a panel (a menu, the matrix) is
-     * open. The page's computer-keyboard notes stand aside while it does.
+     * Whether the editor wants the keys: a panel (a menu, the
+     * matrix) is open. The page's computer-keyboard notes stand
+     * aside while it does.
      * @returns {boolean}
      */
     editorWantsKeys() {
@@ -40,8 +42,8 @@ export class KritterPage {
         return ret;
     }
     /**
-     * Send one MIDI 1.0 channel message to the engine. Returns `false` if
-     * there's no engine link or the ring is full.
+     * Send one MIDI 1.0 channel message to the engine. Returns
+     * `false` if there's no engine link or the ring is full.
      * @param {number} status
      * @param {number} data1
      * @param {number} data2
@@ -104,8 +106,8 @@ export class KritterPage {
         return ret >>> 0;
     }
     /**
-     * The shared buffer for `startAudio`, or `undefined` if the page isn't
-     * cross-origin isolated.
+     * The shared buffer for `startAudio`, or `undefined` if the
+     * page isn't cross-origin isolated.
      * @returns {SharedArrayBuffer | undefined}
      */
     get sab() {
@@ -113,8 +115,8 @@ export class KritterPage {
         return ret;
     }
     /**
-     * Save the current sound as user preset `name` at the root, for the
-     * console and checks.
+     * Save the current sound as user preset `name` at the root,
+     * for the console and checks.
      * @param {string} name
      */
     savePreset(name) {
@@ -126,8 +128,8 @@ export class KritterPage {
         }
     }
     /**
-     * Set param `index` to plain `value` as the user would, for the
-     * console and checks.
+     * Set param `index` to plain `value` as the user would, for
+     * the console and checks.
      * @param {number} index
      * @param {number} value
      */
@@ -135,16 +137,17 @@ export class KritterPage {
         wasm.kritterpage_setParam(this.__wbg_ptr, index, value);
     }
     /**
-     * Show the faceplate at `zoom` CSS pixels per logical pixel, sharp at
-     * any zoom; `silkscreen-fit.mjs` fits it to the page with this.
+     * Show the faceplate at `zoom` CSS pixels per logical pixel,
+     * sharp at any zoom; `silkscreen-fit.mjs` fits it to the page
+     * with this.
      * @param {number} zoom
      */
     setZoom(zoom) {
         wasm.kritterpage_setZoom(this.__wbg_ptr, zoom);
     }
     /**
-     * Share the current sound (as the browser's Share does) and return
-     * the link.
+     * Share the current sound (as the browser's Share does) and
+     * return the link.
      * @returns {string | undefined}
      */
     shareLink() {
@@ -229,7 +232,7 @@ export class WebHost {
 if (Symbol.dispose) WebHost.prototype[Symbol.dispose] = WebHost.prototype.free;
 
 /**
- * Open the user's presets, then mount the kritter editor on `canvas` and
+ * Open the user's presets, then mount the editor on `canvas` and
  * start drawing.
  * @param {HTMLCanvasElement} canvas
  * @returns {Promise<KritterPage>}
@@ -1083,7 +1086,7 @@ function __wbg_get_imports() {
             return ret;
         },
         __wbindgen_generic_0000000000000001: function(arg0, arg1) {
-            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [Externref], shim_idx: 794, ret: Result(Unit), inner_ret: Some(Result(Unit)) }, mutable: true }) -> Externref`.
+            // Cast intrinsic for `Closure(Closure { owned: true, function: Function { arguments: [Externref], shim_idx: 795, ret: Result(Unit), inner_ret: Some(Result(Unit)) }, mutable: true }) -> Externref`.
             const ret = makeMutClosure(arg0, arg1, wasm_bindgen__convert__closures_____invoke__h3ae15ede0744e005);
             return ret;
         },
