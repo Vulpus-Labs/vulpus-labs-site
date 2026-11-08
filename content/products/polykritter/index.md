@@ -9,6 +9,7 @@ blurb = "Every voice is a whole Kritter: two oscillators, the effect section, a 
 status = "in development"
 formats = ["CLAP", "Browser"]
 webdemo = "/products/polykritter/web/"
+manual = "/manuals/polykritter/"
 demoNote = "No install, no account. Works in Chrome, Edge and Firefox — play it from the on-screen keyboard, your computer keys, or a MIDI controller."
 demoPitch = "The whole synth runs in the tab: the same engine, the same faceplate and every control of the plugin — and nothing to uninstall afterwards."
 +++

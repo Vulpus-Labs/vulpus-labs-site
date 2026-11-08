@@ -20,3 +20,6 @@ The manual covers:
 - VCO 1's harmonic spectra, VCO 2's tuning modes and the noise spectrum;
 - ECO against HI: the top-octave response and aliasing across the keyboard;
 - a reference table of every range and time constant.
+
+This is the manual for the Voltage Modular module. The plugin and web instrument have
+[their own manual](/manuals/polykritter/).
