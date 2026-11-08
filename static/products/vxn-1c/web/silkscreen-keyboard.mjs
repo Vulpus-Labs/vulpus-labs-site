@@ -5,6 +5,9 @@
 // MIDI 1.0 channel messages ([status, data1, data2]) through `onMidi`; the
 // page writes them to the engine's MIDI ring.
 //
+// Wider than its place (a phone shows it at its own size), it scrolls: two
+// fingers swipe it, and a wheel or trackpad over it scrolls it sideways.
+//
 // It also plays from the computer keyboard: the home row from A is the
 // white keys from C, the row above the black keys, and Z and X shift the
 // octave. The mapped keys show their letters on the strip.
@@ -156,6 +159,68 @@ export class Voices {
   }
 }
 
+/// Two fingers on the strip scroll it rather than play (0331): a phone
+/// shows the keyboard at its own width, wider than the screen. One finger
+/// plays and glides as ever. When a second touch lands, both fingers' notes
+/// are released and the pair pans; a finger that panned plays nothing more
+/// until it lifts. Pure: it returns what to do, the DOM does it.
+export class TouchPan {
+  constructor() {
+    this.touches = new Map(); // pointerId -> last clientX
+    this.spent = new Set(); // touches that panned, until they lift
+  }
+
+  /// A pointer went down. Returns the pointers whose notes to release: the
+  /// fingers that now pan, or none.
+  down(pointer, x, touch) {
+    if (!touch) return [];
+    this.touches.set(pointer, x);
+    if (this.touches.size < 2) return [];
+    const panning = [...this.touches.keys()];
+    for (const p of panning) this.spent.add(p);
+    return panning;
+  }
+
+  /// A pointer moved to `x`. Returns how far to scroll the strip's content
+  /// (positive: content moves right), or null if this pointer isn't
+  /// panning. Each finger moves the content by its share, so two fingers
+  /// moving together move it by their common distance.
+  move(pointer, x) {
+    if (!this.touches.has(pointer)) return null;
+    const dx = x - this.touches.get(pointer);
+    this.touches.set(pointer, x);
+    if (!this.spent.has(pointer)) return null;
+    const panning = [...this.touches.keys()].filter((p) => this.spent.has(p)).length;
+    return dx / Math.max(1, panning);
+  }
+
+  /// Whether `pointer` is panning (or panned) and so plays nothing.
+  pans(pointer) {
+    return this.spent.has(pointer);
+  }
+
+  up(pointer) {
+    this.touches.delete(pointer);
+    this.spent.delete(pointer);
+  }
+}
+
+/// The scroll a wheel event asks of a horizontal strip, in pixels: its
+/// horizontal delta if that's the larger, else its vertical one (a mouse
+/// wheel has only that). Lines are 16 px; a page is the strip's width.
+export function wheelScroll({ deltaX, deltaY, deltaMode }, width) {
+  const d = Math.abs(deltaX) > Math.abs(deltaY) ? deltaX : deltaY;
+  return deltaMode === 1 ? d * 16 : deltaMode === 2 ? d * width : d;
+}
+
+/// The nearest ancestor of `el` that scrolls sideways, or null.
+function sidewaysScroller(el) {
+  for (let e = el.parentElement; e; e = e.parentElement) {
+    if (/^(auto|scroll)$/.test(getComputedStyle(e).overflowX)) return e;
+  }
+  return null;
+}
+
 const STYLE = `
 /* Fills its container, which sets the size; the keys are absolutely placed,
    so the strip has no height of its own. */
@@ -250,24 +315,52 @@ export function mountKeyboard(
   };
 
   const listeners = [];
-  const listen = (target, type, f) => {
-    target.addEventListener(type, f);
-    listeners.push(() => target.removeEventListener(type, f));
+  const listen = (target, type, f, options) => {
+    target.addEventListener(type, f, options);
+    listeners.push(() => target.removeEventListener(type, f, options));
   };
+  // What scrolls when the keyboard is wider than its place: the page's bar.
+  const scroller = sidewaysScroller(container);
+  const overflows = () => scroller !== null && scroller.scrollWidth > scroller.clientWidth;
+  const pan = new TouchPan();
   listen(strip, "pointerdown", (e) => {
     e.preventDefault();
     strip.setPointerCapture(e.pointerId);
+    const release = overflows() ? pan.down(e.pointerId, e.clientX, e.pointerType === "touch") : [];
+    for (const p of release) send(voices.up(p));
+    if (pan.pans(e.pointerId)) return;
     const { key, velocity } = at(e);
     send(voices.down(e.pointerId, key, velocity));
   });
   listen(strip, "pointermove", (e) => {
+    const dx = pan.move(e.pointerId, e.clientX);
+    if (dx !== null) {
+      scroller.scrollLeft -= dx;
+      return;
+    }
+    if (pan.pans(e.pointerId)) return;
     if (!voices.held.has(e.pointerId) && !strip.hasPointerCapture(e.pointerId)) return;
     const { key, velocity } = at(e);
     send(voices.move(e.pointerId, key, velocity));
   });
   for (const type of ["pointerup", "pointercancel", "lostpointercapture"]) {
-    listen(strip, type, (e) => send(voices.up(e.pointerId)));
+    listen(strip, type, (e) => {
+      pan.up(e.pointerId);
+      send(voices.up(e.pointerId));
+    });
   }
+  // A wheel or trackpad over the keyboard scrolls it sideways, when it's
+  // wider than its place; otherwise it's left to the page.
+  listen(
+    root,
+    "wheel",
+    (e) => {
+      if (!overflows()) return;
+      e.preventDefault();
+      scroller.scrollLeft += wheelScroll(e, scroller.clientWidth);
+    },
+    { passive: false },
+  );
   const releaseAll = () => send(voices.releaseAll());
   listen(window, "blur", releaseAll);
   listen(window, "pagehide", releaseAll);
