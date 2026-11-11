@@ -1,4 +1,4 @@
-{{/*  One VXN product, presented as a portfolio slab.
+{{/*  One featured product, presented as a portfolio slab.
       dict: page, heading (h2/h3), eager */}}
 {{ $p := .page }}
 {{ $h := default "h2" .heading }}
@@ -33,7 +33,7 @@
       {{ with $demo }}
       <a class="btn btn-primary" href="{{ . | relURL }}"><span class="play-glyph"></span>Play it now</a>
       {{ end }}
-      <a class="btn btn-secondary" href="{{ $p.RelPermalink }}">Details &amp; downloads</a>
+      <a class="btn btn-secondary" href="{{ $p.RelPermalink }}">More about {{ $p.Title }}</a>
     </div>
   </div>
 

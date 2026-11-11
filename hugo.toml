@@ -39,7 +39,7 @@ pageRef = '/contact'
 weight = 60
 
 [params]
-description = 'CLAP synthesizers built in Rust — playable in your browser before you buy.'
+description = 'Synthesizers built in Rust, coming as CLAP and VST3 plugins — play them in your browser now.'
 tagline = 'Synthesizers and modular audio tools, built in Rust.'
 
 # Repository that hosts the VXN release binaries.

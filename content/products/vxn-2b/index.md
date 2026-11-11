@@ -6,12 +6,12 @@ range = "vxn"
 weight = 40
 tagline = "Six-operator FM synth with voice stacking and LCD displays"
 accent = "#ff8a3d"
-blurb = "Six-operator FM with all thirty-two operator arrangements, a 16-slot mod matrix, and stacking that turns one note into eight. The successor to VXN2, with a new faceplate and cleaner FM."
+blurb = "Six-operator FM with all thirty-two operator arrangements, a 16-slot mod matrix, and stacking that turns one note into eight."
 status = "coming soon"
-formats = ["CLAP", "Browser"]
+formats = ["CLAP", "VST3", "Browser"]
 webdemo = "/products/vxn-2b/web/"
 manual = "/manuals/vxn-2b/"
-storeSoon = "vxn-2b is coming soon to [KVR Marketplace](https://www.kvraudio.com/marketplace). Until then, play it in your browser — and the free VXN2 it replaces is still below."
+storeSoon = "The vxn-2b plugin, as CLAP and VST3 for macOS and Windows, will follow. Until then, play it in your browser."
 
 [[legacy]]
 title = "VXN2"
@@ -58,14 +58,13 @@ title = "Mussorgsky — Pictures at an Exhibition: Promenade"
 caption = "Performed by VXN2, vxn-2b's predecessor, from [Bernd Krueger](http://piano-midi.de/)’s arrangement of Mussorgsky’s *Pictures at an Exhibition*, used under [CC BY-SA 3.0 DE](https://creativecommons.org/licenses/by-sa/3.0/de/deed.en). Rendered through the synth and trimmed; this recording is shared under the same licence."
 +++
 
-**vxn-2b** ("vixen 2b") is a six-operator FM synthesizer and the successor
-to [VXN2](#previous). Six sine oscillators, thirty-two ways of wiring them
-to each other, and a stacking engine that turns one note into eight — now on
-a new faceplate of rubber knobs and green LCD panels, with cleaner FM at
-every setting. It is coming as a [CLAP](https://cleveraudio.org/) plugin for
-macOS and Windows, with VST3 to follow, and you can play it now in your
-browser: the web build is the same engine and the same faceplate, compiled
-to WebAssembly.
+**vxn-2b** ("vixen 2b") is a six-operator FM synthesizer. Six sine
+oscillators, thirty-two ways of wiring them to each other, and a stacking
+engine that turns one note into eight, on a faceplate of rubber knobs and
+green LCD panels. It is coming as [CLAP](https://cleveraudio.org/) and VST3
+plugins for macOS and Windows, and you can play it now in your browser: the
+web build is the same engine and the same faceplate, compiled to
+WebAssembly.
 
 FM is where the bells, electric pianos, glassy basses and metallic stabs come
 from — sounds that no amount of filtering will get you out of a sawtooth.
@@ -131,7 +130,6 @@ limiter.
 
 ## Voicing and presets
 
-Up to sixteen voices, or Solo with legato and portamento. The factory bank is
-VXN2's fifty-one presets, carried over and re-voiced for the new engine, plus
-new ones. The [manual](/manuals/vxn-2b/) describes every control, with graphs
+Up to sixteen voices, or Solo with legato and portamento. The factory bank
+has over fifty presets. The [manual](/manuals/vxn-2b/) describes every control, with graphs
 measured from the synth's own code.

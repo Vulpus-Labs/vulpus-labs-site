@@ -3,11 +3,11 @@ title = "PolyKritter"
 date = 2026-10-19
 type = "products"
 weight = 45
-tagline = "Kritter's virtual analog voice, sixteen at a time, with stacking, a mod matrix and effects"
+tagline = "Sixteen-voice virtual analog polysynth with diode filters, voice stacking and effects"
 accent = "#e2262e"
-blurb = "Every voice is a whole Kritter: two oscillators, the effect section, a diode filter pair and the envelope. Stack them up to sixteen deep on one note, route them through an eight-slot matrix, and finish with chorus, delay, reverb and a limiter."
+blurb = "Each voice has two oscillators, noise and a ring modulator, through high- and low-pass diode filters. Stack up to sixteen voices on one note, route them through an eight-slot mod matrix, and finish with chorus, delay, reverb and a limiter."
 status = "in development"
-formats = ["CLAP", "Browser"]
+formats = ["CLAP", "VST3", "Browser"]
 webdemo = "/products/polykritter/web/"
 manual = "/manuals/polykritter/"
 demoNote = "No install, no account. Works in Chrome, Edge and Firefox — play it from the on-screen keyboard, your computer keys, or a MIDI controller."
@@ -20,8 +20,8 @@ voice, and every voice shares one panel: each control is where it is on
 [Kritter][kritter], does what it does there, and starts where it starts
 there.
 
-It is in development as a [CLAP](https://cleveraudio.org/) plugin, and you
-can play it now in your browser: the web demo is the same engine and the same
+It is in development as [CLAP](https://cleveraudio.org/) and VST3 plugins,
+and you can play it now in your browser: the web demo is the same engine and the same
 faceplate, compiled to WebAssembly. Play it from the on-screen keyboard,
 from your computer keys (A to ' for the notes, Z and X for the octave), or
 from a MIDI controller. It works best in Chrome, Edge or Firefox; Safari is

@@ -67,24 +67,28 @@ plugins.
 - Tagline: "know many things" (inspired by Archilochus)
 
 **Visual Design:**
-- The palette is taken from the VXN faceplates themselves: near-black charcoal
-  surfaces, ice-blue panel headers, ember-orange controls
-- Display type is Space Grotesk, mono is JetBrains Mono (both from Google
-  Fonts, linked in `partials/head.html`); body text uses the system sans stack
-- `--accent` is a CSS custom property. It defaults to the brand ember, and each
-  product overrides it inline from its `accent` front-matter key, so a product
-  page, its showcase block and its buttons pick up that synth's own colour
+- Quiet dark style: warm charcoal surfaces, soft off-white text, hairline
+  rules, small radii, no glows, gradients or 3D effects
+- Type is a single serif family, Source Serif 4, for headings and body, with
+  IBM Plex Mono for code (both from Google Fonts, linked in
+  `partials/head.html`); labels and chips use small caps
+- `--accent` is a CSS custom property. Each product overrides it inline from
+  its `accent` front-matter key. Nothing paints `--accent` directly: the CSS
+  derives `--tone` (the accent mixed toward a warm grey) plus `--accent-soft` and
+  `--accent-line` and `--tone-fill` (the darker button fill), and redeclares them on any element whose `style` sets
+  `--accent`, so product colours stay muted
 - Responsive; honours `prefers-reduced-motion`
 
 **Layout Features:**
-- Sticky translucent header; nav (Products, Blog, Repos, Store, Contact) from
+- Sticky header; nav (Products, Blog, Repos, Store, Contact) from
   `[menus.main]` in hugo.toml, entries with `params.external = true` open in a
   new tab
 - Templates are full-bleed: `baseof.html` no longer constrains width. Each
   section supplies its own `.wrap` (max 1180px) or `.wrap .wrap-prose`
   (max 46rem, for running text)
-- Homepage: hero (headline, CTA, spec chips, tilted faceplate stack) → one
-  showcase slab per VXN product, alternating sides → other products → blog
+- Homepage: hero (headline, spec chips, then every web-demo product's
+  faceplate side by side, each with its own play link) → one
+  showcase slab per product with a `webdemo` (PolyKritter, vxn-1c, vxn-2b), alternating sides → other products → blog
 - Product pages: hero with faceplate shot and a browser CTA, gallery, sound
   examples, prose, a repeat web-demo call-out, downloads, cross-links to the
   rest of the range

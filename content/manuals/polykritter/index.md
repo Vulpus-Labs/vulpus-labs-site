@@ -4,7 +4,7 @@ date = 2026-11-08
 weight = 7
 platform = "CLAP plugin and web instrument"
 accent = "#e2262e"
-summary = "Kritter's virtual analog voice as a polysynth: up to sixteen voices, stacking, an eight-slot mod matrix, chorus, delay, reverb and a limiter."
+summary = "A virtual analog polysynth: up to sixteen voices, stacking, an eight-slot mod matrix, chorus, delay, reverb and a limiter."
 pdf = "Poly-Kritter-Plugin-Manual.pdf"
 pages = 32
 +++
