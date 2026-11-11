@@ -4,23 +4,23 @@
 {{ $featured := slice }}
 {{ $other := slice }}
 {{ range $products.ByWeight }}{{ if .Params.webdemo }}{{ $featured = $featured | append . }}{{ else }}{{ $other = $other | append . }}{{ end }}{{ end }}
+{{/* Copy lives in content/_index.md: front matter for headings, body for the hero paragraph. */}}
+{{ $hero := default dict .Params.hero }}
+{{ $synths := default dict .Params.synths }}
+{{ $others := default dict .Params.others }}
+{{ $blog := default dict .Params.blog }}
 
 <section class="hero">
   <div class="wrap">
     <div class="hero-copy">
-      <h1 class="hero-title">Plugin synths you can <em>play right now</em>.</h1>
-      <p class="hero-lede">
-        Three synthesizers, on their way as CLAP and VST3 plugins for macOS
-        and Windows. All three run in this browser tab today — no install, no
-        account, no email address. The plugin releases will follow.
-      </p>
+      {{ with $hero.headline }}<h1 class="hero-title">{{ . | markdownify }}</h1>{{ end }}
+      {{ with .Content }}<div class="hero-lede">{{ . }}</div>{{ end }}
+      {{ if or $hero.chips $hero.highlight }}
       <div class="chip-row">
-        <span class="chip">CLAP</span>
-        <span class="chip">VST3</span>
-        <span class="chip">macOS</span>
-        <span class="chip">Windows</span>
-        <span class="chip chip-accent">Web preview available now</span>
+        {{ range $hero.chips }}<span class="chip">{{ . }}</span>{{ end }}
+        {{ with $hero.highlight }}<span class="chip chip-accent">{{ . }}</span>{{ end }}
       </div>
+      {{ end }}
     </div>
 
     <div class="hero-trio">
@@ -44,14 +44,9 @@
   <div class="wrap">
     <div class="section-head">
       <div>
-        <p class="eyebrow">The synths</p>
-        <h2 class="section-heading">Three synths, three voices</h2>
-        <p class="section-sub">
-          A layered subtractive polysynth, a six-operator FM synth and a
-          stacking virtual-analog synth. None of them is a preset player: they
-          are built to be pulled apart. Play the web previews now; the CLAP
-          and VST3 plugins follow.
-        </p>
+        {{ with $synths.eyebrow }}<p class="eyebrow">{{ . }}</p>{{ end }}
+        {{ with $synths.heading }}<h2 class="section-heading">{{ . }}</h2>{{ end }}
+        {{ with $synths.text }}<div class="section-sub">{{ . | markdownify }}</div>{{ end }}
       </div>
       <a class="btn btn-ghost btn-sm" href="{{ "/products/" | relURL }}">All products</a>
     </div>
@@ -64,13 +59,13 @@
   </div>
 </section>
 
-{{ with $other }}
+{{ if or $other $others.cards }}
 <section class="section section-ruled">
   <div class="wrap">
-    <p class="eyebrow">Also from Vulpus Labs</p>
-    <h2 class="section-heading">Build your own instead</h2>
+    {{ with $others.eyebrow }}<p class="eyebrow">{{ . }}</p>{{ end }}
+    {{ with $others.heading }}<h2 class="section-heading">{{ . }}</h2>{{ end }}
     <div class="card-grid" style="margin-top:2rem">
-      {{ range . }}
+      {{ range $other }}
       <article class="card">
         <div class="showcase-titlerow">
           <h3 class="card-title"><a href="{{ .RelPermalink }}">{{ .Title }}</a></h3>
@@ -80,13 +75,18 @@
         <div class="card-foot"><a class="read-more" href="{{ .RelPermalink }}">View product →</a></div>
       </article>
       {{ end }}
+      {{ range $others.cards }}
+      {{ $url := .url }}
+      {{ $ext := hasPrefix $url "http" }}
+      {{ if not $ext }}{{ $url = $url | relURL }}{{ end }}
       <article class="card">
         <h3 class="card-title">
-          <a href="{{ "/manuals/" | relURL }}">Voltage Modular modules</a>
+          <a href="{{ $url }}"{{ if $ext }} target="_blank" rel="noopener noreferrer"{{ end }}>{{ .title }}{{ if $ext }}<span class="external-marker" aria-hidden="true">↗</span>{{ end }}</a>
         </h3>
-        <p class="card-text">Oscillators, filters and effects for Cherry Audio's Voltage Modular.</p>
-        <div class="card-foot"><a class="read-more" href="{{ "/manuals/" | relURL }}">Read the manuals →</a></div>
+        {{ with .text }}<p class="card-text">{{ . | markdownify }}</p>{{ end }}
+        <div class="card-foot"><a class="read-more" href="{{ $url }}"{{ if $ext }} target="_blank" rel="noopener noreferrer"{{ end }}>{{ default "More" .link }} →</a></div>
       </article>
+      {{ end }}
     </div>
   </div>
 </section>
@@ -98,9 +98,9 @@
   <div class="wrap">
     <div class="section-head">
       <div>
-        <p class="eyebrow">From the blog</p>
-        <h2 class="section-heading">How it is built</h2>
-        <p class="section-sub">DSP notes, write-ups and the odd dead end.</p>
+        {{ with $blog.eyebrow }}<p class="eyebrow">{{ . }}</p>{{ end }}
+        {{ with $blog.heading }}<h2 class="section-heading">{{ . }}</h2>{{ end }}
+        {{ with $blog.text }}<div class="section-sub">{{ . | markdownify }}</div>{{ end }}
       </div>
       <a class="btn btn-ghost btn-sm" href="{{ "/posts/" | relURL }}">All posts</a>
     </div>

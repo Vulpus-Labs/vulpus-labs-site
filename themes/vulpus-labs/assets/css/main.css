@@ -472,6 +472,11 @@ img {
   margin-bottom: 2rem;
 }
 
+.section-sub p + p,
+.hero-lede p + p {
+  margin-top: 0.75em;
+}
+
 .hero-actions {
   display: flex;
   flex-wrap: wrap;

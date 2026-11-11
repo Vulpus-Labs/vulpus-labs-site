@@ -96,7 +96,9 @@ plugins.
 
 **Key Template Files:**
 - `themes/vulpus-labs/layouts/_default/baseof.html` - header, content, footer
-- `themes/vulpus-labs/layouts/index.html` - homepage
+- `themes/vulpus-labs/layouts/index.html` - homepage; its copy comes from
+  `content/_index.md` (front matter `hero`, `synths`, `others`, `blog`; the
+  body is the hero paragraph)
 - `themes/vulpus-labs/layouts/products/single.html` - product page
 - `themes/vulpus-labs/layouts/products/list.html` - products index
 - `themes/vulpus-labs/layouts/_default/single.html` - posts and standalone
