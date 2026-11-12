@@ -124,6 +124,10 @@ node scripts/capture-faceplates.mjs
 Regenerate them whenever a synth's faceplate changes. Hugo resizes them to webp
 at build time, so commit the full-size PNGs.
 
+The homepage's link preview (`og:image`) is `assets/og-image.png`, 1200×630:
+the logo beside the three hero faceplates, stacked. Rebuild it after
+recapturing them with `python3 scripts/make-og-image.py` (needs Pillow).
+
 **Front Matter:**
 
 Posts should include `readingTime` parameter (minutes) for display in post cards.
