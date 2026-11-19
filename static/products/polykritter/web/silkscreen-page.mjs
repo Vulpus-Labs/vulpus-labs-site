@@ -17,6 +17,7 @@ import { startAudio } from "./silkscreen-audio.mjs";
 import { mountKeyboard } from "./silkscreen-keyboard.mjs";
 import { fitFaceplate } from "./silkscreen-fit.mjs";
 import { attachMidi } from "./silkscreen-midi.mjs";
+import { scheduleSurvey } from "./silkscreen-survey.mjs";
 
 const VULPUS = "https://vulpuslabs.com";
 
@@ -40,6 +41,10 @@ const VULPUS = "https://vulpuslabs.com";
  * @param {number} [o.octaves]  the keyboard's octaves (default 5)
  * @param {number} [o.keysHigh] the keyboard's height at zoom 1, CSS px
  *        (default 120)
+ * @param {{ src: string, talk: { open: string, closed: string },
+ *           afterMs?: number }} [o.survey]  the talking survey
+ *        (silkscreen-survey.mjs), asked once the page has been in use
+ *        for `afterMs` (default two minutes)
  */
 export function pageOptions(o) {
   for (const k of ["wasm", "name", "blurb", "engine"]) {
@@ -234,6 +239,7 @@ export async function mountSynthPage(options) {
     ui.splash.classList.add("gone");
     resume();
     startMidi();
+    if (o.survey) scheduleSurvey({ ...o.survey, keyboard });
   };
   window.addEventListener("keydown", dismiss, { capture: true });
   ui.splash.addEventListener("pointerdown", dismiss);
