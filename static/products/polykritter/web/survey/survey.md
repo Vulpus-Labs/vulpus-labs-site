@@ -16,8 +16,10 @@ A screen with no options is an ending: reaching it sends the answers to
 `endpoint` (with `send: on`; `send: off` logs them to the console), and
 any key closes the box. The first screen is where it starts.
 
-It's asked only with `?survey` in the page's URL; `&test` shows the
-answers on the page instead of sending them. On localhost both are on.
+It's asked after two minutes on the page: once answered, never again in
+that browser; after "Not now", not for 14 days. `?survey` in the URL asks
+anyway (`?survey=5` after five seconds); `&test` shows the answers on the
+page instead of sending them. On localhost both are on.
 -->
 
 ## intro

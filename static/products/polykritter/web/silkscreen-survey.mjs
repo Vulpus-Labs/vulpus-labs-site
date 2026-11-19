@@ -11,10 +11,13 @@
 //             talk: { open: "survey/talk-open.png", closed: "survey/talk-closed.png" } }
 //
 // to mountSynthPage, which calls scheduleSurvey once the splash is gone.
-// For now it's asked only when the page's URL has `?survey`, and then every
-// time: `?survey` waits the usual two minutes, `?survey=5` five seconds.
-// `&test` shows the answers on the page in place of sending them. Served
-// from this machine (localhost), both are on without asking.
+// It's asked after two minutes of the page being visible; once answered,
+// never again, and after "Not now" (or Escape), not for SNOOZE_MS. The
+// visitor's browser keeps that (localStorage), nothing else. `?survey` in
+// the URL asks whatever was answered before, and `?survey=5` after five
+// seconds. `&test` shows the answers on the page in place of sending them.
+// Served from this machine (localhost), `survey` and `test` are on without
+// asking.
 //
 // The box's type is VT323 (fonts/, SIL Open Font License).
 //
@@ -175,29 +178,42 @@ export class SurveyRun {
   }
 }
 
+/** How long "Not now" holds the survey off. */
+export const SNOOZE_MS = 14 * 24 * 60 * 60 * 1000;
+
 /** A page served from this machine. */
 export const isLocal = (hostname) => ["localhost", "127.0.0.1", "[::1]", "::1", ""].includes(hostname);
 
 /**
- * The survey's URL flags: whether to ask at all (`survey`), after how
- * long (`?survey=N` seconds, else `afterMs`), and whether to show the
- * answers rather than send them (`test`). On localhost, `survey` and
- * `test` are taken as given.
+ * The survey's URL flags: whether to ask whatever was answered before
+ * (`survey`), after how long (`?survey=N` seconds, else `afterMs`), and
+ * whether to show the answers rather than send them (`test`). On
+ * localhost, `survey` and `test` are taken as given.
  *
  * @param {string} search  `location.search`
  * @param {number} afterMs
  * @param {string} [hostname]  `location.hostname`
- * @returns {{ ask: boolean, waitMs: number, test: boolean }}
+ * @returns {{ force: boolean, waitMs: number, test: boolean }}
  */
 export function surveyFlags(search, afterMs, hostname = "vulpuslabs.com") {
   const q = new URLSearchParams(search);
   const local = isLocal(hostname);
   const seconds = Number(q.get("survey"));
   return {
-    ask: local || q.has("survey"),
+    force: local || q.has("survey"),
     waitMs: q.get("survey") && Number.isFinite(seconds) && seconds >= 0 ? seconds * 1000 : afterMs,
     test: local || q.has("test"),
   };
+}
+
+/**
+ * Whether to ask, given what this browser stored last time (`{ state, at }`
+ * or null): never again once answered, not for `snoozeMs` after "not now".
+ */
+export function shouldAsk(stored, now, snoozeMs = SNOOZE_MS) {
+  if (stored?.state === "done") return false;
+  if (stored?.state === "declined") return !(now - stored.at < snoozeMs);
+  return true;
 }
 
 /** How long to wait after typing `ch` (ms): longer after punctuation. */
@@ -265,6 +281,24 @@ function ensureStyle() {
   document.head.append(style);
 }
 
+const storeKey = (id) => `silkscreen-survey:${id}`;
+
+function readStore(storage, id) {
+  try {
+    return JSON.parse(storage?.getItem(storeKey(id)) ?? "null");
+  } catch {
+    return null;
+  }
+}
+
+function writeStore(storage, id, state) {
+  try {
+    storage?.setItem(storeKey(id), JSON.stringify({ state, at: Date.now() }));
+  } catch {
+    // Private windows can refuse; the survey just asks again next time.
+  }
+}
+
 /** The answers in a panel on the page (`&test`), for checking a script. */
 export function showResults(body) {
   ensureStyle();
@@ -313,8 +347,10 @@ export async function send(survey, body) {
  * @param {{ releaseAll?: Function }} [o.keyboard]  its held notes are let go
  * @param {(body: object) => void} [o.deliver]  takes the answers at an
  *        ending (default: send)
+ * @param {(state: "done" | "declined") => void} [o.remember]  told when
+ *        an ending is reached, or the box is closed before one
  */
-export function showSurvey({ survey, talk, keyboard, deliver = (body) => send(survey, body) }) {
+export function showSurvey({ survey, talk, keyboard, deliver = (body) => send(survey, body), remember = () => {} }) {
   ensureStyle();
   keyboard?.releaseAll?.();
 
@@ -336,6 +372,7 @@ export function showSurvey({ survey, talk, keyboard, deliver = (body) => send(su
   const close = () => {
     if (closed) return;
     closed = true;
+    if (!run.ended) remember("declined");
     clearTimeout(typing?.timer);
     window.removeEventListener("keydown", onKey, { capture: true });
     root.classList.add("out");
@@ -412,7 +449,10 @@ export function showSurvey({ survey, talk, keyboard, deliver = (body) => send(su
   const show = () => {
     box.replaceChildren();
     say(run.screen);
-    if (run.ended) deliver(run.payload());
+    if (run.ended) {
+      remember("done");
+      deliver(run.payload());
+    }
   };
 
   const pick = (key) => {
@@ -458,7 +498,8 @@ export function showSurvey({ survey, talk, keyboard, deliver = (body) => send(su
 
 /**
  * Load the survey at `src` and show it once the page has been visible for
- * the wait `surveyFlags` gives, if the URL asks for it.
+ * the wait `surveyFlags` gives, unless this browser has answered it, or
+ * said "not now" lately (`?survey` asks anyway).
  *
  * @param {object} o
  * @param {string} o.src  the survey's markdown
@@ -467,6 +508,7 @@ export function showSurvey({ survey, talk, keyboard, deliver = (body) => send(su
  * @param {object} [o.keyboard]
  * @param {string} [o.search]  default `location.search`
  * @param {string} [o.hostname]  default `location.hostname`
+ * @param {Storage} [o.storage]  default `localStorage`
  */
 export async function scheduleSurvey({
   src,
@@ -475,9 +517,9 @@ export async function scheduleSurvey({
   keyboard,
   search = location.search,
   hostname = location.hostname,
+  storage = globalThis.localStorage,
 }) {
   const flags = surveyFlags(search, afterMs, hostname);
-  if (!flags.ask) return;
   let survey;
   try {
     const r = await fetch(src);
@@ -487,6 +529,8 @@ export async function scheduleSurvey({
     console.error("survey:", e);
     return;
   }
+  if (!flags.force && !shouldAsk(readStore(storage, survey.id), Date.now())) return;
+  const remember = (state) => writeStore(storage, survey.id, state);
   for (const url of [talk.open, talk.closed]) new Image().src = url;
   ensureStyle();
   document.fonts?.load('20px "ss-survey-vt323"').catch(() => {});
@@ -498,6 +542,6 @@ export async function scheduleSurvey({
     if (document.visibilityState === "visible") seen += tick;
     if (seen < flags.waitMs) return;
     clearInterval(timer);
-    showSurvey({ survey, talk, keyboard, deliver });
+    showSurvey({ survey, talk, keyboard, deliver, remember });
   }, tick);
 }
