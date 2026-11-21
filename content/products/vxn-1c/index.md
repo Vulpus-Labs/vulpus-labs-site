@@ -11,9 +11,9 @@ status = "beta"
 formats = ["CLAP", "VST3", "Browser"]
 webdemo = "/products/vxn-1c/web/"
 manual = "/manuals/vxn-1c/"
-version = "0.1.0"
+version = "0.1.1"
 signed = true
-downloadsNote = """**Beta.** vxn-1c 0.1.0 is a beta release of the CLAP plugin. Until it is unlocked, it fades to silence for a second and a half once a minute; nothing else is held back. A licence code unlocks it for good. If you would like to beta-test it in exchange for an unlock code, email [vulpuslabs@gmail.com](mailto:vulpuslabs@gmail.com) and say which OS and DAW you use."""
+downloadsNote = """**Beta.** vxn-1c 0.1.1 is a beta release of the CLAP plugin. Until it is unlocked, it fades to silence for a second and a half once a minute; nothing else is held back. A licence code unlocks it for good. If you would like to beta-test it in exchange for an unlock code, email [vulpuslabs@gmail.com](mailto:vulpuslabs@gmail.com) and say which OS and DAW you use."""
 
 [install]
 clap = "vxn-1c.clap"
@@ -22,23 +22,23 @@ clap = "vxn-1c.clap"
 platform = "macOS"
 format = "CLAP plugin"
 arch = "Universal"
-url = "https://downloads.vulpuslabs.com/vxn-1c/0.1.0/vxn-1c-0.1.0-macos.clap.zip"
+url = "https://downloads.vulpuslabs.com/vxn-1c/0.1.1/vxn-1c-0.1.1-macos.clap.zip"
 
 [[downloads]]
 platform = "Windows"
 format = "CLAP plugin"
 arch = "x64"
-url = "https://downloads.vulpuslabs.com/vxn-1c/0.1.0/vxn-1c-0.1.0-windows.clap.zip"
+url = "https://downloads.vulpuslabs.com/vxn-1c/0.1.1/vxn-1c-0.1.1-windows.clap.zip"
 
 [[downloads]]
 platform = "Linux"
 format = "CLAP plugin"
 arch = "x64"
-url = "https://downloads.vulpuslabs.com/vxn-1c/0.1.0/vxn-1c-0.1.0-linux.clap.zip"
+url = "https://downloads.vulpuslabs.com/vxn-1c/0.1.1/vxn-1c-0.1.1-linux.clap.zip"
 
 [[extras]]
 label = "SHA-256 checksums"
-url = "https://downloads.vulpuslabs.com/vxn-1c/0.1.0/SHA256SUMS"
+url = "https://downloads.vulpuslabs.com/vxn-1c/0.1.1/SHA256SUMS"
 
 [[legacy]]
 title = "VXN1b"

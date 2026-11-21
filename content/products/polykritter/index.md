@@ -12,9 +12,9 @@ webdemo = "/products/polykritter/web/"
 manual = "/manuals/polykritter/"
 demoNote = "No install, no account. Works in Chrome, Edge and Firefox — play it from the on-screen keyboard, your computer keys, or a MIDI controller."
 demoPitch = "The whole synth runs in the tab: the same engine, the same faceplate and every control of the plugin — and nothing to uninstall afterwards."
-version = "0.1.0"
+version = "0.1.1"
 signed = true
-downloadsNote = """**Beta.** PolyKritter 0.1.0 is a beta release of the CLAP plugin. Until it is unlocked, it fades to silence for a second and a half once a minute; nothing else is held back. A licence code unlocks it for good. If you would like to beta-test it in exchange for an unlock code, email [vulpuslabs@gmail.com](mailto:vulpuslabs@gmail.com) and say which OS and DAW you use."""
+downloadsNote = """**Beta.** PolyKritter 0.1.1 is a beta release of the CLAP plugin. Until it is unlocked, it fades to silence for a second and a half once a minute; nothing else is held back. A licence code unlocks it for good. If you would like to beta-test it in exchange for an unlock code, email [vulpuslabs@gmail.com](mailto:vulpuslabs@gmail.com) and say which OS and DAW you use."""
 
 [install]
 clap = "SilkscreenPolyKritter.clap"
@@ -23,23 +23,23 @@ clap = "SilkscreenPolyKritter.clap"
 platform = "macOS"
 format = "CLAP plugin"
 arch = "Universal"
-url = "https://downloads.vulpuslabs.com/polykritter/0.1.0/polykritter-0.1.0-macos.clap.zip"
+url = "https://downloads.vulpuslabs.com/polykritter/0.1.1/polykritter-0.1.1-macos.clap.zip"
 
 [[downloads]]
 platform = "Windows"
 format = "CLAP plugin"
 arch = "x64"
-url = "https://downloads.vulpuslabs.com/polykritter/0.1.0/polykritter-0.1.0-windows.clap.zip"
+url = "https://downloads.vulpuslabs.com/polykritter/0.1.1/polykritter-0.1.1-windows.clap.zip"
 
 [[downloads]]
 platform = "Linux"
 format = "CLAP plugin"
 arch = "x64"
-url = "https://downloads.vulpuslabs.com/polykritter/0.1.0/polykritter-0.1.0-linux.clap.zip"
+url = "https://downloads.vulpuslabs.com/polykritter/0.1.1/polykritter-0.1.1-linux.clap.zip"
 
 [[extras]]
 label = "SHA-256 checksums"
-url = "https://downloads.vulpuslabs.com/polykritter/0.1.0/SHA256SUMS"
+url = "https://downloads.vulpuslabs.com/polykritter/0.1.1/SHA256SUMS"
 +++
 
 **PolyKritter** is [Kritter][kritter], the Vulpus Labs virtual analog
