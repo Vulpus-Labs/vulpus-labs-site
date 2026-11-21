@@ -7,11 +7,38 @@ weight = 40
 tagline = "Six-operator FM synth with voice stacking and LCD displays"
 accent = "#ff8a3d"
 blurb = "Six-operator FM with all thirty-two operator arrangements, a 16-slot mod matrix, and stacking that turns one note into eight."
-status = "coming soon"
+status = "beta"
 formats = ["CLAP", "VST3", "Browser"]
 webdemo = "/products/vxn-2b/web/"
 manual = "/manuals/vxn-2b/"
-storeSoon = "The vxn-2b plugin, as CLAP and VST3 for macOS and Windows, will follow. Until then, play it in your browser."
+version = "0.1.0"
+signed = true
+downloadsNote = """**Beta.** vxn-2b 0.1.0 is a beta release of the CLAP plugin. Until it is unlocked, it fades to silence for a second and a half once a minute; nothing else is held back. A licence code unlocks it for good. If you would like to beta-test it in exchange for an unlock code, email [vulpuslabs@gmail.com](mailto:vulpuslabs@gmail.com) and say which OS and DAW you use."""
+
+[install]
+clap = "vxn-2b.clap"
+
+[[downloads]]
+platform = "macOS"
+format = "CLAP plugin"
+arch = "Universal"
+url = "https://downloads.vulpuslabs.com/vxn-2b/0.1.0/vxn-2b-0.1.0-macos.clap.zip"
+
+[[downloads]]
+platform = "Windows"
+format = "CLAP plugin"
+arch = "x64"
+url = "https://downloads.vulpuslabs.com/vxn-2b/0.1.0/vxn-2b-0.1.0-windows.clap.zip"
+
+[[downloads]]
+platform = "Linux"
+format = "CLAP plugin"
+arch = "x64"
+url = "https://downloads.vulpuslabs.com/vxn-2b/0.1.0/vxn-2b-0.1.0-linux.clap.zip"
+
+[[extras]]
+label = "SHA-256 checksums"
+url = "https://downloads.vulpuslabs.com/vxn-2b/0.1.0/SHA256SUMS"
 
 [[legacy]]
 title = "VXN2"
@@ -61,9 +88,9 @@ caption = "Performed by VXN2, vxn-2b's predecessor, from [Bernd Krueger](http://
 **vxn-2b** ("vixen 2b") is a six-operator FM synthesizer. Six sine
 oscillators, thirty-two ways of wiring them to each other, and a stacking
 engine that turns one note into eight, on a faceplate of rubber knobs and
-green LCD panels. It is coming as [CLAP](https://cleveraudio.org/) and VST3
-plugins for macOS and Windows, and you can play it now in your browser: the
-web build is the same engine and the same faceplate, compiled to
+green LCD panels. It is out in beta as a [CLAP](https://cleveraudio.org/) plugin for macOS,
+Windows and Linux ([downloads](#downloads)), with VST3 to follow, and you
+can play it now in your browser: the web build is the same engine and the same faceplate, compiled to
 WebAssembly.
 
 FM is where the bells, electric pianos, glassy basses and metallic stabs come

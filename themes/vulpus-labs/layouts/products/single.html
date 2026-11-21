@@ -141,7 +141,8 @@
         on GitHub.
       </p>
       {{ end }}
-      {{ partial "download-grid.html" (dict "downloads" . "repo" $repo "release" $release "install" $page.Params.install) }}
+      {{ with $page.Params.downloadsNote }}<div class="downloads-release">{{ $page.RenderString . }}</div>{{ end }}
+      {{ partial "download-grid.html" (dict "downloads" . "repo" $repo "release" $release "install" $page.Params.install "signed" $page.Params.signed) }}
       {{ else }}
       <p class="downloads-note">{{ with $page.Params.storeSoon }}{{ . | markdownify }}{{ else }}No download is available for this product yet.{{ end }}</p>
       {{ end }}{{ end }}
