@@ -39,4 +39,9 @@ text = "DSP notes, write-ups and the odd dead end."
 Three synthesizer plugins for macOS and
 Windows. The full versions of all three run in a browser tab today — no install and no signup required.
 
-Plugin releases in CLAP/VST3 format for Windows and macOS are on their way.
+**Beta releases of the CLAP plugins for macOS are available now:** download
+[PolyKritter](/products/polykritter/#downloads),
+[vxn-1c](/products/vxn-1c/#downloads) or
+[vxn-2b](/products/vxn-2b/#downloads). Until unlocked with a licence code,
+they fade to silence briefly once a minute. Want to beta-test? Email
+[vulpuslabs@gmail.com](mailto:vulpuslabs@gmail.com) for an unlock code.
