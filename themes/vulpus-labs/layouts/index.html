@@ -3,11 +3,14 @@
 {{/* Featured: every product with a browser build. */}}
 {{ $featured := slice }}
 {{ $other := slice }}
-{{ range $products.ByWeight }}{{ if .Params.webdemo }}{{ $featured = $featured | append . }}{{ else }}{{ $other = $other | append . }}{{ end }}{{ end }}
+{{/* The free effects (range "fx"), in a section of their own. */}}
+{{ $fx := slice }}
+{{ range $products.ByWeight }}{{ if .Params.webdemo }}{{ $featured = $featured | append . }}{{ else if eq .Params.range "fx" }}{{ $fx = $fx | append . }}{{ else }}{{ $other = $other | append . }}{{ end }}{{ end }}
 {{/* Copy lives in content/_index.md: front matter for headings, body for the hero paragraph. */}}
 {{ $hero := default dict .Params.hero }}
 {{ $synths := default dict .Params.synths }}
 {{ $others := default dict .Params.others }}
+{{ $effects := default dict .Params.fx }}
 {{ $blog := default dict .Params.blog }}
 
 <section class="hero">
@@ -58,6 +61,19 @@
     {{ end }}
   </div>
 </section>
+
+{{ with $fx }}
+<section class="section section-ruled" id="fx">
+  <div class="wrap">
+    {{ with $effects.eyebrow }}<p class="eyebrow">{{ . }}</p>{{ end }}
+    {{ with $effects.heading }}<h2 class="section-heading">{{ . }}</h2>{{ end }}
+    {{ with $effects.text }}<div class="section-sub" style="margin-bottom:2rem">{{ . | markdownify }}</div>{{ end }}
+    {{ range . }}
+    {{ partial "product-showcase.html" (dict "page" . "heading" "h3") }}
+    {{ end }}
+  </div>
+</section>
+{{ end }}
 
 {{ if or $other $others.cards }}
 <section class="section section-ruled">

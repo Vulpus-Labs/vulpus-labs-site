@@ -19,6 +19,12 @@ Three fully-featured synth plugins with distinctive voices and capabilities. The
 Each synth has a "random" button that generates random presets. If you find a voice you like, you can export it from the browser version and import it into the CLAP/VST3 plugin running in your DAW.
 """
 
+# The free effects (products with range = "fx"), each as a showcase slab.
+[fx]
+eyebrow = "Free effects"
+heading = "Effects, free and open source"
+text = "CLAP effects for macOS, Windows and Linux, free to download and to build from [source](https://github.com/Vulpus-Labs/vxn-free)."
+
 # Products without a web demo are listed here as cards, followed by `cards`.
 [others]
 eyebrow = "Also from Vulpus Labs"

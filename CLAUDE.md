@@ -135,7 +135,8 @@ Posts should include `readingTime` parameter (minutes) for display in post cards
 Products (`type = "products"`) use:
 
 - `range = "vxn"` - groups the page into the VXN range on the homepage and
-  products list
+  products list; `range = "fx"` puts it in the "Free effects" section of
+  both instead (its copy on the homepage is `[fx]` in `content/_index.md`)
 - `accent` - hex colour driving `--accent` on that product's pages and cards
 - `tagline` - one line under the title; `blurb` - the extra sentence shown in
   showcase slabs

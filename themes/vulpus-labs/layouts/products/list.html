@@ -1,6 +1,7 @@
 {{ define "main" }}
 {{ $vxn := (where .Pages "Params.range" "vxn").ByWeight }}
-{{ $other := (where .Pages "Params.range" "!=" "vxn").ByWeight }}
+{{ $fx := (where .Pages "Params.range" "fx").ByWeight }}
+{{ $other := (where (where .Pages "Params.range" "!=" "vxn") "Params.range" "!=" "fx").ByWeight }}
 
 <div class="wrap">
   <header class="archive-header">
@@ -16,6 +17,17 @@
     <p class="eyebrow">The VXN range</p>
     {{ range $i, $p := . }}
     {{ partial "product-showcase.html" (dict "page" $p "heading" "h2" "eager" (eq $i 0)) }}
+    {{ end }}
+  </div>
+</section>
+{{ end }}
+
+{{ with $fx }}
+<section class="section section-ruled" id="fx">
+  <div class="wrap">
+    <p class="eyebrow">Free effects</p>
+    {{ range . }}
+    {{ partial "product-showcase.html" (dict "page" . "heading" "h2") }}
     {{ end }}
   </div>
 </section>
