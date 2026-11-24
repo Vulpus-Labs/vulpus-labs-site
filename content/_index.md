@@ -23,7 +23,7 @@ Each synth has a "random" button that generates random presets. If you find a vo
 [fx]
 eyebrow = "Free effects"
 heading = "Effects, free and open source"
-text = "CLAP effects for macOS, Windows and Linux, free to download and to build from [source](https://github.com/Vulpus-Labs/vxn-free)."
+text = "CLAP and VST3 effects for macOS, Windows and Linux, free to download and to build from [source](https://github.com/Vulpus-Labs/vxn-free)."
 
 # Products without a web demo are listed here as cards, followed by `cards`.
 [others]

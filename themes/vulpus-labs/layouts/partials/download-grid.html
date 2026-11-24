@@ -19,14 +19,21 @@
   {{ end }}
 </div>
 {{ if .signed }}
-{{ $clap := "the .clap file" }}{{ with .install }}{{ with .clap }}{{ $clap = . }}{{ end }}{{ end }}
+{{ $clap := "the .clap file" }}{{ $vst3 := "" }}
+{{ with .install }}{{ with .clap }}{{ $clap = . }}{{ end }}{{ with .vst3 }}{{ $vst3 = . }}{{ end }}{{ end }}
 <aside class="downloads-callout">
   <h3>Installing</h3>
   <p>Unzip the download and copy <code>{{ $clap }}</code> into your CLAP
-    folder, then rescan plugins in your DAW:</p>
-  <pre><code>macOS     ~/Library/Audio/Plug-Ins/CLAP/
+    folder{{ with $vst3 }}, or <code>{{ . }}</code> into your VST3 folder{{ end }},
+    then rescan plugins in your DAW:</p>
+  <pre><code>{{ if $vst3 }}macOS     CLAP  ~/Library/Audio/Plug-Ins/CLAP/
+          VST3  ~/Library/Audio/Plug-Ins/VST3/
+Windows   CLAP  C:\Program Files\Common Files\CLAP\
+          VST3  C:\Program Files\Common Files\VST3\
+Linux     CLAP  ~/.clap/
+          VST3  ~/.vst3/{{ else }}macOS     ~/Library/Audio/Plug-Ins/CLAP/
 Windows   C:\Program Files\Common Files\CLAP\
-Linux     ~/.clap/</code></pre>
+Linux     ~/.clap/{{ end }}</code></pre>
   <p>The macOS build is signed and notarized by Apple, so it loads without
     any extra steps. The Windows and Linux builds are not signed. If Windows
     blocks the plugin, right-click the downloaded zip, choose

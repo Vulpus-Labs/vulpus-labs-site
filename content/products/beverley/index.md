@@ -8,35 +8,54 @@ tagline = "A bitcrusher that adds harmonic grit, not just stair-steps"
 accent = "#d9572b"
 blurb = "Gamma-curved, fractional-depth bit reduction with smoothing between steps, and auto gain that crushes quiet passages as hard as loud ones. Free, and open source."
 status = "shipping"
-formats = ["CLAP"]
+formats = ["CLAP", "VST3"]
 license = "Free · MIT or Apache-2.0"
-version = "0.1.0"
+version = "0.1.1"
 signed = true
 
 [install]
 clap = "Beverley.clap"
+vst3 = "Beverley.vst3"
 
 [[downloads]]
 platform = "macOS"
 format = "CLAP plugin"
 arch = "Universal"
-url = "https://downloads.vulpuslabs.com/beverley/0.1.0/beverley-0.1.0-macos.clap.zip"
+url = "https://downloads.vulpuslabs.com/beverley/0.1.1/beverley-0.1.1-macos.clap.zip"
+
+[[downloads]]
+platform = "macOS"
+format = "VST3 plugin"
+arch = "Universal"
+url = "https://downloads.vulpuslabs.com/beverley/0.1.1/beverley-0.1.1-macos.vst3.zip"
 
 [[downloads]]
 platform = "Windows"
 format = "CLAP plugin"
 arch = "x64"
-url = "https://downloads.vulpuslabs.com/beverley/0.1.0/beverley-0.1.0-windows.clap.zip"
+url = "https://downloads.vulpuslabs.com/beverley/0.1.1/beverley-0.1.1-windows.clap.zip"
+
+[[downloads]]
+platform = "Windows"
+format = "VST3 plugin"
+arch = "x64"
+url = "https://downloads.vulpuslabs.com/beverley/0.1.1/beverley-0.1.1-windows.vst3.zip"
 
 [[downloads]]
 platform = "Linux"
 format = "CLAP plugin"
 arch = "x64"
-url = "https://downloads.vulpuslabs.com/beverley/0.1.0/beverley-0.1.0-linux.clap.zip"
+url = "https://downloads.vulpuslabs.com/beverley/0.1.1/beverley-0.1.1-linux.clap.zip"
+
+[[downloads]]
+platform = "Linux"
+format = "VST3 plugin"
+arch = "x64"
+url = "https://downloads.vulpuslabs.com/beverley/0.1.1/beverley-0.1.1-linux.vst3.zip"
 
 [[extras]]
 label = "SHA-256 checksums"
-url = "https://downloads.vulpuslabs.com/beverley/0.1.0/SHA256SUMS"
+url = "https://downloads.vulpuslabs.com/beverley/0.1.1/SHA256SUMS"
 
 [[extras]]
 label = "Source code (GitHub)"
@@ -48,7 +67,7 @@ that could do with some dirt. Most bitcrushers chop a signal into hard
 stair-steps; Beverley lets you choose where the steps fall, how many there
 are and how sharp their edges are, so it runs from a gentle grain to a
 full-on square-wave fuzz. It is a free [CLAP](https://cleveraudio.org/)
-plugin for macOS, Windows and Linux ([downloads](#downloads)), and its
+and VST3 plugin for macOS, Windows and Linux ([downloads](#downloads)), and its
 source is on [GitHub](https://github.com/Vulpus-Labs/vxn-free) under the
 MIT or Apache-2.0 licence.
 
