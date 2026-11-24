@@ -26,7 +26,7 @@
   <div class="wrap">
     <section class="product-hero">
       <div class="product-hero-body">
-        <p class="eyebrow">{{ if eq .Params.range "vxn" }}The VXN range{{ else }}Vulpus Labs{{ end }}</p>
+        <p class="eyebrow">{{ if eq .Params.range "vxn" }}The VXN range{{ else if eq .Params.range "fx" }}Free effects{{ else }}Vulpus Labs{{ end }}</p>
         <div class="showcase-titlerow">
           <h1 class="product-hero-title">{{ .Title }}</h1>
           {{ with .Params.status }}<span class="status-badge status-{{ . | urlize }}">{{ . }}</span>{{ end }}

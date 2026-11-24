@@ -1,7 +1,8 @@
 {{ define "main" }}
-{{ $vxn := (where .Pages "Params.range" "vxn").ByWeight }}
-{{ $fx := (where .Pages "Params.range" "fx").ByWeight }}
-{{ $other := (where (where .Pages "Params.range" "!=" "vxn") "Params.range" "!=" "fx").ByWeight }}
+{{/* As on the homepage: the synths are the products with a browser
+     build, the free effects are range "fx", and the rest follow. */}}
+{{ $vxn := slice }}{{ $fx := slice }}{{ $other := slice }}
+{{ range .Pages.ByWeight }}{{ if .Params.webdemo }}{{ $vxn = $vxn | append . }}{{ else if eq .Params.range "fx" }}{{ $fx = $fx | append . }}{{ else }}{{ $other = $other | append . }}{{ end }}{{ end }}
 
 <div class="wrap">
   <header class="archive-header">
@@ -14,7 +15,7 @@
 {{ with $vxn }}
 <section class="section-tight">
   <div class="wrap">
-    <p class="eyebrow">The VXN range</p>
+    <p class="eyebrow">The synths</p>
     {{ range $i, $p := . }}
     {{ partial "product-showcase.html" (dict "page" $p "heading" "h2" "eager" (eq $i 0)) }}
     {{ end }}
