@@ -11,9 +11,9 @@ pages = 9
 
 The manual for [Beverley](/products/beverley/) covers:
 
-- the chain every sample passes through, and every control with a labelled view of the
-  faceplate;
-- bit depth, crush mode, smoothing and gamma, as transfer curves measured from the plugin;
-- what crushing does to a wave and its harmonics, and the aliasing at each depth and smoothing;
-- fixed gain and auto gain: PEAK and RANGE, and DECAY, as measured gain over time;
-- stereo modes and mix, starting points, and a reference table of every range and taper.
+- a quick start: what you hear at the defaults, and the three knobs to try first;
+- what each control does to the sound, and when to reach for it, with graphs;
+- auto gain, and how to keep quiet and loud passages crushed alike;
+- stereo and mix, starting points for drums, fuzz, grain and more, and tips for common
+  problems;
+- a reference of every control's range and default.
