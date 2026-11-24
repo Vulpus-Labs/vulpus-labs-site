@@ -85,13 +85,12 @@ from one depth to the next.
 **SMOOTHING** shapes each step. At 0 they are hard edges; around the middle
 each step becomes an S-curve, rounder and less harsh; at 100 % the steps are
 gone and the signal passes untouched. It is also the way to tame the
-crush's high-frequency fizz: a little smoothing goes a long way.
+crush's high-frequency fizz: the further it goes, the less fizz is left.
 
-**GAMMA** bends the signal before it is crushed and straightens it out
-afterwards, which decides where the steps bunch up. Below 1 they crowd
-round the quiet parts of each wave, so soft tails grit up while peaks stay
-clean; above 1 they crowd round the loud parts, so the attack breaks up
-first.
+**GAMMA** decides whether quiet or loud parts of the sound break up first.
+Below 1 the steps are coarse where the sound is quiet, so soft tails grit
+up while peaks stay clean; above 1 they are coarse where it is loud, so the
+attack breaks up first while quiet parts keep their detail.
 
 **CRUSH** picks how the steps are laid out. **SYM** crushes each side of
 the waveform on its own, with a step at silence, so quiet sounds fall
@@ -102,8 +101,8 @@ at silence, which buzzes and spits more, closer to an old sampler.
 
 **GAIN** pushes the signal up to 20 dB into the crush and takes it back
 down afterwards, so it changes how hard the signal is crushed without
-changing how loud it comes out. Push it far enough and the peaks clip as
-well.
+making it louder. Push it far enough and the peaks clip as well, coming out
+flattened and quieter.
 
 Press **AUTO** and Beverley sets the gain for you, following the input so
 that quiet passages are crushed as hard as loud ones. **DETECT** chooses
