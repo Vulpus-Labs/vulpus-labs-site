@@ -95,7 +95,9 @@ attack breaks up first while quiet parts keep their detail.
 **CRUSH** picks how the steps are laid out. **SYM** crushes each side of
 the waveform on its own, with a step at silence, so quiet sounds fall
 away to nothing. **ASYM** crushes the whole wave on one grid with no step
-at silence, which buzzes and spits more, closer to an old sampler.
+at silence, which buzzes and spits more, closer to an old sampler; in the
+last stretch before silence it eases off the steps, so a dying note slides
+to nothing rather than ending on a buzz.
 
 ## Gain
 
