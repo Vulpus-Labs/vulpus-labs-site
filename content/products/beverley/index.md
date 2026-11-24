@@ -12,6 +12,7 @@ formats = ["CLAP", "VST3"]
 license = "Free · MIT or Apache-2.0"
 version = "0.1.1"
 signed = true
+manual = "/manuals/beverley/"
 
 [install]
 clap = "Beverley.clap"
