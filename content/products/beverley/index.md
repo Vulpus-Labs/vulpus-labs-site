@@ -10,7 +10,7 @@ blurb = "Gamma-curved, fractional-depth bit reduction with smoothing between ste
 status = "shipping"
 formats = ["CLAP", "VST3"]
 license = "Free · MIT or Apache-2.0"
-version = "0.1.1"
+version = "0.2.0"
 signed = true
 manual = "/manuals/beverley/"
 
@@ -22,41 +22,41 @@ vst3 = "Beverley.vst3"
 platform = "macOS"
 format = "CLAP plugin"
 arch = "Universal"
-url = "https://downloads.vulpuslabs.com/beverley/0.1.1/beverley-0.1.1-macos.clap.zip"
+url = "https://downloads.vulpuslabs.com/beverley/0.2.0/beverley-0.2.0-macos.clap.zip"
 
 [[downloads]]
 platform = "macOS"
 format = "VST3 plugin"
 arch = "Universal"
-url = "https://downloads.vulpuslabs.com/beverley/0.1.1/beverley-0.1.1-macos.vst3.zip"
+url = "https://downloads.vulpuslabs.com/beverley/0.2.0/beverley-0.2.0-macos.vst3.zip"
 
 [[downloads]]
 platform = "Windows"
 format = "CLAP plugin"
 arch = "x64"
-url = "https://downloads.vulpuslabs.com/beverley/0.1.1/beverley-0.1.1-windows.clap.zip"
+url = "https://downloads.vulpuslabs.com/beverley/0.2.0/beverley-0.2.0-windows.clap.zip"
 
 [[downloads]]
 platform = "Windows"
 format = "VST3 plugin"
 arch = "x64"
-url = "https://downloads.vulpuslabs.com/beverley/0.1.1/beverley-0.1.1-windows.vst3.zip"
+url = "https://downloads.vulpuslabs.com/beverley/0.2.0/beverley-0.2.0-windows.vst3.zip"
 
 [[downloads]]
 platform = "Linux"
 format = "CLAP plugin"
 arch = "x64"
-url = "https://downloads.vulpuslabs.com/beverley/0.1.1/beverley-0.1.1-linux.clap.zip"
+url = "https://downloads.vulpuslabs.com/beverley/0.2.0/beverley-0.2.0-linux.clap.zip"
 
 [[downloads]]
 platform = "Linux"
 format = "VST3 plugin"
 arch = "x64"
-url = "https://downloads.vulpuslabs.com/beverley/0.1.1/beverley-0.1.1-linux.vst3.zip"
+url = "https://downloads.vulpuslabs.com/beverley/0.2.0/beverley-0.2.0-linux.vst3.zip"
 
 [[extras]]
 label = "SHA-256 checksums"
-url = "https://downloads.vulpuslabs.com/beverley/0.1.1/SHA256SUMS"
+url = "https://downloads.vulpuslabs.com/beverley/0.2.0/SHA256SUMS"
 
 [[extras]]
 label = "Source code (GitHub)"
@@ -73,7 +73,8 @@ source is on [GitHub](https://github.com/Vulpus-Labs/vxn-free) under the
 MIT or Apache-2.0 licence.
 
 It began life as a Vulpus Labs module for Voltage Modular, and keeps that
-module's sound and controls.
+module's sound and controls. For a crush that treats the lows, mids and
+highs apart, see its sibling, [Wesley](/products/wesley/).
 
 ## The crush
 
@@ -98,6 +99,10 @@ away to nothing. **ASYM** crushes the whole wave on one grid with no step
 at silence, which buzzes and spits more, closer to an old sampler; in the
 last stretch before silence it eases off the steps, so a dying note slides
 to nothing rather than ending on a buzz.
+
+The **1 CYCLE** window shows what the settings do to one cycle of a pure
+tone, and follows the knobs as you turn them, whether or not anything is
+playing.
 
 ## Gain
 
