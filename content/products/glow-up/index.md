@@ -19,40 +19,40 @@ clap = "Glow-Up.clap"
 vst3 = "Glow-Up.vst3"
 
 [[downloads]]
-platform = "macOS macos Universal"
-format = " plugin"
-arch = ""
-url = "https://downloads.vulpuslabs.com/glow-up/0.3.0/glow-up-0.3.0-CLAP clap..zip"
+platform = "macOS"
+format = "CLAP plugin"
+arch = "Universal"
+url = "https://downloads.vulpuslabs.com/glow-up/0.3.0/glow-up-0.3.0-macos.clap.zip"
 
 [[downloads]]
-platform = "macOS macos Universal"
-format = " plugin"
-arch = ""
-url = "https://downloads.vulpuslabs.com/glow-up/0.3.0/glow-up-0.3.0-VST3 vst3..zip"
+platform = "macOS"
+format = "VST3 plugin"
+arch = "Universal"
+url = "https://downloads.vulpuslabs.com/glow-up/0.3.0/glow-up-0.3.0-macos.vst3.zip"
 
 [[downloads]]
-platform = "Windows windows x64"
-format = " plugin"
-arch = ""
-url = "https://downloads.vulpuslabs.com/glow-up/0.3.0/glow-up-0.3.0-CLAP clap..zip"
+platform = "Windows"
+format = "CLAP plugin"
+arch = "x64"
+url = "https://downloads.vulpuslabs.com/glow-up/0.3.0/glow-up-0.3.0-windows.clap.zip"
 
 [[downloads]]
-platform = "Windows windows x64"
-format = " plugin"
-arch = ""
-url = "https://downloads.vulpuslabs.com/glow-up/0.3.0/glow-up-0.3.0-VST3 vst3..zip"
+platform = "Windows"
+format = "VST3 plugin"
+arch = "x64"
+url = "https://downloads.vulpuslabs.com/glow-up/0.3.0/glow-up-0.3.0-windows.vst3.zip"
 
 [[downloads]]
-platform = "Linux linux x64"
-format = " plugin"
-arch = ""
-url = "https://downloads.vulpuslabs.com/glow-up/0.3.0/glow-up-0.3.0-CLAP clap..zip"
+platform = "Linux"
+format = "CLAP plugin"
+arch = "x64"
+url = "https://downloads.vulpuslabs.com/glow-up/0.3.0/glow-up-0.3.0-linux.clap.zip"
 
 [[downloads]]
-platform = "Linux linux x64"
-format = " plugin"
-arch = ""
-url = "https://downloads.vulpuslabs.com/glow-up/0.3.0/glow-up-0.3.0-VST3 vst3..zip"
+platform = "Linux"
+format = "VST3 plugin"
+arch = "x64"
+url = "https://downloads.vulpuslabs.com/glow-up/0.3.0/glow-up-0.3.0-linux.vst3.zip"
 
 [[extras]]
 label = "SHA-256 checksums"
