@@ -1,4 +1,4 @@
-// Fit a silkscreen faceplate to the page's space (0325).
+// Fit a silkscreen faceplate to the page's space.
 //
 // The page gives the faceplate a scroller (`stage`) above the keyboard bar.
 // This keeps the faceplate as large as fits in it, between `min` and
@@ -11,7 +11,7 @@
 // a phone's width leaves its controls too small to touch.
 //
 // The keyboard scales with it, width and height, so the two line up and
-// keep their proportions (0330). They are fitted as one column: the
+// keep their proportions. They are fitted as one column: the
 // faceplate's height and the keyboard's, at the zoom, fill the stage and
 // the keyboard's bar together.
 

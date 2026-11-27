@@ -1,4 +1,4 @@
-// Web MIDI input for web instruments (ADR 0010 §6, ticket 0125).
+// Web MIDI input for web instruments (design/hosts.md).
 //
 // The page stands in for a host, and a host passes a MIDI controller's
 // messages to the plugin. The engine's ring already carries MIDI 1.0
@@ -7,11 +7,11 @@
 // two-byte messages padded with a zero, and drops system messages (SysEx,
 // clock, active sensing), which the ring doesn't carry.
 //
-// After vxn-1b's midi-input.mjs: every input port is subscribed, hotplug
-// adds and drops ports, and a browser without Web MIDI (Safari) or a
-// refused permission resolves rather than throws, so the page plays on from
-// its own keyboards. Unlike vxn's, it doesn't place messages within the
-// quantum: the engine applies MIDI at block start (ADR 0010 §6).
+// Every input port is subscribed, hotplug adds and drops ports, and a
+// browser without Web MIDI (Safari) or a refused permission resolves rather
+// than throws, so the page plays on from its own keyboards. Messages aren't
+// placed within the quantum: the engine applies MIDI at block start
+// (design/hosts.md).
 
 /// The ring's word for a Web MIDI message, or null if it carries none:
 /// a channel message as [status, data1, data2].

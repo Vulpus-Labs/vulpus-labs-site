@@ -1,4 +1,4 @@
-// Starts a silkscreen engine module in an AudioWorklet (ADR 0010 §1).
+// Starts a silkscreen engine module in an AudioWorklet (design/hosts.md).
 //
 // Call startAudio from a user gesture (a click): browsers only let an
 // AudioContext run when it's created or resumed inside one. Or call it
@@ -24,7 +24,7 @@ export async function startAudio({
   if (!globalThis.crossOriginIsolated) {
     throw new Error(
       "silkscreen: the page isn't cross-origin isolated, so there's no SharedArrayBuffer; " +
-        "serve it with COOP and COEP headers (cargo xtask web <example> --serve)",
+        "serve it with COOP and COEP headers (cargo silkscreen web <package> --serve)",
     );
   }
   const ctx = new AudioContext();
@@ -78,6 +78,8 @@ export async function startAudio({
     },
     /** A value from the page standing in for a host; the editor follows it. */
     setHostParam: (index, value) => node.port.postMessage({ type: "host-param", index, value }),
+    /** The tempo the engine's transport reports, in BPM, from its next block. */
+    setTempo: (bpm) => node.port.postMessage({ type: "tempo", bpm }),
     close: () => ctx.close(),
   };
 }
