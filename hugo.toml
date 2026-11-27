@@ -15,6 +15,11 @@ pageRef = '/effects'
 weight = 12
 
 [[menus.main]]
+name = 'Modules'
+pageRef = '/products/voltage-modular'
+weight = 14
+
+[[menus.main]]
 name = 'Manuals'
 pageRef = '/manuals'
 weight = 15

@@ -12,7 +12,24 @@
 <section class="section-tight">
   <div class="wrap">
     {{ range $i, $p := .products }}
-    {{ partial "product-showcase.html" (dict "page" $p "heading" "h2" "eager" (eq $i 0)) }}
+    {{ partial "product-showcase.html" (dict "page" $p "heading" "h2" "eager" (eq $i 0) "downloads" $.downloads) }}
+    {{ end }}
+    {{ if .install }}
+    <aside class="downloads-callout">
+      <h3>Installing</h3>
+      <p>Unzip the download and copy the <code>.clap</code> file into your CLAP folder, or the
+        <code>.vst3</code> into your VST3 folder, then rescan plugins in your DAW:</p>
+      <pre><code>macOS     CLAP  ~/Library/Audio/Plug-Ins/CLAP/
+          VST3  ~/Library/Audio/Plug-Ins/VST3/
+Windows   CLAP  C:\Program Files\Common Files\CLAP\
+          VST3  C:\Program Files\Common Files\VST3\
+Linux     CLAP  ~/.clap/
+          VST3  ~/.vst3/</code></pre>
+      <p>The macOS builds are signed and notarized by Apple. The Windows and Linux builds are not
+        signed: if Windows blocks a plugin, right-click the downloaded zip, choose
+        <em>Properties</em>, tick <em>Unblock</em> and unzip it again. Checksums are on each
+        effect's page.</p>
+    </aside>
     {{ end }}
   </div>
 </section>

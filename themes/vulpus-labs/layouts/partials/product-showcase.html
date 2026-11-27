@@ -1,5 +1,6 @@
 {{/*  One featured product, presented as a portfolio slab.
-      dict: page, heading (h2/h3), eager */}}
+      dict: page, heading (h2/h3), eager, downloads (true: list the
+      product's download links, by platform, under its buttons) */}}
 {{ $p := .page }}
 {{ $h := default "h2" .heading }}
 {{ $eager := default false .eager }}
@@ -35,6 +36,26 @@
       {{ end }}
       <a class="btn btn-secondary" href="{{ $p.RelPermalink }}">More about {{ $p.Title }}</a>
     </div>
+    {{ if and .downloads $p.Params.downloads }}
+    {{ $repo := or $p.Params.releaseRepo site.Params.releaseRepo }}
+    {{ $platforms := slice }}
+    {{ range $p.Params.downloads }}{{ if not (in $platforms .platform) }}{{ $platforms = $platforms | append .platform }}{{ end }}{{ end }}
+    <dl class="showcase-downloads">
+      {{ range $platforms }}
+      {{ $os := . }}
+      <div class="showcase-downloads-row">
+        <dt>{{ partial "os-icon.html" $os }}{{ $os }}</dt>
+        <dd>
+          {{ range where $p.Params.downloads "platform" $os }}
+          {{ $href := .url }}
+          {{ with .asset }}{{ $href = printf "https://github.com/%s/releases/download/%s/%s" $repo $p.Params.release . }}{{ end }}
+          <a href="{{ $href }}"{{ with .arch }} title="{{ $.page.Title }} for {{ $os }}, {{ . }}"{{ end }}>{{ index (split .format " ") 0 }} ↓</a>
+          {{ end }}
+        </dd>
+      </div>
+      {{ end }}
+    </dl>
+    {{ end }}
   </div>
 
   <div class="showcase-media">

@@ -80,7 +80,7 @@ plugins.
 - Responsive; honours `prefers-reduced-motion`
 
 **Layout Features:**
-- Sticky header; nav (Synths, Effects, Manuals, Blog, Repos, Store, Contact) from
+- Sticky header; nav (Synths, Effects, Modules, Manuals, Blog, Repos, Store, Contact) from
   `[menus.main]` in hugo.toml, entries with `params.external = true` open in a
   new tab
 - Templates are full-bleed: `baseof.html` no longer constrains width. Each
@@ -92,7 +92,9 @@ plugins.
   effects as one composite image linked to `/effects/` → other products →
   blog
 - `/synths/` and `/effects/`: one showcase slab per product in the range,
-  alternating sides. `/products/` (linked from the footer) still lists
+  alternating sides. `/effects/` also lists each effect's downloads by
+  platform in its slab, and ends with the install note, so a download is
+  one click from the homepage. `/products/` (linked from the footer) still lists
   everything, Patches included
 - Product pages: hero with faceplate shot and a browser CTA, gallery, sound
   examples, prose, a repeat web-demo call-out, downloads, cross-links to the

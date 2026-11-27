@@ -602,6 +602,46 @@ img {
   max-width: 660px;
 }
 
+/* Download links in a showcase slab (the effects page), one row per platform */
+.showcase-downloads {
+  display: grid;
+  gap: 0.4rem;
+  margin-top: 1.5rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--line-soft);
+}
+
+.showcase-downloads-row {
+  display: grid;
+  grid-template-columns: 7.5rem 1fr;
+  align-items: center;
+}
+
+.showcase-downloads dt {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--text-dim);
+}
+
+.showcase-downloads dt svg {
+  width: 15px;
+  height: 15px;
+  fill: var(--text-dim);
+  flex: none;
+}
+
+.showcase-downloads dd {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 1.25rem;
+  margin: 0;
+}
+
+.showcase-downloads a {
+  color: var(--tone);
+}
+
 /* --------------------------------------------------------------------------
    Screenshot frame — a faux plugin window around every faceplate shot
    -------------------------------------------------------------------------- */
