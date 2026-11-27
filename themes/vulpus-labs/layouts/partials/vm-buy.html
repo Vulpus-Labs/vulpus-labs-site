@@ -1,0 +1,6 @@
+{{/* A module entry's Buy button: `store` link, `price`, optional struck-through
+     `was` and `buyLabel`. Renders nothing without `store`. */}}
+{{ $e := .entry }}
+{{ with $e.store }}
+<a class="{{ $.class }}" href="{{ . }}" target="_blank" rel="noopener noreferrer">{{ default "Buy" $e.buyLabel }}{{ with $e.price }} · {{ . }}{{ end }}{{ with $e.was }} <s class="price-was">{{ . }}</s>{{ end }}<span class="external-marker" aria-hidden="true">↗</span></a>
+{{ end }}

@@ -80,7 +80,7 @@ plugins.
 - Responsive; honours `prefers-reduced-motion`
 
 **Layout Features:**
-- Sticky header; nav (Synths, Effects, Modules, Manuals, Blog, Repos, Store, Contact) from
+- Sticky header; nav (Synths, Effects, Modules, Manuals, Blog, Repos, Contact) from
   `[menus.main]` in hugo.toml, entries with `params.external = true` open in a
   new tab
 - Templates are full-bleed: `baseof.html` no longer constrains width. Each
@@ -198,7 +198,12 @@ faceplate or downloads, but `[[modules]]` entries, each a `name`, a
 `manual` page path (its summary, accent and faceplate fill the entry; a
 wrong path fails the build) and optionally a YouTube `video` with
 `videoTitle`. Entries with a video are slabs beside the video; the rest
-are cards. `store` is the Cherry Audio listing.
+are cards. Each entry's `store` (its Cherry Audio page) and `price` make a
+Buy button (`partials/vm-buy.html`; optional `was`, `buyLabel`), and
+`[[modules.items]]` (`name`, `url`, `price`) lists a series' modules one by
+one, as for Janus, which has no bundle. Prices are copied by hand from the
+store, so check them when Cherry Audio changes them. The page-level `store`
+is the Vulpus Labs manufacturer listing.
 
 **Manuals** (`/manuals/`, `layouts/manuals/`): one page bundle per manual,
 `content/manuals/<name>/index.md` beside its PDF and a `faceplate.png` cover.

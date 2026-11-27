@@ -7,6 +7,7 @@ accent = "#ff5fd2"
 summary = "A stereo spectral pitch shifter: up to two octaves either way, with the formants held in place or moved on their own, feedback, and a spectral freeze."
 pdf = "Shiftr-Manual.pdf"
 pages = 14
+store = "https://store.cherryaudio.com/modules/shiftr"
 +++
 
 The manual covers:

@@ -642,6 +642,47 @@ img {
   color: var(--tone);
 }
 
+/* Voltage Modular page: a series' modules with their store prices */
+.vm-items {
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
+  gap: 0.3rem 1.5rem;
+  margin: 1.5rem 0 0;
+  padding: 1.25rem 0 0;
+  border-top: 1px solid var(--line-soft);
+}
+
+.vm-items a {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  color: var(--tone);
+  text-decoration: none;
+}
+
+.vm-items a:hover .vm-item-name {
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+.vm-item-price {
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+}
+
+.vm-card-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem 1.25rem;
+}
+
+.price-was {
+  opacity: 0.6;
+  font-weight: 400;
+}
+
 /* --------------------------------------------------------------------------
    Screenshot frame — a faux plugin window around every faceplate shot
    -------------------------------------------------------------------------- */

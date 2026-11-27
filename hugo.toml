@@ -37,13 +37,6 @@ weight = 30
 external = true
 
 [[menus.main]]
-name = 'Store'
-url = 'https://store.cherryaudio.com/manufacturers/vulpus-labs'
-weight = 40
-[menus.main.params]
-external = true
-
-[[menus.main]]
 name = 'Contact'
 pageRef = '/contact'
 weight = 60

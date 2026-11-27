@@ -21,7 +21,7 @@
     <a class="btn btn-primary" href="{{ .RelPermalink }}" download>Download PDF</a>
     <a class="btn btn-secondary" href="{{ .RelPermalink }}" target="_blank" rel="noopener">Open in browser</a>
     {{ end }}
-    {{ with .Params.store }}<a class="btn btn-ghost" href="{{ . }}" target="_blank" rel="noopener">Store</a>{{ end }}
+    {{ with .Params.store }}<a class="btn btn-ghost" href="{{ . }}" target="_blank" rel="noopener noreferrer">Buy on Cherry Audio<span class="external-marker" aria-hidden="true">↗</span></a>{{ end }}
   </div>
 
   <div class="post-content">{{ .Content }}</div>

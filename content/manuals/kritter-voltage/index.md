@@ -7,7 +7,7 @@ accent = "#e2262e"
 summary = "A monophonic synthesizer based on one from the 1970s: two oscillators, ring modulator, high-pass and low-pass filters, with CV inputs and outputs."
 pdf = "Kritter-Manual.pdf"
 pages = 19
-store = "https://store.cherryaudio.com/manufacturers/vulpus-labs"
+store = "https://store.cherryaudio.com/modules/kritter"
 +++
 
 The manual covers:

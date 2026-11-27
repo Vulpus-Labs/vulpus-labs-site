@@ -7,7 +7,7 @@ accent = "#c8402a"
 summary = "Five modules for drones: Littoral, Fluvial, Calderal, Alluvial and Glacial, in one manual."
 pdf = "Radish-Manual.pdf"
 pages = 40
-store = "https://store.cherryaudio.com/manufacturers/vulpus-labs"
+store = "https://store.cherryaudio.com/bundles/radish-series"
 +++
 
 The manual covers:
