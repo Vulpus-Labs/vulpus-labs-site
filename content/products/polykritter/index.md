@@ -7,39 +7,58 @@ tagline = "Sixteen-voice virtual analog polysynth with diode filters, voice stac
 accent = "#e2262e"
 blurb = "Each voice has two oscillators, noise and a ring modulator, through high- and low-pass diode filters. Stack up to sixteen voices on one note, route them through an eight-slot mod matrix, and finish with chorus, delay, reverb and a limiter."
 status = "beta"
-formats = ["CLAP", "Browser"]
+formats = ["CLAP", "VST3", "Browser"]
 webdemo = "/products/polykritter/web/"
 manual = "/manuals/polykritter/"
 demoNote = "No install, no account. Works in Chrome, Edge and Firefox — play it from the on-screen keyboard, your computer keys, or a MIDI controller."
 demoPitch = "The whole synth runs in the tab: the same engine, the same faceplate and every control of the plugin — and nothing to uninstall afterwards."
-version = "0.1.1"
+version = "0.1.4"
 signed = true
-downloadsNote = """**Beta.** PolyKritter 0.1.1 is a beta release of the CLAP plugin. Until it is unlocked, it fades to silence for a second and a half once a minute; nothing else is held back. A licence code unlocks it for good. If you would like to beta-test it in exchange for an unlock code, email [vulpuslabs@gmail.com](mailto:vulpuslabs@gmail.com) and say which OS and DAW you use."""
+downloadsNote = """**Beta.** PolyKritter 0.1.4 is a beta release of the CLAP and VST®3 plugins. Until it is unlocked, it fades to silence for a second and a half once a minute; nothing else is held back. A licence code unlocks it for good. If you would like to beta-test it in exchange for an unlock code, email [vulpuslabs@gmail.com](mailto:vulpuslabs@gmail.com) and say which OS and DAW you use."""
 
 [install]
-clap = "SilkscreenPolyKritter.clap"
+clap = "PolyKritter.clap"
+vst3 = "PolyKritter.vst3"
 
 [[downloads]]
 platform = "macOS"
 format = "CLAP plugin"
 arch = "Universal"
-url = "https://downloads.vulpuslabs.com/polykritter/0.1.1/polykritter-0.1.1-macos.clap.zip"
+url = "https://downloads.vulpuslabs.com/polykritter/0.1.4/polykritter-0.1.4-macos.clap.zip"
+
+[[downloads]]
+platform = "macOS"
+format = "VST3 plugin"
+arch = "Universal"
+url = "https://downloads.vulpuslabs.com/polykritter/0.1.4/polykritter-0.1.4-macos.vst3.zip"
 
 [[downloads]]
 platform = "Windows"
 format = "CLAP plugin"
 arch = "x64"
-url = "https://downloads.vulpuslabs.com/polykritter/0.1.1/polykritter-0.1.1-windows.clap.zip"
+url = "https://downloads.vulpuslabs.com/polykritter/0.1.4/polykritter-0.1.4-windows.clap.zip"
+
+[[downloads]]
+platform = "Windows"
+format = "VST3 plugin"
+arch = "x64"
+url = "https://downloads.vulpuslabs.com/polykritter/0.1.4/polykritter-0.1.4-windows.vst3.zip"
 
 [[downloads]]
 platform = "Linux"
 format = "CLAP plugin"
 arch = "x64"
-url = "https://downloads.vulpuslabs.com/polykritter/0.1.1/polykritter-0.1.1-linux.clap.zip"
+url = "https://downloads.vulpuslabs.com/polykritter/0.1.4/polykritter-0.1.4-linux.clap.zip"
+
+[[downloads]]
+platform = "Linux"
+format = "VST3 plugin"
+arch = "x64"
+url = "https://downloads.vulpuslabs.com/polykritter/0.1.4/polykritter-0.1.4-linux.vst3.zip"
 
 [[extras]]
 label = "SHA-256 checksums"
-url = "https://downloads.vulpuslabs.com/polykritter/0.1.1/SHA256SUMS"
+url = "https://downloads.vulpuslabs.com/polykritter/0.1.4/SHA256SUMS"
 +++
 
 **PolyKritter** is [Kritter][kritter], the Vulpus Labs virtual analog
@@ -48,8 +67,8 @@ voice, and every voice shares one panel: each control is where it is on
 [Kritter][kritter], does what it does there, and starts where it starts
 there.
 
-It is out in beta as a [CLAP](https://cleveraudio.org/) plugin for macOS,
-Windows and Linux ([downloads](#downloads)), with VST3 to follow, and you
+It is out in beta as a [CLAP](https://cleveraudio.org/) and VST®3 plugin for macOS,
+Windows and Linux ([downloads](#downloads)), and you
 can play it now in your browser: the web demo is the same engine and the same
 faceplate, compiled to WebAssembly. Play it from the on-screen keyboard,
 from your computer keys (A to ' for the notes, Z and X for the octave), or

@@ -19,7 +19,7 @@
         <h2 class="card-title"><a href="{{ .RelPermalink }}">{{ .Title }}</a></h2>
         {{ with .Params.summary }}<p class="card-text">{{ . }}</p>{{ end }}
         <div class="chip-row">
-          {{ with .Params.platform }}<span class="chip">{{ . }}</span>{{ end }}
+          {{ with .Params.platform }}<span class="chip">{{ replace . "VST" "VST®" }}</span>{{ end }}
           <span class="chip">PDF{{ with .Params.pages }} · {{ . }} pages{{ end }}</span>
           <span class="chip">{{ .Date.Format "2 January 2006" }}</span>
         </div>
@@ -30,6 +30,8 @@
       </article>
       {{ end }}
     </div>
+    {{ $vst := false }}{{ range .Pages }}{{ if in .Params.platform "VST" }}{{ $vst = true }}{{ end }}{{ end }}
+    {{ if $vst }}{{ partial "vst-compatible.html" . }}{{ end }}
   </div>
 </section>
 {{ end }}

@@ -31,5 +31,7 @@ Linux     CLAP  ~/.clap/
         effect's page.</p>
     </aside>
     {{ end }}
+    {{ $vst := false }}{{ range .products }}{{ if in .Params.formats "VST3" }}{{ $vst = true }}{{ end }}{{ end }}
+    {{ if $vst }}{{ partial "vst-compatible.html" . }}{{ end }}
   </div>
 </section>

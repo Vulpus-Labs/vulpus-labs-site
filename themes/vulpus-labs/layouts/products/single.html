@@ -34,7 +34,7 @@
         {{ with .Params.tagline }}<p class="product-tagline">{{ . }}</p>{{ end }}
         <div class="chip-row">
           {{ with .Params.version }}<span class="chip">v{{ . }}</span>{{ end }}
-          {{ range .Params.formats }}<span class="chip">{{ . }}</span>{{ end }}
+          {{ range .Params.formats }}<span class="chip">{{ replace . "VST" "VST®" }}</span>{{ end }}
           {{ with .Params.license }}<span class="chip">{{ . }}</span>{{ end }}
           {{ if $demo }}<span class="chip chip-accent">Runs in the browser</span>{{ end }}
         </div>
@@ -155,6 +155,7 @@
         {{ end }}
       </ul>
       {{ end }}
+      {{ if in .Params.formats "VST3" }}{{ partial "vst-compatible.html" . }}{{ end }}
     </div>
   </section>
 

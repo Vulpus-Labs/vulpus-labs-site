@@ -26,7 +26,7 @@
     {{ with $p.Params.blurb }}<p class="showcase-blurb">{{ . }}</p>{{ end }}
     <div class="chip-row showcase-specs">
       {{ with $p.Params.version }}<span class="chip">v{{ . }}</span>{{ end }}
-      {{ range $p.Params.formats }}<span class="chip">{{ . }}</span>{{ end }}
+      {{ range $p.Params.formats }}<span class="chip">{{ replace . "VST" "VST®" }}</span>{{ end }}
       {{ with $p.Params.license }}<span class="chip">{{ . }}</span>{{ end }}
       {{ if $demo }}<span class="chip chip-accent">Runs in the browser</span>{{ end }}
     </div>

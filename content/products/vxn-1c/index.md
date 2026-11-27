@@ -8,43 +8,62 @@ tagline = "Dual-layer subtractive polysynth with a mod matrix and an arpeggiator
 accent = "#5aa8f5"
 blurb = "Two complete instruments in one patch, layered or split, each with a 16-slot mod matrix, an arpeggiator and stacking up to 32 voices a note."
 status = "beta"
-formats = ["CLAP", "Browser"]
+formats = ["CLAP", "VST3", "Browser"]
 webdemo = "/products/vxn-1c/web/"
 manual = "/manuals/vxn-1c/"
-version = "0.1.1"
+version = "0.1.4"
 signed = true
-downloadsNote = """**Beta.** vxn-1c 0.1.1 is a beta release of the CLAP plugin. Until it is unlocked, it fades to silence for a second and a half once a minute; nothing else is held back. A licence code unlocks it for good. If you would like to beta-test it in exchange for an unlock code, email [vulpuslabs@gmail.com](mailto:vulpuslabs@gmail.com) and say which OS and DAW you use."""
+downloadsNote = """**Beta.** vxn-1c 0.1.4 is a beta release of the CLAP and VST®3 plugins. Until it is unlocked, it fades to silence for a second and a half once a minute; nothing else is held back. A licence code unlocks it for good. If you would like to beta-test it in exchange for an unlock code, email [vulpuslabs@gmail.com](mailto:vulpuslabs@gmail.com) and say which OS and DAW you use."""
 
 [install]
 clap = "vxn-1c.clap"
+vst3 = "vxn-1c.vst3"
 
 [[downloads]]
 platform = "macOS"
 format = "CLAP plugin"
 arch = "Universal"
-url = "https://downloads.vulpuslabs.com/vxn-1c/0.1.1/vxn-1c-0.1.1-macos.clap.zip"
+url = "https://downloads.vulpuslabs.com/vxn-1c/0.1.4/vxn-1c-0.1.4-macos.clap.zip"
+
+[[downloads]]
+platform = "macOS"
+format = "VST3 plugin"
+arch = "Universal"
+url = "https://downloads.vulpuslabs.com/vxn-1c/0.1.4/vxn-1c-0.1.4-macos.vst3.zip"
 
 [[downloads]]
 platform = "Windows"
 format = "CLAP plugin"
 arch = "x64"
-url = "https://downloads.vulpuslabs.com/vxn-1c/0.1.1/vxn-1c-0.1.1-windows.clap.zip"
+url = "https://downloads.vulpuslabs.com/vxn-1c/0.1.4/vxn-1c-0.1.4-windows.clap.zip"
+
+[[downloads]]
+platform = "Windows"
+format = "VST3 plugin"
+arch = "x64"
+url = "https://downloads.vulpuslabs.com/vxn-1c/0.1.4/vxn-1c-0.1.4-windows.vst3.zip"
 
 [[downloads]]
 platform = "Linux"
 format = "CLAP plugin"
 arch = "x64"
-url = "https://downloads.vulpuslabs.com/vxn-1c/0.1.1/vxn-1c-0.1.1-linux.clap.zip"
+url = "https://downloads.vulpuslabs.com/vxn-1c/0.1.4/vxn-1c-0.1.4-linux.clap.zip"
+
+[[downloads]]
+platform = "Linux"
+format = "VST3 plugin"
+arch = "x64"
+url = "https://downloads.vulpuslabs.com/vxn-1c/0.1.4/vxn-1c-0.1.4-linux.vst3.zip"
 
 [[extras]]
 label = "SHA-256 checksums"
-url = "https://downloads.vulpuslabs.com/vxn-1c/0.1.1/SHA256SUMS"
+url = "https://downloads.vulpuslabs.com/vxn-1c/0.1.4/SHA256SUMS"
 +++
 
 **vxn-1c** is a dual-layer subtractive polysynth, with a chorus, an
 arpeggiator on each layer, and a RANDOM button that builds a new sound in one
-of eleven styles. It is out in beta as a [CLAP](https://cleveraudio.org/) plugin for macOS,
-Windows and Linux ([downloads](#downloads)), with VST3 to follow, and you
+of eleven styles. It is out in beta as a [CLAP](https://cleveraudio.org/) and VST®3 plugin for macOS,
+Windows and Linux ([downloads](#downloads)), and you
 can play it now in your browser: the web build is the same engine and the same faceplate, compiled to WebAssembly.
 
 A patch is two complete instruments, **Layer 1** and **Layer 2**, sharing

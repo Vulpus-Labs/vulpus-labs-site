@@ -42,7 +42,7 @@ text = "DSP notes, write-ups and the odd dead end."
 Three synthesizer plugins for macOS, Windows and Linux. The full versions of
 all three run in a browser tab today — no install and no signup required.
 
-**Beta releases of the CLAP plugins are available now, with VST3 to follow:** download
+**Beta releases of the CLAP and VST®3 plugins are available now:** download
 [PolyKritter](/products/polykritter/#downloads),
 [vxn-1c](/products/vxn-1c/#downloads) or
 [vxn-2b](/products/vxn-2b/#downloads). Until unlocked with a licence code,
