@@ -1,6 +1,6 @@
 +++
 title = "Glow-Up"
-date = 2026-11-26
+date = 2026-11-27
 weight = 9
 platform = "CLAP and VST3 plugin"
 accent = "#f2a33a"

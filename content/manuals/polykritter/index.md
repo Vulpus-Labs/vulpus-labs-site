@@ -1,12 +1,12 @@
 +++
 title = "PolyKritter plugin"
-date = 2026-11-08
+date = 2026-11-27
 weight = 7
-platform = "CLAP plugin and web instrument"
+platform = "CLAP and VST3 plugin and web instrument"
 accent = "#e2262e"
 summary = "A virtual analog polysynth: up to sixteen voices, stacking, an eight-slot mod matrix, chorus, delay, reverb and a limiter."
 pdf = "Poly-Kritter-Plugin-Manual.pdf"
-pages = 32
+pages = 33
 +++
 
 The manual for the [PolyKritter](/products/polykritter/) plugin and web instrument covers:

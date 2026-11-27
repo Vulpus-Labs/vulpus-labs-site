@@ -1,6 +1,6 @@
 +++
 title = "Wesley"
-date = 2026-11-25
+date = 2026-11-27
 weight = 8
 platform = "CLAP and VST3 plugin"
 accent = "#e2b25a"

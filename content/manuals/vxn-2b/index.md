@@ -1,8 +1,8 @@
 +++
 title = "vxn-2b"
-date = 2026-11-08
+date = 2026-11-27
 weight = 6
-platform = "CLAP plugin and web instrument"
+platform = "CLAP and VST3 plugin and web instrument"
 accent = "#ff8a3d"
 summary = "A six-operator FM synthesizer: thirty-two algorithms, per-operator envelopes and key scaling, stacks of up to eight lanes a voice, and a 16-slot mod matrix."
 pdf = "vxn-2b-Manual.pdf"

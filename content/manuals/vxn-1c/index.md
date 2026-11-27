@@ -1,8 +1,8 @@
 +++
 title = "vxn-1c"
-date = 2026-11-08
+date = 2026-11-27
 weight = 5
-platform = "CLAP plugin and web instrument"
+platform = "CLAP and VST3 plugin and web instrument"
 accent = "#5aa8f5"
 summary = "A dual-layer subtractive polysynth: two complete instruments per patch, layered or split, each with a 16-slot mod matrix, an arpeggiator and stacks of up to 32 voices."
 pdf = "vxn-1c-Manual.pdf"
