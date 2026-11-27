@@ -6,7 +6,7 @@ title = "Vulpus Labs"
 # is a YouTube id, embedded beside the copy.
 [hero]
 headline = "Three Synth Plugins you can *play right now*."
-chips = ["CLAP", "VST3", "macOS", "Windows"]
+chips = ["CLAP", "macOS", "Windows", "Linux"]
 highlight = "Web preview available now"
 video = "9Eo3w9CtHKI"
 videoTitle = "Vulpus Labs Showreel - vxn-1c, vxn-2b, and Poly-Kritter"
@@ -39,10 +39,10 @@ heading = "How it is built"
 text = "DSP notes, write-ups and the odd dead end."
 +++
 
-Three synthesizer plugins for macOS and
-Windows. The full versions of all three run in a browser tab today — no install and no signup required.
+Three synthesizer plugins for macOS, Windows and Linux. The full versions of
+all three run in a browser tab today — no install and no signup required.
 
-**Beta releases of the CLAP plugins for macOS are available now:** download
+**Beta releases of the CLAP plugins are available now, with VST3 to follow:** download
 [PolyKritter](/products/polykritter/#downloads),
 [vxn-1c](/products/vxn-1c/#downloads) or
 [vxn-2b](/products/vxn-2b/#downloads). Until unlocked with a licence code,

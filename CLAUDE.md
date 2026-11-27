@@ -159,8 +159,8 @@ Products (`type = "products"`) use:
   showcase slabs
 - `version` - display version (`v0.1.1`); `release` - the git tag downloads
   resolve against
-- `releaseRepo` - overrides `params.releaseRepo` in hugo.toml (default
-  `Vulpus-Labs/vxn-1`)
+- `releaseRepo` - the GitHub repo `asset` downloads resolve against (e.g.
+  `Vulpus-Labs/patches`); falls back to `params.releaseRepo`, which is unset
 - `webdemo` - path to the browser build, e.g. `/products/vxn-2b/web/`
 - `formats` - array shown as chips, e.g. `["CLAP", "VST3"]`
 - `demoNote` - replaces the line under the hero's browser button (default:
@@ -172,7 +172,7 @@ Products (`type = "products"`) use:
   `https://github.com/<repo>/releases/download/<release>/<asset>`) or a full
   `url`
 - `[install]` - `clap` and `vst3`, the installed bundle filenames (e.g.
-  `vxn1b.clap`). They fill in the `xattr` de-quarantine commands in the callout
+  `vxn-1c.clap`). They fill in the `xattr` de-quarantine commands in the callout
   under the download grid; without them the callout falls back to a generic path
 - `[[extras]]` - `label` plus `asset`/`url`, for manuals and side artifacts
 - `store` - the product's store page (KVR Marketplace). When set, the hero and
@@ -182,18 +182,15 @@ Products (`type = "products"`) use:
   a `store` nor `downloads` (e.g. "coming soon to KVR Marketplace")
 - `manual` - path to the product's manual page, e.g. `/manuals/vxn-1c/`; adds a
   Manual button to the hero
-- `[[legacy]]` - a superseded product still offered for download, rendered as
-  a "Previous version" section (`#previous`) below the downloads: `title`,
-  `version`, `release`, optional `repo`, `note` (markdown), `[legacy.install]`
-  and `[[legacy.downloads]]` as above. vxn-1c carries VXN1b's, vxn-2b VXN2's;
-  `/products/vxn-1b/` and `/products/vxn-2/` redirect to them
-  (`static/_redirects`)
 - `[[audio]]` - either `file` (a glob matched against the page bundle's
   resources) or `url` (a path served from `static/`, e.g.
-  `/media/ravel_vxn1.m4a`), plus optional `title` and `caption` (rendered as
+  `/media/demo.m4a`), plus optional `title` and `caption` (rendered as
   markdown, so it can carry attribution links). A `file` entry
   renders only once the file exists, so entries can be declared before the audio
   lands; a `url` entry always renders, so the file has to be there.
+
+The free predecessors (VXN1, VXN1b, VXN2) are retired and not linked; their
+old URLs 301 to vxn-1c and vxn-2b (`static/_redirects`).
 
 **Voltage Modular modules** (`/products/voltage-modular/`,
 `layouts/products/voltage-modular.html`, chosen by its `layout` key): no

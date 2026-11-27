@@ -5,7 +5,7 @@ tagline = "Bug reports, questions, licensing — all welcome."
 
 ## Email
 
-<dominic.fox@gmail.com>
+<vulpuslabs@gmail.com>
 
 The fastest route for anything that isn't a bug: licensing questions, press,
 collaboration, or "does vxn-2b do *this*?". It is also where bug reports
@@ -16,8 +16,6 @@ for vxn-1c, vxn-2b and the PolyKritter plugin go, as their code is not public.
 Please raise these as issues on the repository for the product, so they stay
 visible and searchable:
 
-- [vxn-1](https://github.com/Vulpus-Labs/vxn-1/issues) — VXN1b and VXN2, the
-  free predecessors of vxn-1c and vxn-2b, both live in this repository
 - [patches](https://github.com/Vulpus-Labs/patches/issues) — the Patches engine,
   DSL and player
 - [patches-bundles](https://github.com/Vulpus-Labs/patches-bundles/issues) —

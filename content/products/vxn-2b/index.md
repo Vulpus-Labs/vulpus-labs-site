@@ -8,7 +8,7 @@ tagline = "Six-operator FM synth with voice stacking and LCD displays"
 accent = "#ff8a3d"
 blurb = "Six-operator FM with all thirty-two operator arrangements, a 16-slot mod matrix, and stacking that turns one note into eight."
 status = "beta"
-formats = ["CLAP", "VST3", "Browser"]
+formats = ["CLAP", "Browser"]
 webdemo = "/products/vxn-2b/web/"
 manual = "/manuals/vxn-2b/"
 version = "0.1.1"
@@ -39,50 +39,6 @@ url = "https://downloads.vulpuslabs.com/vxn-2b/0.1.1/vxn-2b-0.1.1-linux.clap.zip
 [[extras]]
 label = "SHA-256 checksums"
 url = "https://downloads.vulpuslabs.com/vxn-2b/0.1.1/SHA256SUMS"
-
-[[legacy]]
-title = "VXN2"
-version = "0.3.2"
-release = "0.3.2"
-note = "vxn-2b's predecessor, free and MIT-licensed, as CLAP and VST3 plugins. It is no longer developed, and vxn-2b does not read its saved sessions or user presets; its factory bank is in vxn-2b."
-
-[legacy.install]
-clap = "VXN2.clap"
-vst3 = "VXN2.vst3"
-
-[[legacy.downloads]]
-platform = "macOS"
-format = "CLAP plugin"
-arch = "Universal"
-asset = "VXN2-macOS-universal.clap.zip"
-
-[[legacy.downloads]]
-platform = "macOS"
-format = "VST3 plugin"
-arch = "Universal"
-asset = "VXN2-macOS-universal.vst3.zip"
-
-[[legacy.downloads]]
-platform = "Windows"
-format = "CLAP plugin"
-arch = "x64"
-asset = "VXN2-windows-x64.clap"
-
-[[legacy.downloads]]
-platform = "Windows"
-format = "VST3 plugin"
-arch = "x64"
-asset = "VXN2-windows-x64.vst3.zip"
-
-[[audio]]
-url = "/media/ravel_vxn2.m4a"
-title = "Ravel — Jeux d’eau"
-caption = "Performed by VXN2, vxn-2b's predecessor, from [Bernd Krueger](http://piano-midi.de/)’s arrangement of Ravel’s *Jeux d’eau*, used under [CC BY-SA 3.0 DE](https://creativecommons.org/licenses/by-sa/3.0/de/deed.en). Rendered through the synth and trimmed; this recording is shared under the same licence."
-
-[[audio]]
-url = "/media/mussorgsky_vxn2.m4a"
-title = "Mussorgsky — Pictures at an Exhibition: Promenade"
-caption = "Performed by VXN2, vxn-2b's predecessor, from [Bernd Krueger](http://piano-midi.de/)’s arrangement of Mussorgsky’s *Pictures at an Exhibition*, used under [CC BY-SA 3.0 DE](https://creativecommons.org/licenses/by-sa/3.0/de/deed.en). Rendered through the synth and trimmed; this recording is shared under the same licence."
 +++
 
 **vxn-2b** ("vixen 2b") is a six-operator FM synthesizer. Six sine

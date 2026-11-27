@@ -46,9 +46,7 @@
           <a class="btn btn-secondary btn-lg" href="{{ . }}" target="_blank" rel="noopener noreferrer">Buy on {{ $storeName }}</a>
           {{ else }}{{ if .Params.downloads }}
           <a class="btn btn-secondary btn-lg" href="#downloads">Download ↓</a>
-          {{ else }}{{ with .Params.legacy }}
-          <a class="btn btn-secondary btn-lg" href="#previous">{{ (index . 0).title }} download ↓</a>
-          {{ end }}{{ end }}{{ end }}
+          {{ end }}{{ end }}
           {{ with .Params.manual }}
           <a class="btn btn-secondary btn-lg" href="{{ . | relURL }}">Manual</a>
           {{ end }}
@@ -159,26 +157,6 @@
       {{ end }}
     </div>
   </section>
-
-  {{/* Earlier products this one supersedes, still downloadable. */}}
-  {{ range .Params.legacy }}
-  {{ $lrepo := or .repo $repo }}
-  <section class="section section-ruled" id="previous">
-    <div class="wrap">
-      <p class="eyebrow">Previous version</p>
-      <h2 class="section-heading" style="margin-bottom:1rem">{{ .title }}{{ with .version }} <span class="chip">v{{ . }}</span>{{ end }}</h2>
-      {{ with .note }}<div class="downloads-release">{{ $page.RenderString . }}</div>{{ end }}
-      {{ with .release }}
-      <p class="downloads-release">
-        Release
-        <a href="https://github.com/{{ $lrepo }}/releases/tag/{{ . }}" target="_blank" rel="noopener noreferrer">{{ . }}</a>
-        on GitHub.
-      </p>
-      {{ end }}
-      {{ partial "download-grid.html" (dict "downloads" .downloads "repo" $lrepo "release" .release "install" .install) }}
-    </div>
-  </section>
-  {{ end }}
 
   {{ $siblings := where (where site.RegularPages "Type" "products") "Permalink" "!=" .Permalink }}
   {{ with $siblings.ByWeight }}

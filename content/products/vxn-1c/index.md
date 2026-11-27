@@ -8,7 +8,7 @@ tagline = "Dual-layer subtractive polysynth with a mod matrix and an arpeggiator
 accent = "#5aa8f5"
 blurb = "Two complete instruments in one patch, layered or split, each with a 16-slot mod matrix, an arpeggiator and stacking up to 32 voices a note."
 status = "beta"
-formats = ["CLAP", "VST3", "Browser"]
+formats = ["CLAP", "Browser"]
 webdemo = "/products/vxn-1c/web/"
 manual = "/manuals/vxn-1c/"
 version = "0.1.1"
@@ -39,50 +39,6 @@ url = "https://downloads.vulpuslabs.com/vxn-1c/0.1.1/vxn-1c-0.1.1-linux.clap.zip
 [[extras]]
 label = "SHA-256 checksums"
 url = "https://downloads.vulpuslabs.com/vxn-1c/0.1.1/SHA256SUMS"
-
-[[legacy]]
-title = "VXN1b"
-version = "0.3.2"
-release = "0.3.2"
-note = "vxn-1c's predecessor, free and MIT-licensed, as CLAP and VST3 plugins. It is no longer developed, and vxn-1c does not read its presets or saved sessions."
-
-[legacy.install]
-clap = "vxn1b.clap"
-vst3 = "VXN1b.vst3"
-
-[[legacy.downloads]]
-platform = "macOS"
-format = "CLAP plugin"
-arch = "Universal"
-asset = "VXN1b-macOS-universal.clap.zip"
-
-[[legacy.downloads]]
-platform = "macOS"
-format = "VST3 plugin"
-arch = "Universal"
-asset = "VXN1b-macOS-universal.vst3.zip"
-
-[[legacy.downloads]]
-platform = "Windows"
-format = "CLAP plugin"
-arch = "x64"
-asset = "VXN1b-windows-x64.clap"
-
-[[legacy.downloads]]
-platform = "Windows"
-format = "VST3 plugin"
-arch = "x64"
-asset = "VXN1b-windows-x64.vst3.zip"
-
-[[audio]]
-url = "/media/ravel_vxn1.m4a"
-title = "Ravel — Jeux d’eau"
-caption = "Performed by VXN1b, vxn-1c's predecessor, from [Bernd Krueger](http://piano-midi.de/)’s arrangement of Ravel’s *Jeux d’eau*, used under [CC BY-SA 3.0 DE](https://creativecommons.org/licenses/by-sa/3.0/de/deed.en). Rendered through the synth and trimmed; this recording is shared under the same licence."
-
-[[audio]]
-url = "/media/mussorgsky_vxn1.m4a"
-title = "Mussorgsky — Pictures at an Exhibition: Promenade"
-caption = "Performed by VXN1b, vxn-1c's predecessor, from [Bernd Krueger](http://piano-midi.de/)’s arrangement of Mussorgsky’s *Pictures at an Exhibition*, used under [CC BY-SA 3.0 DE](https://creativecommons.org/licenses/by-sa/3.0/de/deed.en). Rendered through the synth and trimmed; this recording is shared under the same licence."
 +++
 
 **vxn-1c** is a dual-layer subtractive polysynth, with a chorus, an
