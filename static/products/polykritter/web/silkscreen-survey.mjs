@@ -1,4 +1,4 @@
-// The talking survey (0363): after a while on a synth's web page, a
+// The talking survey: after a while on a synth's web page, a
 // portrait pops up over it with a text box under it, and asks a few
 // questions, answered with the A, B and C keys (or a click). Its words are
 // typed into the box while the portrait's two frames, mouth open and
@@ -35,7 +35,7 @@ const OPTION = /^[-*]\s+([A-Za-z])\)\s+(.*?)\s*->\s*(\S+)\s*$/;
  *
  * ```markdown
  * ---
- * id: polykritter-2026-11
+ * id: my-synth-2026-11
  * endpoint: https://example.com/survey
  * send: off
  * ---
@@ -195,7 +195,7 @@ export const isLocal = (hostname) => ["localhost", "127.0.0.1", "[::1]", "::1", 
  * @param {string} [hostname]  `location.hostname`
  * @returns {{ force: boolean, waitMs: number, test: boolean }}
  */
-export function surveyFlags(search, afterMs, hostname = "vulpuslabs.com") {
+export function surveyFlags(search, afterMs, hostname = "example.com") {
   const q = new URLSearchParams(search);
   const local = isLocal(hostname);
   const seconds = Number(q.get("survey"));

@@ -30,11 +30,22 @@
       name: "PolyKritter",
       blurb: "the virtual analog poly synth",
       engine: "./kritter_web_engine.wasm",
-      example: "kritter",
+      example: "kritter-web",
+      vendor: { name: "Vulpus Labs" },
       homepage: "https://vulpuslabs.com/products/polykritter",
       accent: "#ff6d78",
       logo: { src: "logo.png", alt: "PolyKritter, virtual analog poly synth", width: 432 },
       octaves: 4,
+      tempo: true,
+      links: [
+        { text: "About PolyKritter", href: "https://vulpuslabs.com/products/polykritter/" },
+        { text: "Get the plugin", href: "https://vulpuslabs.com/products/polykritter/#downloads" },
+      ],
+      signup: {
+        action: "https://buttondown.com/api/emails/embed-subscribe/vulpuslabs",
+        text: "One email when PolyKritter is released, then the odd note about new synths and effects.",
+        fields: { tag: "polykritter" },
+      },
       survey: {
         src: "survey/survey.md",
         talk: { open: "survey/talk-open.png", closed: "survey/talk-closed.png" },

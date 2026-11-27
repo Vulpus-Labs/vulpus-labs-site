@@ -1,14 +1,14 @@
-// The standard web presentation of a silkscreen synth (0326).
+// The standard web presentation of a silkscreen synth.
 //
 // One call builds the whole page: the faceplate's scroller over the pinned
-// keyboard bar (0323), the splash with its browser note and the gesture
+// keyboard bar, the splash with its browser note and the gesture
 // that starts the sound, the CPU meter and MIDI readout, and the fit
-// (0325). A synth's index.html is its meta tags and
+//. A synth's index.html is its meta tags and
 //
-//   import * as wasm from "./pkg/vxn2b_web.js";
+//   import * as wasm from "./pkg/tone_web.js";
 //   import { mountSynthPage } from "./silkscreen-page.mjs";
-//   mountSynthPage({ wasm, name: "vxn-2b", blurb: "the six-operator FM synth",
-//                    engine: "./vxn2b_web_engine.wasm", example: "vxn2b" });
+//   mountSynthPage({ wasm, name: "Tone", blurb: "a one-oscillator synth",
+//                    engine: "./tone_web_engine.wasm", example: "tone" });
 //
 // The pure parts (the options' defaults, the browser note) are exported for
 // the node tests; the rest needs a DOM.
@@ -18,8 +18,6 @@ import { mountKeyboard } from "./silkscreen-keyboard.mjs";
 import { fitFaceplate } from "./silkscreen-fit.mjs";
 import { attachMidi } from "./silkscreen-midi.mjs";
 import { scheduleSurvey } from "./silkscreen-survey.mjs";
-
-const VULPUS = "https://vulpuslabs.com";
 
 /**
  * The page's options with their defaults filled in. Throws, naming the
@@ -31,9 +29,12 @@ const VULPUS = "https://vulpuslabs.com";
  * @param {string} o.name     the synth's name, as the splash shows it
  * @param {string} o.blurb    what it is, after "the web demo of NAME, "
  * @param {string} o.engine   the engine module's URL
- * @param {string} [o.example]  its `cargo xtask web` name, for the
+ * @param {string} [o.example]  its web package, for the
  *        not-isolated message (default: `name`)
- * @param {string} [o.homepage] where the splash links (default Vulpus Labs)
+ * @param {{ name: string, url?: string }} [o.vendor]  who made it: the
+ *        splash says "by NAME", linked to `url` if given
+ * @param {string} [o.homepage] the synth's own page, linked from the
+ *        splash as "For more details, see …"
  * @param {string} [o.accent]   the splash link's colour
  * @param {{ src: string, alt: string, width?: number }} [o.logo]  shown
  *        on the splash in place of the name
@@ -45,21 +46,48 @@ const VULPUS = "https://vulpuslabs.com";
  *           afterMs?: number }} [o.survey]  the talking survey
  *        (silkscreen-survey.mjs), asked once the page has been in use
  *        for `afterMs` (default two minutes)
+ * @param {boolean | { initial?: number, min?: number, max?: number }} [o.tempo]
+ *        a BPM field beside the CPU meter, sent as the engine transport's
+ *        tempo and remembered between visits (default 120, 40 to 240)
+ * @param {{ text: string, href: string }[]} [o.links]  links in a bar
+ *        in the top right, each opening in a new tab
+ * @param {{ action: string, label?: string, text?: string,
+ *           fields?: Record<string, string> }} [o.signup]  a button in
+ *        that bar that opens a mailing-list form: one email field,
+ *        posted to `action` in a new tab with `fields` as hidden inputs
  */
 export function pageOptions(o) {
   for (const k of ["wasm", "name", "blurb", "engine"]) {
     if (o?.[k] == null) throw new Error(`mountSynthPage: the "${k}" option is required`);
   }
-  return {
+  if (o.signup && !o.signup.action) throw new Error('mountSynthPage: the "signup" option needs an "action"');
+  const merged = {
     example: o.name,
-    homepage: VULPUS,
+    vendor: null,
+    homepage: null,
     accent: "#1f9cff",
     logo: null,
     low: 36,
     octaves: 5,
     keysHigh: 120,
+    links: [],
     ...Object.fromEntries(Object.entries(o).filter(([, v]) => v !== undefined)),
   };
+  merged.tempo = o.tempo ? { initial: 120, min: 40, max: 240, ...(o.tempo === true ? {} : o.tempo) } : null;
+  merged.signup = o.signup
+    ? { label: "Get release news", text: "Leave your email to hear when it is released.", fields: {}, ...o.signup }
+    : null;
+  return merged;
+}
+
+/**
+ * A tempo typed into the field, as whole BPM within `min`..`max`; `fallback`
+ * when it isn't a number.
+ */
+export function tempoValue(input, { min, max }, fallback) {
+  const n = Math.round(Number(input));
+  if (!Number.isFinite(n) || String(input).trim() === "") return fallback;
+  return Math.min(max, Math.max(min, n));
 }
 
 /**
@@ -120,6 +148,28 @@ body { margin: 0; height: 100vh; height: 100dvh; display: flex; flex-direction: 
 #cpu-bar { height: 6px; background: #3a3a40; border-radius: 3px; overflow: hidden; }
 #cpu-fill { height: 100%; width: 0; background: #5bbf6a; transition: width 0.2s; }
 #status, #midi { font-size: 12px; color: #8c8c92; }
+#tempo { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #8c8c92; }
+#tempo input { width: 3em; padding: 2px 4px; background: #151417; color: #f0f0f2; border: 1px solid #3a3a40;
+               border-radius: 3px; font: inherit; font-variant-numeric: tabular-nums; }
+
+/* Links and the mailing-list form, top right. */
+/* With the bar, the faceplate starts below it rather than under it. */
+body.ss-bar #face { padding-top: 48px; }
+#links { position: fixed; top: 12px; right: 12px; z-index: 5; display: flex; flex-wrap: wrap; justify-content: flex-end;
+         align-items: center; gap: 6px 14px; max-width: calc(100vw - 140px); font-size: 12px; }
+#links a { color: #c8c8cc; text-decoration: none; }
+#links a:hover { color: #f0f0f2; text-decoration: underline; }
+#links button { padding: 4px 10px; font: inherit; color: #f0f0f2; background: color-mix(in srgb, var(--accent) 35%, #202024);
+                border: 1px solid color-mix(in srgb, var(--accent) 60%, transparent); border-radius: 4px; cursor: pointer; }
+#signup { position: fixed; top: 44px; right: 12px; z-index: 5; width: min(300px, calc(100vw - 24px)); display: grid; gap: 8px;
+          padding: 14px; background: #151417; border: 1px solid #3a3438; border-radius: 8px;
+          box-shadow: 0 8px 28px rgb(0 0 0 / 0.5); font-size: 13px; }
+#signup[hidden] { display: none; }
+#signup p { margin: 0; line-height: 1.4; }
+#signup .row { display: flex; gap: 6px; }
+#signup input[type="email"] { flex: 1; min-width: 0; padding: 6px 8px; background: #202024; color: #f0f0f2;
+                              border: 1px solid #3a3a40; border-radius: 4px; font: inherit; }
+#signup .done { color: #8c8c92; }
 #midi { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 /* The splash: over everything while the page loads behind it. */
@@ -158,12 +208,19 @@ function build(body, o) {
   document.head.append(style);
   document.documentElement.style.setProperty("--accent", o.accent);
 
-  const link = el("a", { href: o.homepage, target: "_blank", rel: "noopener" });
-  link.textContent = o.homepage === VULPUS ? "Vulpus Labs" : o.homepage.replace(/^https?:\/\//, "");
-  const about =
-    o.homepage === VULPUS
-      ? el("p", {}, "This is the web demo of ", el("strong", {}, o.name), `, ${o.blurb} by `, link, ".")
-      : el("p", {}, "This is the web demo of ", el("strong", {}, o.name), `, ${o.blurb} by Vulpus Labs. For more details, see `, link, ".");
+  const link = (href, text) => {
+    const a = el("a", { href, target: "_blank", rel: "noopener" });
+    a.textContent = text;
+    return a;
+  };
+  const about = el("p", {}, "This is the web demo of ", el("strong", {}, o.name), `, ${o.blurb}`);
+  if (o.vendor) {
+    about.append(" by ", o.vendor.url ? link(o.vendor.url, o.vendor.name) : o.vendor.name);
+  }
+  about.append(".");
+  if (o.homepage) {
+    about.append(" For more details, see ", link(o.homepage, o.homepage.replace(/^https?:\/\//, "")), ".");
+  }
   const title = o.logo
     ? el("img", { src: o.logo.src, alt: o.logo.alt, ...(o.logo.width ? { width: o.logo.width } : {}) })
     : el("h1", {}, o.name);
@@ -187,13 +244,30 @@ function build(body, o) {
   const cpuFill = el("div", { id: "cpu-fill" });
   const midi = el("div", { id: "midi", title: "Web MIDI inputs" }, "MIDI –");
   const status = el("div", { id: "status" });
+  const tempo = o.tempo
+    ? el("input", { type: "number", min: o.tempo.min, max: o.tempo.max, step: 1, inputmode: "numeric", "aria-label": "Tempo, BPM" })
+    : null;
   const audio = el(
     "div",
     { id: "audio" },
     el("div", { id: "cpu", title: "The engine's share of the audio thread" }, cpuText, el("div", { id: "cpu-bar" }, cpuFill)),
+    ...(tempo ? [el("label", { id: "tempo", title: "The tempo synced arpeggiators, LFOs and delays follow" }, "BPM", tempo)] : []),
     midi,
     status,
   );
+
+  const extras = [];
+  let signup = null;
+  if (o.links.length || o.signup) {
+    const bar = el("nav", { id: "links", "aria-label": `About ${o.name}` }, ...o.links.map((l) => link(l.href, l.text)));
+    extras.push(bar);
+    document.body.classList.add("ss-bar");
+    if (o.signup) {
+      signup = buildSignup(o.signup);
+      bar.append(signup.button);
+      extras.push(signup.form);
+    }
+  }
 
   const canvas = el("canvas", { id: "faceplate" });
   const stage = el("div", { id: "stage" }, el("div", { id: "face" }, canvas));
@@ -201,8 +275,45 @@ function build(body, o) {
   keyboard.style.height = `${o.keysHigh}px`;
   const keys = el("div", { id: "keys" }, keyboard);
 
-  body.replaceChildren(splash, audio, stage, keys);
-  return { splash, browsers, prompt, cpuText, cpuFill, midi, status, canvas, stage, keyboard };
+  body.replaceChildren(splash, audio, ...extras, stage, keys);
+  return { splash, browsers, prompt, cpuText, cpuFill, midi, status, tempo, canvas, stage, keyboard };
+}
+
+/**
+ * The mailing-list button and the form it opens. The form posts in a new
+ * tab, so the player keeps playing. The keyboard ignores keys typed into
+ * a field, so typing an address plays no notes; Escape closes the form.
+ */
+function buildSignup(s) {
+  const button = el("button", { type: "button", "aria-expanded": "false", "aria-controls": "signup" }, s.label);
+  const email = el("input", { type: "email", name: "email", required: "", autocomplete: "email",
+                              placeholder: "you@example.com", "aria-label": "Email address" });
+  const done = el("p", { class: "done", hidden: "" }, "Thanks. Check your inbox to confirm.");
+  const form = el(
+    "form",
+    { id: "signup", action: s.action, method: "post", target: "_blank", hidden: "" },
+    el("p", {}, s.text),
+    el("div", { class: "row" }, email, el("button", { type: "submit" }, "Subscribe")),
+    ...Object.entries(s.fields).map(([name, value]) => el("input", { type: "hidden", name, value })),
+    done,
+  );
+  const show = (open) => {
+    form.hidden = !open;
+    button.setAttribute("aria-expanded", String(open));
+    if (open) email.focus();
+    else if (document.activeElement && form.contains(document.activeElement)) document.activeElement.blur();
+  };
+  button.addEventListener("click", () => show(form.hidden));
+  form.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") show(false);
+  });
+  // The post happens in its new tab; this tab just says so.
+  form.addEventListener("submit", () => setTimeout(() => {
+    done.hidden = false;
+    email.value = "";
+    email.blur();
+  }));
+  return { button, form };
 }
 
 /**
@@ -264,7 +375,9 @@ export async function mountSynthPage(options) {
   window.keyboard = keyboard;
   // The faceplate as large as fits above the keyboard, which matches its
   // width; on a phone, its own size (silkscreen-fit.mjs).
-  const fit = fitFaceplate({ page, stage: ui.stage, canvas: ui.canvas, keyboard: ui.keyboard });
+  // The bar of links, if any, adds to the stage's top padding (STYLE).
+  const padY = document.body.classList.contains("ss-bar") ? 48 : 16;
+  const fit = fitFaceplate({ page, stage: ui.stage, canvas: ui.canvas, keyboard: ui.keyboard, padY });
   window.fit = fit;
 
   const showLoad = (load) => {
@@ -293,7 +406,35 @@ export async function mountSynthPage(options) {
       console.error(e);
     }
   } else {
-    failed = `Not cross-origin isolated, so no audio. Serve with cargo xtask web ${o.example} --serve.`;
+    failed = `Not cross-origin isolated, so no audio. Serve with cargo silkscreen web ${o.example} --serve.`;
+  }
+  if (ui.tempo) {
+    // Remembered per synth; an engine without tempo-synced features
+    // simply ignores it.
+    const key = `silkscreen-tempo:${o.example}`;
+    let saved = null;
+    try {
+      saved = localStorage.getItem(key);
+    } catch {
+      // Storage refused (a private window): the field still works.
+    }
+    let bpm = tempoValue(saved ?? o.tempo.initial, o.tempo, o.tempo.initial);
+    ui.tempo.value = bpm;
+    audio?.setTempo(bpm);
+    ui.tempo.addEventListener("change", () => {
+      bpm = tempoValue(ui.tempo.value, o.tempo, bpm);
+      ui.tempo.value = bpm;
+      audio?.setTempo(bpm);
+      try {
+        localStorage.setItem(key, String(bpm));
+      } catch {
+        // As above.
+      }
+    });
+    // A click selects the value, so typing replaces it.
+    ui.tempo.addEventListener("focus", () => ui.tempo.select());
+    // Enter sets it and hands the keys back to the keyboard.
+    ui.tempo.addEventListener("keydown", (e) => e.key === "Enter" && ui.tempo.blur());
   }
   ui.prompt.classList.remove("loading");
   ui.prompt.textContent = failed ? `${failed} Press any key to see the editor.` : "Press any key to start.";

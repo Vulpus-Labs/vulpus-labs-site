@@ -1,11 +1,11 @@
-// AudioWorkletProcessor for a silkscreen engine module (ADR 0010 §1).
+// AudioWorkletProcessor for a silkscreen engine module (design/hosts.md).
 //
 // The engine module is raw C-ABI wasm built with
 // `silkscreen_bridge::export_web_engine!`. Its transport logic is Rust; this
 // file only supplies the `silkscreen_sab` imports (Atomics over the shared
 // buffer) and copies audio between Web Audio and the engine's buffers.
 //
-// Following vxn-1b's worklet:
+// How it runs:
 //   - the wasm bytes arrive in processorOptions (a worklet has no fetch) and
 //     are instantiated asynchronously; process() renders silence until then;
 //   - views of linear memory are cached and rebuilt only when
@@ -56,6 +56,8 @@ class SilkscreenEngine extends AudioWorkletProcessor {
       if (!this.x) return;
       if (m.type === "host-param") this.x.silkscreen_engine_host_set_param(m.index, m.value);
       else if (m.type === "reset") this.x.silkscreen_engine_reset();
+      // Absent from engine modules built before silkscreen 0.3.2.
+      else if (m.type === "tempo") this.x.silkscreen_engine_set_tempo?.(m.bpm);
     };
 
     WebAssembly.instantiate(wasmBytes, { silkscreen_sab: sharedWords(sab) }).then(
