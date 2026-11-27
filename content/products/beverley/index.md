@@ -10,7 +10,7 @@ blurb = "Gamma-curved, fractional-depth bit reduction with smoothing between ste
 status = "shipping"
 formats = ["CLAP", "VST3"]
 license = "Free · MIT or Apache-2.0"
-version = "0.2.0"
+version = "0.3.1"
 signed = true
 manual = "/manuals/beverley/"
 
@@ -22,41 +22,41 @@ vst3 = "Beverley.vst3"
 platform = "macOS"
 format = "CLAP plugin"
 arch = "Universal"
-url = "https://downloads.vulpuslabs.com/beverley/0.2.0/beverley-0.2.0-macos.clap.zip"
+url = "https://downloads.vulpuslabs.com/beverley/0.3.1/beverley-0.3.1-macos.clap.zip"
 
 [[downloads]]
 platform = "macOS"
 format = "VST3 plugin"
 arch = "Universal"
-url = "https://downloads.vulpuslabs.com/beverley/0.2.0/beverley-0.2.0-macos.vst3.zip"
+url = "https://downloads.vulpuslabs.com/beverley/0.3.1/beverley-0.3.1-macos.vst3.zip"
 
 [[downloads]]
 platform = "Windows"
 format = "CLAP plugin"
 arch = "x64"
-url = "https://downloads.vulpuslabs.com/beverley/0.2.0/beverley-0.2.0-windows.clap.zip"
+url = "https://downloads.vulpuslabs.com/beverley/0.3.1/beverley-0.3.1-windows.clap.zip"
 
 [[downloads]]
 platform = "Windows"
 format = "VST3 plugin"
 arch = "x64"
-url = "https://downloads.vulpuslabs.com/beverley/0.2.0/beverley-0.2.0-windows.vst3.zip"
+url = "https://downloads.vulpuslabs.com/beverley/0.3.1/beverley-0.3.1-windows.vst3.zip"
 
 [[downloads]]
 platform = "Linux"
 format = "CLAP plugin"
 arch = "x64"
-url = "https://downloads.vulpuslabs.com/beverley/0.2.0/beverley-0.2.0-linux.clap.zip"
+url = "https://downloads.vulpuslabs.com/beverley/0.3.1/beverley-0.3.1-linux.clap.zip"
 
 [[downloads]]
 platform = "Linux"
 format = "VST3 plugin"
 arch = "x64"
-url = "https://downloads.vulpuslabs.com/beverley/0.2.0/beverley-0.2.0-linux.vst3.zip"
+url = "https://downloads.vulpuslabs.com/beverley/0.3.1/beverley-0.3.1-linux.vst3.zip"
 
 [[extras]]
 label = "SHA-256 checksums"
-url = "https://downloads.vulpuslabs.com/beverley/0.2.0/SHA256SUMS"
+url = "https://downloads.vulpuslabs.com/beverley/0.3.1/SHA256SUMS"
 
 [[extras]]
 label = "Source code (GitHub)"
