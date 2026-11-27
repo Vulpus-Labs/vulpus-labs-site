@@ -145,11 +145,11 @@ export interface InitOutput {
     readonly webhost_setZoom: (a: number, b: number) => void;
     readonly webhost_stop: (a: number) => void;
     readonly webhost_zoom: (a: number) => number;
-    readonly wasm_bindgen__convert__closures_____invoke__h5e49811666bb5fac: (a: number, b: number, c: number) => void;
+    readonly wasm_bindgen__convert__closures_____invoke__h54a1ac916ae54f4d: (a: number, b: number, c: number) => void;
     readonly wasm_bindgen__convert__closures_____invoke__h1707fddd86a6f68e: (a: number, b: number, c: any, d: any) => void;
     readonly wasm_bindgen__convert__closures_____invoke__h3ae15ede0744e005: (a: number, b: number, c: any) => [number, number];
-    readonly wasm_bindgen__convert__closures_____invoke__h5b4249efc1962cfd: (a: number, b: number, c: any) => void;
-    readonly wasm_bindgen__convert__closures_____invoke__h34eeeeb7456ccd61: (a: number, b: number) => void;
+    readonly wasm_bindgen__convert__closures_____invoke__hb0717010b2273d30: (a: number, b: number, c: any) => void;
+    readonly wasm_bindgen__convert__closures_____invoke__h87a0a4899944ee42: (a: number, b: number) => void;
     readonly __wbindgen_malloc: (a: number, b: number) => number;
     readonly __wbindgen_realloc: (a: number, b: number, c: number, d: number) => number;
     readonly __wbindgen_exn_store: (a: number) => void;

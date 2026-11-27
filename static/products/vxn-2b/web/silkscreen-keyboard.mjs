@@ -1,4 +1,4 @@
-// An on-screen piano keyboard for web instruments (ADR 0010 §6).
+// An on-screen piano keyboard for web instruments (design/hosts.md).
 //
 // It belongs to the page, which stands in for a host, not to the plugin's
 // editor, so it's HTML under the faceplate rather than part of it. It emits
@@ -159,7 +159,7 @@ export class Voices {
   }
 }
 
-/// Two fingers on the strip scroll it rather than play (0331): a phone
+/// Two fingers on the strip scroll it rather than play: a phone
 /// shows the keyboard at its own width, wider than the screen. One finger
 /// plays and glides as ever. When a second touch lands, both fingers' notes
 /// are released and the pair pans; a finger that panned plays nothing more
