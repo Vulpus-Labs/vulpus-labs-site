@@ -6,7 +6,7 @@ title = "Vulpus Labs"
 # is a YouTube id, embedded beside the copy.
 [hero]
 headline = "Three Synth Plugins you can *play right now*."
-chips = ["CLAP", "macOS", "Windows", "Linux"]
+chips = ["CLAP", "VST3", "macOS", "Windows", "Linux"]
 highlight = "Web preview available now"
 video = "9Eo3w9CtHKI"
 videoTitle = "Vulpus Labs Showreel - vxn-1c, vxn-2b, and Poly-Kritter"
