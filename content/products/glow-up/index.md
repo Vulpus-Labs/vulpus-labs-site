@@ -4,9 +4,9 @@ date = 2026-11-26
 type = "products"
 range = "fx"
 weight = 62
-tagline = "A harmonic filter: brighten a sound at the intervals you choose"
+tagline = "A harmonic filter: draw a second pitch out of the overtones already there"
 accent = "#f2a33a"
-blurb = "Finds the strongest pitches in the sound and boosts what is already there at two ratios of each, an octave and a fifth up by default, with resonance up to singing. Free, and open source."
+blurb = "Boosts the overtones already in a sound at two intervals above its strongest pitches, an octave and a fifth by default. On plucked guitar it draws out a second pitch; elsewhere it brightens or rings. Free, and open source."
 status = "shipping"
 formats = ["CLAP", "VST3"]
 license = "Free · MIT or Apache-2.0"
@@ -63,11 +63,15 @@ label = "Source code (GitHub)"
 url = "https://github.com/Vulpus-Labs/vxn-free"
 +++
 
-**Glow-Up** listens for the strongest notes and overtones in a sound and
-brightens it at chosen intervals above them: an octave, a fifth, or any
-ratio you set. It does this with narrow filters that lift what is already
-there, so it adds shimmer and focus without adding notes, until you turn
-up its resonance and the filters start to sing. It is a free
+**Glow-Up** finds the strongest pitches in a sound and boosts the
+overtones already there at chosen intervals above them: an octave, a
+fifth, or any ratio you set. On a plucked guitar note, rich in overtones,
+the one at that interval comes forward until you hear it as a second
+pitch alongside the note. On other sounds it brightens, and with its
+resonance turned up it adds overtones that ring and sing. For a shimmer,
+turn on **DRY CUT** and send only the boosts into a reverb.
+
+It is a free
 [CLAP](https://cleveraudio.org/) and VST3 plugin for macOS, Windows and
 Linux ([downloads](#downloads)), and its source is on
 [GitHub](https://github.com/Vulpus-Labs/vxn-free) under the MIT or
