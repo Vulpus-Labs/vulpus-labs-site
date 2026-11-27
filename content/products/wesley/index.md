@@ -80,8 +80,8 @@ single-band sibling.
 
 **LOW X** and **HIGH X** set where the sound is split, from 40 Hz to 1 kHz
 and from 500 Hz to 12 kHz. The bands overlap gently at each crossover and
-always add back up to an even sound: switch every band off and Wesley
-sounds like the original.
+always add back up to an even sound: switch every band off, with each
+**LEVEL** at 0 dB, for a clean bypass.
 
 Each band's **ON** switches its crush on and off, and **SOLO** lets you hear
 it alone while you set it up; one band at a time. Out of the box LOW is
