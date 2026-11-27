@@ -35,3 +35,9 @@ Linux     CLAP  ~/.clap/
     {{ if $vst }}{{ partial "vst-compatible.html" . }}{{ end }}
   </div>
 </section>
+
+<section class="section-tight">
+  <div class="wrap">
+    {{ partial "signup.html" (dict "tag" (path.Base $page.RelPermalink)) }}
+  </div>
+</section>

@@ -55,6 +55,7 @@
         <p class="also-tagline">{{ with .Params.demoNote }}{{ . | markdownify }}{{ else }}No install, no account. Works in Chrome, Edge and Firefox — play it from
           your computer keyboard, or plug in a MIDI controller.{{ end }}</p>
         {{ end }}
+        {{ if eq .Params.status "beta" }}<p class="also-tagline"><a href="#signup">Get an email when it is released ↓</a></p>{{ end }}
       </div>
 
       <div class="product-hero-media">
@@ -156,6 +157,17 @@
       </ul>
       {{ end }}
       {{ if in .Params.formats "VST3" }}{{ partial "vst-compatible.html" . }}{{ end }}
+    </div>
+  </section>
+
+  <section class="section-tight">
+    <div class="wrap">
+      {{ $slug := .File.ContentBaseName }}
+      {{ if eq .Params.status "beta" }}
+      {{ partial "signup.html" (dict "tag" $slug "heading" (printf "Hear when %s is released" .Title) "text" (printf "One email when %s leaves beta, then the odd note about new synths and effects. Unsubscribe any time." .Title)) }}
+      {{ else }}
+      {{ partial "signup.html" (dict "tag" $slug) }}
+      {{ end }}
     </div>
   </section>
 

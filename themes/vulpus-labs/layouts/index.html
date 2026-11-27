@@ -116,6 +116,12 @@
 </section>
 {{ end }}
 
+<section class="section section-ruled">
+  <div class="wrap">
+    {{ partial "signup.html" (dict "tag" "home") }}
+  </div>
+</section>
+
 {{ $posts := where site.RegularPages "Type" "posts" }}
 {{ with $posts }}
 <section class="section section-ruled">

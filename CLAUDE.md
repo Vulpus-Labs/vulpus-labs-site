@@ -100,6 +100,13 @@ plugins.
   examples, prose, a repeat web-demo call-out, downloads, cross-links to the
   rest of the range
 - No sidebar — the monthly archive is a jump-link row on `/posts/`
+- Mailing list: `partials/signup.html` posts straight to Buttondown
+  (`vulpuslabs`), with a hidden `tag` naming where the signup came from: the
+  product's slug on product pages (beta products get "Hear when X is
+  released" and a pointer from the hero), `synths`/`effects` on the range
+  pages, `home` before the homepage blog, and `contact` via the
+  `{{< signup tag="…" >}}` shortcode. Create a new tag in Buttondown when
+  adding a product
 
 **Key Template Files:**
 - `themes/vulpus-labs/layouts/_default/baseof.html` - header, content, footer

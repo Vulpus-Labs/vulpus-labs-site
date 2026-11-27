@@ -860,6 +860,67 @@ a.shot:focus-visible .shot-cta {
   max-width: 40rem;
 }
 
+/* Mailing-list signup (partials/signup.html) */
+.signup-panel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1.25rem 2rem;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  padding: clamp(1.25rem, 3vw, 2rem);
+}
+
+.signup-copy h2 {
+  font-size: 1.375rem;
+  margin-bottom: 0.4rem;
+}
+
+.signup-copy p {
+  color: var(--text-dim);
+  font-size: 0.9375rem;
+  max-width: 36rem;
+}
+
+.signup-form {
+  display: flex;
+  gap: 0.5rem;
+  flex: 1 1 20rem;
+  max-width: 28rem;
+}
+
+.signup-form input[type="email"] {
+  flex: 1;
+  min-width: 0;
+  padding: 0.6rem 0.75rem;
+  background: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  color: var(--text);
+  font: inherit;
+}
+
+.signup-form input[type="email"]::placeholder {
+  color: var(--text-faint);
+}
+
+.signup-form input[type="email"]:focus {
+  outline: none;
+  border-color: var(--accent-line);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
 /* Sound examples */
 .audio-list {
   display: grid;

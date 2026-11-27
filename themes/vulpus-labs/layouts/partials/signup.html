@@ -1,0 +1,17 @@
+{{/* The Buttondown mailing-list form. dict: heading, text (markdown), tag
+     (a Buttondown tag naming where the signup came from), id (default
+     "signup"). Posts straight to Buttondown, no script; Buttondown's
+     confirmation page opens in a new tab so the visitor keeps this one. */}}
+{{ $id := default "signup" .id }}
+<div class="signup-panel" id="{{ $id }}">
+  <div class="signup-copy">
+    <h2>{{ default "Hear about new releases" .heading }}</h2>
+    <p>{{ with .text }}{{ . | markdownify }}{{ else }}New synths and effects, and the odd note on how they are built. A few emails a year; unsubscribe any time.{{ end }}</p>
+  </div>
+  <form class="signup-form" action="https://buttondown.com/api/emails/embed-subscribe/vulpuslabs" method="post" target="_blank">
+    <label class="visually-hidden" for="{{ $id }}-email">Email address</label>
+    <input type="email" name="email" id="{{ $id }}-email" placeholder="you@example.com" autocomplete="email" required>
+    {{ with .tag }}<input type="hidden" name="tag" value="{{ . }}">{{ end }}
+    <button class="btn btn-primary" type="submit">Subscribe</button>
+  </form>
+</div>

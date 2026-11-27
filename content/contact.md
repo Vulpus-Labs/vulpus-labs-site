@@ -33,6 +33,8 @@ Vulpus Labs modules for Voltage Modular are sold through the
 Store, purchase and licensing issues go to Cherry Audio; anything about how a
 module *behaves* comes to me.
 
+{{< signup tag="contact" >}}
+
 ## Elsewhere
 
 - [github.com/Vulpus-Labs](https://github.com/Vulpus-Labs) — every repository
