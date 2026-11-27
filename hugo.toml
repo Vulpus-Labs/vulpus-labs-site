@@ -42,6 +42,6 @@ pageRef = '/contact'
 weight = 60
 
 [params]
-description = 'Three synthesizer plugins, in beta as CLAP for macOS, Windows and Linux — play them in your browser now.'
+description = 'Three synthesizer plugins, in beta as CLAP and VST3 for macOS, Windows and Linux — play them in your browser now.'
 tagline = 'Synthesizers and modular audio tools, built in Rust.'
 
