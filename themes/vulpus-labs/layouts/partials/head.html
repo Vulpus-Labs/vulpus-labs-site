@@ -7,6 +7,7 @@
 <meta name="theme-color" content="#1a1917">
 <link rel="canonical" href="{{ .Permalink }}">
 <link rel="icon" href="{{ "favicon.ico" | relURL }}">
+{{ with site.GetPage "/posts" }}{{ with .OutputFormats.Get "rss" }}<link rel="alternate" type="application/rss+xml" title="{{ site.Title }} blog" href="{{ .Permalink }}">{{ end }}{{ end }}
 
 <meta property="og:type" content="{{ if .IsPage }}article{{ else }}website{{ end }}">
 <meta property="og:site_name" content="{{ site.Title }}">

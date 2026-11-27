@@ -36,4 +36,5 @@ module *behaves* comes to me.
 ## Elsewhere
 
 - [github.com/Vulpus-Labs](https://github.com/Vulpus-Labs) — every repository
-- [The blog](/posts/) — implementation notes and DSP write-ups
+- [The blog](/posts/) — implementation notes and DSP write-ups, also as an
+  [RSS feed](/posts/index.xml)

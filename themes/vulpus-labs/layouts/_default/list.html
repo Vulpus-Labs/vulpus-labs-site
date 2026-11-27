@@ -4,6 +4,7 @@
     <p class="eyebrow">{{ if eq .Type "posts" }}Blog{{ else }}{{ .Type | humanize }}{{ end }}</p>
     <h1>{{ .Title }}</h1>
     {{ with .Content }}<div class="archive-description">{{ . }}</div>{{ end }}
+    {{ if eq .Type "posts" }}{{ with .OutputFormats.Get "rss" }}<p><a class="read-more" href="{{ .RelPermalink }}">Subscribe by RSS</a></p>{{ end }}{{ end }}
   </header>
 </div>
 
