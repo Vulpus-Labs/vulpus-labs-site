@@ -1,0 +1,5 @@
+{{ define "main" }}
+{{/* The synths: every product with a browser build, in weight order. */}}
+{{ $products := where (where site.RegularPages "Type" "products") "Params.webdemo" "!=" nil }}
+{{ partial "range-page.html" (dict "page" . "products" $products.ByWeight) }}
+{{ end }}

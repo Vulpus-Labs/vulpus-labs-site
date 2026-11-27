@@ -1,6 +1,6 @@
 {{ define "main" }}
 {{ $products := where site.RegularPages "Type" "products" }}
-{{/* Featured: every product with a browser build. */}}
+{{/* Featured: every product with a browser build, in the hero row. */}}
 {{ $featured := slice }}
 {{ $other := slice }}
 {{/* The free effects (range "fx"), in a section of their own. */}}
@@ -8,24 +8,40 @@
 {{ range $products.ByWeight }}{{ if .Params.webdemo }}{{ $featured = $featured | append . }}{{ else if eq .Params.range "fx" }}{{ $fx = $fx | append . }}{{ else }}{{ $other = $other | append . }}{{ end }}{{ end }}
 {{/* Copy lives in content/_index.md: front matter for headings, body for the hero paragraph. */}}
 {{ $hero := default dict .Params.hero }}
-{{ $synths := default dict .Params.synths }}
+{{ $synthsCopy := default dict .Params.synths }}
 {{ $others := default dict .Params.others }}
 {{ $effects := default dict .Params.fx }}
 {{ $blog := default dict .Params.blog }}
 
 <section class="hero">
   <div class="wrap">
-    <div class="hero-copy">
-      {{ with $hero.headline }}<h1 class="hero-title">{{ . | markdownify }}</h1>{{ end }}
-      {{ with .Content }}<div class="hero-lede">{{ . }}</div>{{ end }}
-      {{ if or $hero.chips $hero.highlight }}
-      <div class="chip-row">
-        {{ range $hero.chips }}<span class="chip">{{ . }}</span>{{ end }}
-        {{ with $hero.highlight }}<span class="chip chip-accent">{{ . }}</span>{{ end }}
+    <div class="hero-top">
+      <div class="hero-copy">
+        {{ with $hero.headline }}<h1 class="hero-title">{{ . | markdownify }}</h1>{{ end }}
+        {{ with .Content }}<div class="hero-lede">{{ . }}</div>{{ end }}
+        {{ if or $hero.chips $hero.highlight }}
+        <div class="chip-row">
+          {{ range $hero.chips }}<span class="chip">{{ . }}</span>{{ end }}
+          {{ with $hero.highlight }}<span class="chip chip-accent">{{ . }}</span>{{ end }}
+        </div>
+        {{ end }}
+      </div>
+      {{ with $hero.video }}
+      <div class="hero-video">
+        <iframe src="https://www.youtube-nocookie.com/embed/{{ . }}"
+                title="{{ default "Video" $hero.videoTitle }}"
+                loading="lazy"
+                allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                referrerpolicy="strict-origin-when-cross-origin"
+                allowfullscreen></iframe>
       </div>
       {{ end }}
     </div>
 
+    <div class="hero-trio-head">
+      {{ with $synthsCopy.eyebrow }}<p class="eyebrow">{{ . }}</p>{{ end }}
+      <a class="btn btn-ghost btn-sm" href="{{ "/synths/" | relURL }}">{{ default "See the synths" $synthsCopy.link }}</a>
+    </div>
     <div class="hero-trio">
       {{ range $featured }}
       {{ $p := . }}
@@ -43,33 +59,31 @@
   </div>
 </section>
 
-<section class="section" id="range">
+{{ with $fx }}
+{{ $img := resources.Get "fx-faceplates.png" }}
+{{ $fxURL := "/effects/" | relURL }}
+{{ $names := slice }}{{ range $fx }}{{ $names = $names | append .Title }}{{ end }}
+<section class="section section-ruled" id="fx">
   <div class="wrap">
     <div class="section-head">
       <div>
-        {{ with $synths.eyebrow }}<p class="eyebrow">{{ . }}</p>{{ end }}
-        {{ with $synths.heading }}<h2 class="section-heading">{{ . }}</h2>{{ end }}
-        {{ with $synths.text }}<div class="section-sub">{{ . | markdownify }}</div>{{ end }}
+        {{ with $effects.eyebrow }}<p class="eyebrow">{{ . }}</p>{{ end }}
+        {{ with $effects.heading }}<h2 class="section-heading">{{ . }}</h2>{{ end }}
+        {{ with $effects.text }}<div class="section-sub">{{ . | markdownify }}</div>{{ end }}
       </div>
-      <a class="btn btn-ghost btn-sm" href="{{ "/products/" | relURL }}">All products</a>
+      <a class="btn btn-secondary btn-sm" href="{{ $fxURL }}">{{ default "See the effects" $effects.link }}</a>
     </div>
-  </div>
-
-  <div class="wrap">
-    {{ range $i, $p := $featured }}
-    {{ partial "product-showcase.html" (dict "page" $p "heading" "h3" "eager" false) }}
-    {{ end }}
-  </div>
-</section>
-
-{{ with $fx }}
-<section class="section section-ruled" id="fx">
-  <div class="wrap">
-    {{ with $effects.eyebrow }}<p class="eyebrow">{{ . }}</p>{{ end }}
-    {{ with $effects.heading }}<h2 class="section-heading">{{ . }}</h2>{{ end }}
-    {{ with $effects.text }}<div class="section-sub" style="margin-bottom:2rem">{{ . | markdownify }}</div>{{ end }}
-    {{ range . }}
-    {{ partial "product-showcase.html" (dict "page" . "heading" "h3") }}
+    {{ with $img }}
+    {{ $w1 := .Resize "1200x webp q82" }}
+    {{ $w2 := .Resize "2337x webp q82" }}
+    <a class="fx-band" href="{{ $fxURL }}">
+      <img src="{{ $w2.RelPermalink }}"
+           srcset="{{ $w1.RelPermalink }} 1200w, {{ $w2.RelPermalink }} 2337w"
+           sizes="(max-width: 1180px) 100vw, 1116px"
+           width="{{ $w2.Width }}" height="{{ $w2.Height }}"
+           loading="lazy" decoding="async"
+           alt="{{ delimit $names ", " " and " }} — faceplates">
+    </a>
     {{ end }}
   </div>
 </section>

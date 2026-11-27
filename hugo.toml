@@ -5,9 +5,14 @@ theme = 'vulpus-labs'
 
 [menus]
 [[menus.main]]
-name = 'Products'
-pageRef = '/products'
+name = 'Synths'
+pageRef = '/synths'
 weight = 10
+
+[[menus.main]]
+name = 'Effects'
+pageRef = '/effects'
+weight = 12
 
 [[menus.main]]
 name = 'Manuals'

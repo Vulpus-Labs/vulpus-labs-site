@@ -1,0 +1,5 @@
+{{ define "main" }}
+{{/* The free effects: every product with range "fx", in weight order. */}}
+{{ $products := where (where site.RegularPages "Type" "products") "Params.range" "fx" }}
+{{ partial "range-page.html" (dict "page" . "products" $products.ByWeight) }}
+{{ end }}

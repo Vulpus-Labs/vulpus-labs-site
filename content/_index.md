@@ -2,28 +2,30 @@
 title = "Vulpus Labs"
 
 # The hero. `headline` is inline markdown: *emphasis* renders in the accent
-# colour. The page body below is the paragraph under the headline.
+# colour. The page body below is the paragraph under the headline. `video`
+# is a YouTube id, embedded beside the copy.
 [hero]
 headline = "Three Synth Plugins you can *play right now*."
 chips = ["CLAP", "VST3", "macOS", "Windows"]
 highlight = "Web preview available now"
+video = "9Eo3w9CtHKI"
+videoTitle = "Vulpus Labs Showreel - vxn-1c, vxn-2b, and Poly-Kritter"
 
-# Every product with a `webdemo` is featured here, in weight order; their
-# names, taglines and blurbs come from their own pages.
+# The row of synth faceplates under the hero: every product with a
+# `webdemo`, in weight order. `link` is the button to /synths/, whose own
+# copy is content/synths/_index.md.
 [synths]
 eyebrow = "The synths"
-heading = "Virtual Analog, Digital FM, and 70s Retro"
-text = """
-Three fully-featured synth plugins with distinctive voices and capabilities. The full plugin version, engineered in Rust for high audio quality and CPU-efficiency, has been cross-compiled to WebAssembly and runs identically in the browser, with full MIDI control.
+link = "See the synths"
 
-Each synth has a "random" button that generates random presets. If you find a voice you like, you can export it from the browser version and import it into the CLAP/VST3 plugin running in your DAW.
-"""
-
-# The free effects (products with range = "fx"), each as a showcase slab.
+# The free effects (products with range = "fx"), shown as one composite
+# image (assets/fx-faceplates.png, from scripts/make-fx-image.py) linked
+# to /effects/, whose own copy is content/effects/_index.md.
 [fx]
 eyebrow = "Free effects"
 heading = "Effects, free and open source"
 text = "CLAP and VST3 effects for macOS, Windows and Linux, free to download and to build from [source](https://github.com/Vulpus-Labs/vxn-free)."
+link = "See the effects"
 
 # Products without a web demo are listed here as cards, followed by `cards`.
 [others]

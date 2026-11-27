@@ -1,0 +1,18 @@
+{{/*  A range page (/synths/, /effects/): its copy, then one showcase slab
+      per product in the range. dict: page, products */}}
+{{ $page := .page }}
+<div class="wrap">
+  <header class="archive-header">
+    {{ with $page.Params.eyebrow }}<p class="eyebrow">{{ . }}</p>{{ end }}
+    <h1>{{ default $page.Title $page.Params.heading }}</h1>
+    {{ with $page.Content }}<div class="archive-description">{{ . }}</div>{{ end }}
+  </header>
+</div>
+
+<section class="section-tight">
+  <div class="wrap">
+    {{ range $i, $p := .products }}
+    {{ partial "product-showcase.html" (dict "page" $p "heading" "h2" "eager" (eq $i 0)) }}
+    {{ end }}
+  </div>
+</section>

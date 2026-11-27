@@ -80,15 +80,20 @@ plugins.
 - Responsive; honours `prefers-reduced-motion`
 
 **Layout Features:**
-- Sticky header; nav (Products, Blog, Repos, Store, Contact) from
+- Sticky header; nav (Synths, Effects, Manuals, Blog, Repos, Store, Contact) from
   `[menus.main]` in hugo.toml, entries with `params.external = true` open in a
   new tab
 - Templates are full-bleed: `baseof.html` no longer constrains width. Each
   section supplies its own `.wrap` (max 1180px) or `.wrap .wrap-prose`
   (max 46rem, for running text)
-- Homepage: hero (headline, spec chips, then every web-demo product's
-  faceplate side by side, each with its own play link) → one
-  showcase slab per product with a `webdemo` (PolyKritter, vxn-1c, vxn-2b), alternating sides → other products → blog
+- Homepage: hero (headline and copy beside the embedded showreel video,
+  then every web-demo product's faceplate side by side, each linked to its
+  page and its browser demo, with a button to `/synths/`) → the free
+  effects as one composite image linked to `/effects/` → other products →
+  blog
+- `/synths/` and `/effects/`: one showcase slab per product in the range,
+  alternating sides. `/products/` (linked from the footer) still lists
+  everything, Patches included
 - Product pages: hero with faceplate shot and a browser CTA, gallery, sound
   examples, prose, a repeat web-demo call-out, downloads, cross-links to the
   rest of the range
@@ -97,8 +102,12 @@ plugins.
 **Key Template Files:**
 - `themes/vulpus-labs/layouts/_default/baseof.html` - header, content, footer
 - `themes/vulpus-labs/layouts/index.html` - homepage; its copy comes from
-  `content/_index.md` (front matter `hero`, `synths`, `others`, `blog`; the
-  body is the hero paragraph)
+  `content/_index.md` (front matter `hero` (with `video`, a YouTube id),
+  `synths`, `fx`, `others`, `blog`; the body is the hero paragraph)
+- `themes/vulpus-labs/layouts/synths/list.html` and `effects/list.html` -
+  the range pages, both through `partials/range-page.html`; their copy is
+  `content/synths/_index.md` and `content/effects/_index.md` (`eyebrow`,
+  `heading`, body)
 - `themes/vulpus-labs/layouts/products/single.html` - product page
 - `themes/vulpus-labs/layouts/products/list.html` - products index
 - `themes/vulpus-labs/layouts/_default/single.html` - posts and standalone
@@ -124,6 +133,10 @@ node scripts/capture-faceplates.mjs
 Regenerate them whenever a synth's faceplate changes. Hugo resizes them to webp
 at build time, so commit the full-size PNGs.
 
+The homepage's free-effects image is `assets/fx-faceplates.png`: Wesley
+beside Glow-Up over Beverley. Rebuild it after recapturing any of their
+faceplates with `python3 scripts/make-fx-image.py` (needs Pillow).
+
 The homepage's link preview (`og:image`) is `assets/og-image.png`, 1200×630:
 the logo beside the three hero faceplates, stacked. Rebuild it after
 recapturing them with `python3 scripts/make-og-image.py` (needs Pillow).
@@ -134,10 +147,11 @@ Posts should include `readingTime` parameter (minutes) for display in post cards
 
 Products (`type = "products"`) use:
 
-- `range` - `"vxn"` marks a VXN-range synth; `"fx"` puts the page in the
-  "Free effects" section of the homepage and the products index (its copy
-  on the homepage is `[fx]` in `content/_index.md`). The synths section of
-  both pages is every product with a `webdemo`, whatever its range
+- `range` - `"vxn"` marks a VXN-range synth; `"fx"` puts the product on
+  `/effects/`, in the homepage's free-effects image (by hand: see
+  `scripts/make-fx-image.py`) and in the products index. `/synths/` and the
+  homepage's synth row are every product with a `webdemo`, whatever its
+  range
 - `accent` - hex colour driving `--accent` on that product's pages and cards
 - `tagline` - one line under the title; `blurb` - the extra sentence shown in
   showcase slabs
