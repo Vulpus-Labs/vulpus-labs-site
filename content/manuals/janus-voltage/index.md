@@ -8,8 +8,6 @@ summary = "Eleven modules for polyphonic voices: KEY, MTP, CVC, DCO, VCF, ENV, L
 pdf = "Janus-Manual.pdf"
 pages = 52
 store = "https://store.cherryaudio.com/manufacturers/vulpus-labs"
-video = "yDRosVOQNUc"
-videoTitle = "The Janus Series for Voltage Modular"
 +++
 
 The manual covers:

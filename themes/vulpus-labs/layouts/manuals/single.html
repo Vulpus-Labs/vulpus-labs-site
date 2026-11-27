@@ -24,12 +24,6 @@
     {{ with .Params.store }}<a class="btn btn-ghost" href="{{ . }}" target="_blank" rel="noopener">Store</a>{{ end }}
   </div>
 
-  {{ with .Params.video }}
-  <div class="manual-video">
-    {{ partial "youtube.html" (dict "id" . "title" (default $.Title $.Params.videoTitle)) }}
-  </div>
-  {{ end }}
-
   <div class="post-content">{{ .Content }}</div>
 </div>
 {{ end }}

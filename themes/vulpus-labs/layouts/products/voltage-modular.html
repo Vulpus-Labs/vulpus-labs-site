@@ -1,0 +1,72 @@
+{{ define "main" }}
+{{/* The Voltage Modular modules: intro and store link, then one slab per
+     module series with a video, then cards for the rest. Each entry's
+     summary and accent come from its manual's page. */}}
+{{ $page := . }}
+{{ $store := .Params.store }}
+{{ $withVideo := slice }}{{ $rest := slice }}
+{{ range .Params.modules }}
+  {{ $m := site.GetPage .manual }}
+  {{ if not $m }}{{ errorf "voltage-modular: no manual page at %q for %q; fix `manual` in %s" .manual .name $page.File.Path }}{{ end }}
+  {{ $e := merge . (dict "page" $m) }}
+  {{ if .video }}{{ $withVideo = $withVideo | append $e }}{{ else }}{{ $rest = $rest | append $e }}{{ end }}
+{{ end }}
+
+<article class="product"{{ with .Params.accent }} style="--accent: {{ . }}"{{ end }}>
+  <div class="wrap">
+    <header class="archive-header">
+      <p class="eyebrow">Voltage Modular</p>
+      <h1>{{ .Title }}</h1>
+      {{ with .Params.tagline }}<p class="product-tagline">{{ . }}</p>{{ end }}
+      {{ with .Content }}<div class="archive-description">{{ . }}</div>{{ end }}
+      <div class="product-hero-actions">
+        {{ with $store }}<a class="btn btn-primary" href="{{ . }}" target="_blank" rel="noopener noreferrer">Vulpus Labs on the Cherry Audio store<span class="external-marker" aria-hidden="true">↗</span></a>{{ end }}
+        <a class="btn btn-secondary" href="{{ "/manuals/" | relURL }}">All manuals</a>
+      </div>
+    </header>
+
+    {{ range $withVideo }}
+    {{ $m := .page }}
+    <article class="showcase"{{ with $m.Params.accent }} style="--accent: {{ . }}"{{ end }}>
+      <div class="showcase-body">
+        <div class="showcase-titlerow">
+          <h2 class="showcase-name">{{ .name }}</h2>
+        </div>
+        {{ with $m.Params.summary }}<p class="showcase-blurb">{{ . }}</p>{{ end }}
+        <div class="chip-row showcase-specs">
+          {{ with $m.Params.platform }}<span class="chip">{{ . }}</span>{{ end }}
+        </div>
+        <div class="showcase-actions">
+          <a class="btn btn-secondary" href="{{ $m.RelPermalink }}">Read the manual</a>
+          {{ with $store }}<a class="btn btn-ghost" href="{{ . }}" target="_blank" rel="noopener noreferrer">Store<span class="external-marker" aria-hidden="true">↗</span></a>{{ end }}
+        </div>
+      </div>
+      <div class="showcase-media">
+        {{ partial "youtube.html" (dict "id" .video "title" .videoTitle) }}
+      </div>
+    </article>
+    {{ end }}
+  </div>
+
+  {{ with $rest }}
+  <section class="section section-ruled">
+    <div class="wrap">
+      <p class="eyebrow">More modules</p>
+      <div class="card-grid vm-cards">
+        {{ range . }}
+        {{ $m := .page }}
+        <article class="card manual-card"{{ with $m.Params.accent }} style="--accent: {{ . }}"{{ end }}>
+          {{ with $m.Resources.GetMatch "faceplate.png" }}
+          {{ partial "shot.html" (dict "img" . "label" (printf "%s panel" $m.Title) "href" $m.RelPermalink) }}
+          {{ end }}
+          <h2 class="card-title"><a href="{{ $m.RelPermalink }}">{{ .name }}</a></h2>
+          {{ with $m.Params.summary }}<p class="card-text">{{ . }}</p>{{ end }}
+          <div class="card-foot"><a class="read-more" href="{{ $m.RelPermalink }}">Read the manual →</a></div>
+        </article>
+        {{ end }}
+      </div>
+    </div>
+  </section>
+  {{ end }}
+</article>
+{{ end }}

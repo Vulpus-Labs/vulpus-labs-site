@@ -530,9 +530,13 @@ img {
   margin-bottom: 0;
 }
 
-/* A video below a manual's download buttons */
-.manual-video {
-  margin-block: 2rem;
+/* Voltage Modular cards: panels range from wide strips to tall columns,
+   so cap their height and centre them */
+.vm-cards .shot-img {
+  width: auto;
+  max-width: 100%;
+  max-height: 240px;
+  margin-inline: auto;
 }
 
 /* The free effects on the homepage: one composite image, linked to /effects/ */

@@ -32,11 +32,6 @@ link = "See the effects"
 eyebrow = "Also from Vulpus Labs"
 heading = "Tools for modular synthesis - build your own!"
 
-[[others.cards]]
-title = "Voltage Modular modules"
-text = "Oscillators, filters and effects for Cherry Audio's Voltage Modular."
-url = "/manuals/"
-link = "Read the manuals"
 
 [blog]
 eyebrow = "From the blog"
