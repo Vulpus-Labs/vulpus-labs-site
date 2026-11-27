@@ -8,6 +8,8 @@ summary = "Up to sixteen Kritter voices on one panel, driven by poly cables, wit
 pdf = "PolyKritter-Manual.pdf"
 pages = 22
 store = "https://store.cherryaudio.com/manufacturers/vulpus-labs"
+video = "KrQ8nQMTK3Q"
+videoTitle = "PolyKritter for Voltage Modular"
 +++
 
 The manual covers:

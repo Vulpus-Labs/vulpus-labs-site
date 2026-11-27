@@ -8,6 +8,8 @@ summary = "Five modules for drones: Littoral, Fluvial, Calderal, Alluvial and Gl
 pdf = "Radish-Manual.pdf"
 pages = 40
 store = "https://store.cherryaudio.com/manufacturers/vulpus-labs"
+video = "CXzmaReqP08"
+videoTitle = "The Radish Series - Drones for Voltage Modular"
 +++
 
 The manual covers:

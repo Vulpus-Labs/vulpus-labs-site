@@ -197,7 +197,8 @@ Products (`type = "products"`) use:
 `content/manuals/<name>/index.md` beside its PDF and a `faceplate.png` cover.
 Front matter: `title`, `date`, `weight`, `platform` (a chip, e.g. "Voltage
 Modular module"), `accent`, `summary`, `pdf` (the bundle's file name), `pages`,
-and optionally `store`. The PDFs are built in their own repositories (e.g.
+and optionally `store`, and `video` (a YouTube id, embedded under the
+download buttons through `partials/youtube.html`) with `videoTitle`. The PDFs are built in their own repositories (e.g.
 `vm-pro/poly-kritter/manual/build.sh`) and copied in.
 
 Product pages that carry audio or screenshots must be page bundles

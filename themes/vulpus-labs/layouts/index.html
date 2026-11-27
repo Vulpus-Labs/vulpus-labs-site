@@ -27,14 +27,7 @@
         {{ end }}
       </div>
       {{ with $hero.video }}
-      <div class="hero-video">
-        <iframe src="https://www.youtube-nocookie.com/embed/{{ . }}"
-                title="{{ default "Video" $hero.videoTitle }}"
-                loading="lazy"
-                allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                referrerpolicy="strict-origin-when-cross-origin"
-                allowfullscreen></iframe>
-      </div>
+      {{ partial "youtube.html" (dict "id" . "title" $hero.videoTitle) }}
       {{ end }}
     </div>
 
